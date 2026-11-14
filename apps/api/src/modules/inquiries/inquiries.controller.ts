@@ -7,6 +7,7 @@ import {
   generateQuotationNotificationEmail,
   generateInquiryStatusUpdateEmail,
 } from '../../integrations/resend';
+import { sendMailGateway, getNotifyEmail } from '../../integrations/mailer';
 import { config } from '../../config';
 import {
   productInquirySchema,
@@ -126,6 +127,15 @@ export class InquiriesController {
         }),
       }).catch((emailErr) => console.error('[Inquiry Email Error]:', emailErr));
 
+      // Mail gateway (SMTP) — supplementary delivery
+      getNotifyEmail().then(notifyTo => {
+        sendMailGateway({
+          to: notifyTo,
+          subject: `[TRICLINIUM Inquiry] ${targetName} (${referenceNumber})`,
+          html: generateInquiryNotificationEmail({ referenceNumber, type: inquiryType, customerName, email, phone, company, message, targetName }),
+        }).catch(e => console.error('[Mailer Gateway Error]:', e));
+      });
+
       return res.status(201).json({
         success: true,
         data: {
@@ -189,6 +199,15 @@ export class InquiriesController {
           targetName: data.subject,
         }),
       }).catch((emailErr) => console.error('[Contact Email Error]:', emailErr));
+
+      // Mail gateway (SMTP) — supplementary delivery
+      getNotifyEmail().then(notifyTo => {
+        sendMailGateway({
+          to: notifyTo,
+          subject: `[TRICLINIUM Contact] ${data.subject} (${referenceNumber})`,
+          html: generateInquiryNotificationEmail({ referenceNumber, type: 'General Contact', customerName: data.customerName, email: data.email, phone: data.phone, company: data.company, message: data.message, targetName: data.subject }),
+        }).catch(e => console.error('[Mailer Gateway Error]:', e));
+      });
 
       return res.status(201).json({
         success: true,

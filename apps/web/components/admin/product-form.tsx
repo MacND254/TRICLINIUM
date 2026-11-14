@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Trash2, ArrowLeft, Loader2, Save, Image as ImageIcon } from 'lucide-react';
+import { Plus, Trash2, ArrowLeft, Loader2, Save, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -41,13 +41,7 @@ export function ProductForm({ initialData, isEdit }: ProductFormProps) {
   );
 
   const [images, setImages] = useState<Array<{ url: string; altText?: string; isPrimary: boolean }>>(
-    initialData?.images || [
-      {
-        url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1200&q=80',
-        altText: 'Primary Assembly View',
-        isPrimary: true,
-      },
-    ]
+    initialData?.images || []
   );
 
   const [seoTitle, setSeoTitle] = useState(initialData?.seoTitle || '');
@@ -55,6 +49,75 @@ export function ProductForm({ initialData, isEdit }: ProductFormProps) {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [uploadingIdx, setUploadingIdx] = useState<number | null>(null);
+
+  const handleImageUpload = async (idx: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingIdx(idx);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const API = process.env.NEXT_PUBLIC_API_URL || '';
+      const res = await fetch(`${API}/api/v1/admin/media/upload`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error?.message || errJson.message || 'Upload failed');
+      }
+      const json = await res.json();
+      const uploadedUrl = json.data?.url || json.url || '';
+      updateImage(idx, 'url', uploadedUrl);
+      if (!images[idx]?.altText) {
+        updateImage(idx, 'altText', file.name.replace(/\.[^/.]+$/, ''));
+      }
+    } catch (err: any) {
+      alert('Image upload failed: ' + (err.message || 'Unknown error'));
+    } finally {
+      setUploadingIdx(null);
+      e.target.value = '';
+    }
+  };
+
+  const handleUploadNewFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const newIdx = images.length;
+    setImages(prev => [...prev, { url: '', altText: file.name.replace(/\.[^/.]+$/, ''), isPrimary: prev.length === 0 }]);
+    setUploadingIdx(newIdx);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const API = process.env.NEXT_PUBLIC_API_URL || '';
+      const res = await fetch(`${API}/api/v1/admin/media/upload`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error?.message || errJson.message || 'Upload failed');
+      }
+      const json = await res.json();
+      const uploadedUrl = json.data?.url || json.url || '';
+      setImages(prev => {
+        const updated = [...prev];
+        if (updated[newIdx]) {
+          updated[newIdx].url = uploadedUrl;
+        }
+        return updated;
+      });
+    } catch (err: any) {
+      alert('Image upload failed: ' + (err.message || 'Unknown error'));
+      setImages(prev => prev.filter((_, i) => i !== newIdx));
+    } finally {
+      setUploadingIdx(null);
+      e.target.value = '';
+    }
+  };
 
   useEffect(() => {
     async function loadCats() {
@@ -405,53 +468,136 @@ export function ProductForm({ initialData, isEdit }: ProductFormProps) {
         </div>
       </div>
 
-      {/* Grid: 4. Image Gallery URLs */}
+      {/* Grid: 4. Image Gallery & File Upload */}
       <div className="p-6 rounded-xl border border-slate-800 bg-slate-900 space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-sky-400">Product Images & Gallery</h3>
-          <Button type="button" size="sm" variant="outline" onClick={addImage} className="h-7 text-xs border-slate-700">
-            <Plus className="h-3 w-3 mr-1" /> Add Image URL
-          </Button>
+          <div>
+            <h3 className="text-sm font-bold uppercase tracking-wider text-sky-400">Product Images & Gallery</h3>
+            <p className="text-xs text-slate-400 mt-0.5">Upload product images directly from your device or specify image URLs.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="flex items-center gap-1.5 cursor-pointer h-8 px-3 rounded-md bg-sky-600 hover:bg-sky-500 text-xs font-semibold text-white transition-colors">
+              <Upload className="h-3.5 w-3.5" />
+              <span>{uploadingIdx !== null ? 'Uploading...' : 'Upload Image File'}</span>
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                disabled={uploadingIdx !== null}
+                onChange={handleUploadNewFile}
+              />
+            </label>
+            <Button type="button" size="sm" variant="outline" onClick={addImage} className="h-8 text-xs border-slate-700 text-slate-300">
+              <Plus className="h-3.5 w-3.5 mr-1" /> Add URL Row
+            </Button>
+          </div>
         </div>
-        <div className="space-y-2">
-          {images.map((img, idx) => (
-            <div key={idx} className="flex gap-3 items-center">
-              <Input
-                value={img.url}
-                onChange={(e) => updateImage(idx, 'url', e.target.value)}
-                placeholder="https://images.unsplash.com/... or Cloudinary URL"
-                className="bg-slate-950 border-slate-800 text-white text-xs flex-1"
-              />
-              <Input
-                value={img.altText || ''}
-                onChange={(e) => updateImage(idx, 'altText', e.target.value)}
-                placeholder="Alt description"
-                className="bg-slate-950 border-slate-800 text-white text-xs w-48 hidden sm:block"
-              />
-              <label className="flex items-center gap-1.5 text-xs text-slate-400 cursor-pointer shrink-0">
-                <input
-                  type="radio"
-                  name="primary_image"
-                  checked={img.isPrimary}
-                  onChange={() => {
-                    const next = images.map((im, i) => ({ ...im, isPrimary: i === idx }));
-                    setImages(next);
-                  }}
-                />
-                <span>Primary</span>
-              </label>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => removeImage(idx)}
-                className="h-8 w-8 text-rose-400 hover:text-rose-300"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
+
+        {images.length === 0 ? (
+          <div className="p-8 rounded-lg border border-dashed border-slate-800 text-center space-y-3 bg-slate-950/40">
+            <div className="h-12 w-12 rounded-full bg-slate-800/80 mx-auto flex items-center justify-center text-slate-400">
+              <Upload className="h-6 w-6" />
             </div>
-          ))}
-        </div>
+            <div>
+              <p className="text-xs font-semibold text-slate-300">No product images added yet</p>
+              <p className="text-[11px] text-slate-500 mt-0.5">Click "Upload Image File" to choose an image from your computer or "Add URL Row" to paste a link.</p>
+            </div>
+            <label className="inline-flex items-center gap-1.5 cursor-pointer h-8 px-3 rounded-md bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-sky-400 border border-slate-700 transition-colors">
+              <Upload className="h-3.5 w-3.5" />
+              <span>Browse Image File</span>
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                disabled={uploadingIdx !== null}
+                onChange={handleUploadNewFile}
+              />
+            </label>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {images.map((img, idx) => (
+              <div key={idx} className="p-3.5 rounded-lg bg-slate-950 border border-slate-800 space-y-2.5">
+                <div className="flex gap-3 items-center">
+                  {/* File upload replacement button */}
+                  <label className="flex items-center gap-1.5 cursor-pointer shrink-0 h-9 px-3 rounded-md border border-slate-700 bg-slate-800 text-xs text-slate-300 hover:bg-slate-700 transition-colors">
+                    <Upload className="h-3.5 w-3.5 text-sky-400" />
+                    <span>{uploadingIdx === idx ? 'Uploading...' : 'Upload'}</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={uploadingIdx !== null}
+                      onChange={(e) => handleImageUpload(idx, e)}
+                    />
+                  </label>
+
+                  <Input
+                    value={img.url}
+                    onChange={(e) => updateImage(idx, 'url', e.target.value)}
+                    placeholder="https://... or uploaded /uploads/..."
+                    className="bg-slate-900 border-slate-700 text-white text-xs flex-1 font-mono"
+                  />
+
+                  <Input
+                    value={img.altText || ''}
+                    onChange={(e) => updateImage(idx, 'altText', e.target.value)}
+                    placeholder="Alt description"
+                    className="bg-slate-900 border-slate-700 text-white text-xs w-48 hidden sm:block"
+                  />
+
+                  <label className="flex items-center gap-1.5 text-xs text-slate-300 cursor-pointer shrink-0 bg-slate-900 px-2.5 py-2 rounded-md border border-slate-800">
+                    <input
+                      type="radio"
+                      name="primary_image"
+                      checked={img.isPrimary}
+                      onChange={() => {
+                        const next = images.map((im, i) => ({ ...im, isPrimary: i === idx }));
+                        setImages(next);
+                      }}
+                      className="text-sky-600 focus:ring-0"
+                    />
+                    <span className="text-[11px] font-medium">Primary</span>
+                  </label>
+
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => removeImage(idx)}
+                    className="h-8 w-8 text-rose-400 hover:text-rose-300"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+
+                {/* Thumbnail Preview */}
+                {img.url && (
+                  <div className="flex items-center gap-3 pt-1 border-t border-slate-900">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={img.url}
+                      alt={img.altText || 'Product Preview'}
+                      className="h-16 w-24 object-cover rounded-md border border-slate-700 bg-slate-900"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.opacity = '0.3';
+                      }}
+                    />
+                    <div className="flex-1 text-[11px] text-slate-400">
+                      <p className="font-semibold text-slate-300 truncate">{img.altText || 'Product image'}</p>
+                      <p className="text-[10px] text-slate-500 font-mono truncate">{img.url}</p>
+                      {img.isPrimary && (
+                        <span className="inline-block mt-1 text-[10px] font-bold text-sky-400 bg-sky-950 px-2 py-0.5 rounded border border-sky-800">
+                          Primary Product Photo
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Grid: 5. SEO Configuration */}

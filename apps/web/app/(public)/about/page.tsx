@@ -1,9 +1,9 @@
 import React from 'react';
-import { ShieldCheck, Award, Layers, Users, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, Award, Layers, Users, CheckCircle2, Video, Bell, Lock } from 'lucide-react';
 
 export const metadata = {
-  title: 'About Us | TRICLINIUM Commercial & Industrial Enterprise',
-  description: 'Learn about our engineering heritage, advanced metallurgical capabilities, and commitment to precision architectural hardware.',
+  title: 'About Us | TRICLINIUM CCTV Surveillance & Home Alarm Systems',
+  description: 'Learn about TRICLINIUM, our certified security technicians, 4K AI surveillance cameras, and smart wireless home alarm systems.',
 };
 
 export default function AboutPage() {
@@ -11,14 +11,15 @@ export default function AboutPage() {
     <div className="container mx-auto px-4 sm:px-8 py-16 space-y-16">
       {/* Hero */}
       <div className="max-w-3xl space-y-4">
-        <span className="text-xs font-bold text-sky-600 uppercase tracking-widest">
-          Corporate Background & Engineering Heritage
+        <span className="text-xs font-bold text-sky-600 uppercase tracking-widest flex items-center gap-1.5">
+          <ShieldCheck className="h-4 w-4" />
+          <span>About TRICLINIUM Security Enterprise</span>
         </span>
         <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-          Uncompromising Precision in Mechanical Physics & Architectural Design
+          Dedicated to Total Situational Awareness & Proactive Security
         </h1>
         <p className="text-base text-slate-600 dark:text-slate-300 leading-relaxed">
-          Founded in 2012 by licensed mechanical engineers and metallurgical specialists, TRICLINIUM is dedicated to solving the structural and kinematics challenges of monumental building portals and high-load industrial machinery.
+          Founded in 2014 by security engineers and network infrastructure specialists, TRICLINIUM delivers end-to-end CCTV surveillance, smart wireless intruder alarms, and integrated biometric access control solutions for residences, retail establishments, and corporate enterprises.
         </p>
       </div>
 
@@ -30,7 +31,7 @@ export default function AboutPage() {
           </div>
           <h3 className="font-bold text-lg text-slate-900 dark:text-white">Our Mission</h3>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            To engineer and deliver the world’s most dependable, high-capacity pivot hardware and precision components with transparent metallurgical verification and zero-failure operation.
+            To provide homes and enterprises with intelligent, dependable 4K surveillance and intrusion detection systems that proactively prevent crime and safeguard loved ones and assets.
           </p>
         </div>
 
@@ -40,7 +41,7 @@ export default function AboutPage() {
           </div>
           <h3 className="font-bold text-lg text-slate-900 dark:text-white">Our Vision</h3>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            To bridge physical manufacturing and digital asset telemetry, allowing engineers worldwide to design monumental architectural structures with real-time operational health insights.
+            To make modern AI-powered security accessible, effortless to operate from mobile devices, and resilient against downtime, weather hazards, and power interruptions.
           </p>
         </div>
 
@@ -50,7 +51,7 @@ export default function AboutPage() {
           </div>
           <h3 className="font-bold text-lg text-slate-900 dark:text-white">Core Tenets</h3>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Traceability at every step. We never substitute alloys, compromise tolerance thresholds, or deliver assemblies that fail rigorous optical metrology testing.
+            Professional excellence in every cable run, zero blind spots, transparent equipment warranties, and rigorous encryption standards to protect your private video streams.
           </p>
         </div>
       </div>
@@ -59,31 +60,35 @@ export default function AboutPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center pt-8 border-t">
         <div className="space-y-6">
           <h2 className="text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-            Advanced Manufacturing & Testing Facility
+            Certified Equipment & Comprehensive Service Guarantee
           </h2>
           <p className="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-            Our state-of-the-art facility features temperature-regulated machining suites, multi-axis 5-axis Mazak milling centers, and calibrated coordinate measuring machines (CMM) achieving optical accuracy within 5 microns.
+            Every camera, recorder, and alarm sensor in our catalog undergoes rigorous bench testing before dispatch. Our licensed installation technicians ensure optimal field-of-view positioning, clean conduit installation, and flawless network configuration.
           </p>
           <div className="space-y-3">
             <div className="flex items-center gap-3 text-xs font-semibold">
               <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-              <span>Full Raw Material Optical Emission Spectrometry</span>
+              <span>4K Ultra HD Sensors with AI Human & Vehicle Classification</span>
             </div>
             <div className="flex items-center gap-3 text-xs font-semibold">
               <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-              <span>Hydraulic Tensile Testing up to 100,000 N</span>
+              <span>Full Color Night Vision & IR Range up to 50 Meters</span>
             </div>
             <div className="flex items-center gap-3 text-xs font-semibold">
               <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-              <span>Salt-Spray Corrosion Chamber (ASTM B117 Tested)</span>
+              <span>Encrypted Cloud & Local Video Storage with Redundant Backup</span>
+            </div>
+            <div className="flex items-center gap-3 text-xs font-semibold">
+              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+              <span>1-Year Complete Warranty on All Hardware & Installation Labor</span>
             </div>
           </div>
         </div>
 
         <div className="aspect-[4/3] rounded-xl overflow-hidden border shadow-lg">
           <img
-            src="https://images.unsplash.com/photo-1581092334651-ddf26d9a09d0?auto=format&fit=crop&w=1200&q=80"
-            alt="TRICLINIUM Facilities"
+            src="https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&w=1200&q=80"
+            alt="TRICLINIUM Security Operations"
             className="h-full w-full object-cover"
           />
         </div>

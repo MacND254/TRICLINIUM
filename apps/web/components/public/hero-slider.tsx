@@ -23,22 +23,22 @@ interface HeroSliderProps {
 const DEFAULT_SLIDES: SlideItem[] = [
   {
     id: 'default-1',
-    headline: 'Precision Industrial Engineering & Monumental Architectural Portals',
-    subheadline: 'Manufacturer of 750kg heavy-pivot assemblies, zero-backlash precision couplings, and enterprise industrial telemetry software.',
-    imageUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1920&q=85',
-    primaryCtaText: 'Explore Catalog',
+    headline: 'Enterprise 4K AI CCTV Surveillance & Smart Alarm Systems',
+    subheadline: 'Protect your property with ultra-high definition cameras, AI-powered human detection, remote smartphone access, and 24/7 wireless intruder alarms.',
+    imageUrl: 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&w=1920&q=85',
+    primaryCtaText: 'Explore CCTV Products',
     primaryCtaLink: '/products',
-    secondaryCtaText: 'Request Quotation (RFQ)',
+    secondaryCtaText: 'Get Free Security Quote',
     secondaryCtaLink: '/contact',
   },
   {
     id: 'default-2',
-    headline: 'High-Tolerance 5-Axis CNC Fabrication & Structural FEA Verification',
-    subheadline: 'Mission-critical component manufacturing adhering to EN 1154, ANSI Grade 1, and ISO 9001:2015 metallurgical certifications.',
-    imageUrl: 'https://images.unsplash.com/photo-1581092162384-8987c1d64718?auto=format&fit=crop&w=1920&q=85',
-    primaryCtaText: 'Engineering Services',
+    headline: 'Certified CCTV Installation & 24/7 Alarm System Integration',
+    subheadline: 'End-to-end security solutions including professional site surveys, clean structured cabling, high-capacity NVR setup, and comprehensive warranties.',
+    imageUrl: 'https://images.unsplash.com/photo-1586771107445-d3ca888129ff?auto=format&fit=crop&w=1920&q=85',
+    primaryCtaText: 'Our Security Services',
     primaryCtaLink: '/services',
-    secondaryCtaText: 'Consult an Engineer',
+    secondaryCtaText: 'Book a Site Assessment',
     secondaryCtaLink: '/contact',
   },
 ];
@@ -82,7 +82,7 @@ export function HeroSlider({ slides }: HeroSliderProps) {
         <div className="max-w-2xl space-y-6">
           <div className="inline-flex items-center gap-2 rounded-full border border-sky-400/30 bg-sky-500/10 px-3.5 py-1 text-xs font-semibold text-sky-300 backdrop-blur-md">
             <ShieldCheck className="h-4 w-4 text-sky-400" />
-            <span>EN 1154 & ISO 9001:2015 Precision Certified</span>
+            <span>Certified Security Integrator · 100% Guaranteed Protection</span>
           </div>
 
           <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight">

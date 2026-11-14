@@ -47,41 +47,58 @@ interface WebsiteSettings {
   notifyEmail: string;
   notifyOnInquiry: boolean;
   notifyOnQuotation: boolean;
+  // Mail Gateway (SMTP)
+  mailGatewayProvider: string;
+  smtpHost: string;
+  smtpPort: string;
+  smtpSecure: boolean;
+  smtpUser: string;
+  smtpPass: string;
+  smtpFromEmail: string;
+  smtpFromName: string;
 }
 
 const DEFAULTS: WebsiteSettings = {
-  siteName: 'TRICLINIUM',
-  tagline: 'Precision Engineering Excellence',
+  siteName: 'TRICLINIUM CCTV & Security Systems',
+  tagline: 'Enterprise 4K Surveillance & Home Alarm Systems',
   logoUrl: '',
   faviconUrl: '',
   primaryColor: '#0ea5e9',
-  accentColor: '#f59e0b',
-  contactEmail: 'info@triclinium.com',
+  accentColor: '#0284c7',
+  contactEmail: 'inquiries@triclinium.com',
   supportEmail: 'support@triclinium.com',
-  phone: '',
+  phone: '+1 (800) 555-0199',
   phoneAlt: '',
-  address: '',
-  city: '',
-  country: '',
-  postalCode: '',
+  address: '742 Security Parkway, Suite 500',
+  city: 'New York',
+  country: 'United States',
+  postalCode: '10001',
   facebook: '',
   twitter: '',
   linkedin: '',
   instagram: '',
   youtube: '',
-  metaTitle: 'TRICLINIUM — Precision Engineering',
-  metaDescription: 'Leading provider of precision industrial engineering solutions, architectural hardware, and telemetry systems.',
-  metaKeywords: 'precision engineering, industrial hardware, telemetry, CNC machining',
+  metaTitle: 'TRICLINIUM — CCTV Surveillance & Home Alarm Systems',
+  metaDescription: 'Commercial 4K AI CCTV cameras, NVR storage, smart wireless alarm systems, and certified security installation.',
+  metaKeywords: 'cctv, surveillance cameras, ip camera, nvr, home alarm system, wireless security',
   googleAnalyticsId: '',
   googleTagManagerId: '',
-  businessHours: 'Mon–Fri: 08:00–17:00',
+  businessHours: 'Mon–Fri: 08:00–18:00 EST (24/7 Monitoring)',
   currency: 'USD',
   currencySymbol: '$',
-  showPrices: false,
+  showPrices: true,
   enableQuotations: true,
-  notifyEmail: '',
+  notifyEmail: 'admin@triclinium.com',
   notifyOnInquiry: true,
   notifyOnQuotation: true,
+  mailGatewayProvider: 'smtp',
+  smtpHost: '',
+  smtpPort: '587',
+  smtpSecure: false,
+  smtpUser: '',
+  smtpPass: '',
+  smtpFromEmail: 'notifications@triclinium.com',
+  smtpFromName: 'TRICLINIUM Security Enterprise',
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -147,7 +164,7 @@ function ToggleField({ label, hint, checked, onChange }: { label: string; hint?:
   );
 }
 
-type TabId = 'general' | 'contact' | 'social' | 'seo' | 'business' | 'notifications';
+type TabId = 'general' | 'contact' | 'social' | 'seo' | 'business' | 'notifications' | 'mail';
 
 const TABS: { id: TabId; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: 'general', label: 'General', icon: Building2 },
@@ -156,6 +173,7 @@ const TABS: { id: TabId; label: string; icon: React.ComponentType<{ className?: 
   { id: 'seo', label: 'SEO', icon: Search },
   { id: 'business', label: 'Business', icon: Globe },
   { id: 'notifications', label: 'Alerts', icon: Bell },
+  { id: 'mail', label: 'Mail Gateway', icon: Mail },
 ];
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -164,6 +182,7 @@ export default function SettingsPage() {
   const [settings, setSettings] = useState<WebsiteSettings>(DEFAULTS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [testingEmail, setTestingEmail] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>('general');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
@@ -175,20 +194,34 @@ export default function SettingsPage() {
   const fetchSettings = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await apiFetch('/settings');
-      // Merge API response with defaults
+      const res = await apiFetch('/admin/settings');
+      const data = res.data || res;
       const merged: WebsiteSettings = { ...DEFAULTS };
-      const src = Array.isArray(data.data) ? data.data : Array.isArray(data) ? data : [];
-      for (const item of src) {
-        const key = item.key as keyof WebsiteSettings;
-        if (key in merged) {
-          if (typeof merged[key] === 'boolean') {
-            (merged as unknown as Record<string, unknown>)[key] = item.value === 'true' || item.value === true;
-          } else {
-            (merged as unknown as Record<string, unknown>)[key] = item.value ?? '';
+
+      if (data && typeof data === 'object') {
+        for (const [k, v] of Object.entries(data)) {
+          if (k in merged) {
+            if (typeof (merged as any)[k] === 'boolean') {
+              (merged as any)[k] = v === 'true' || v === true;
+            } else {
+              (merged as any)[k] = v ?? '';
+            }
           }
         }
       }
+
+      if (Array.isArray(res.items)) {
+        for (const item of res.items) {
+          if (item.key in merged) {
+            if (typeof (merged as any)[item.key] === 'boolean') {
+              (merged as any)[item.key] = item.value === 'true' || item.value === true;
+            } else {
+              (merged as any)[item.key] = item.value ?? '';
+            }
+          }
+        }
+      }
+
       setSettings(merged);
     } catch {
       // Silently use defaults
@@ -217,6 +250,19 @@ export default function SettingsPage() {
       showToast((e as Error).message, 'error');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleTestEmail = async () => {
+    setTestingEmail(true);
+    try {
+      await handleSave();
+      const res = await apiFetch('/admin/settings/test-email', { method: 'POST' });
+      showToast(res.message || 'Test email sent successfully! Check your inbox.');
+    } catch (e: any) {
+      showToast(e.message || 'Failed to send test email', 'error');
+    } finally {
+      setTestingEmail(false);
     }
   };
 
@@ -443,10 +489,118 @@ export default function SettingsPage() {
                 <div className="flex items-start gap-3">
                   <AlertCircle className="h-5 w-5 text-amber-400 shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-sm font-medium text-amber-300">Email delivery powered by Resend</p>
-                    <p className="text-xs text-amber-400/70 mt-1">Configure your Resend API key in environment variables (<code className="font-mono">RESEND_API_KEY</code>) and set <code className="font-mono">EMAIL_FROM</code> to your verified sending address.</p>
+                    <p className="text-sm font-medium text-amber-300">Dual Email Delivery: Resend + SMTP Gateway</p>
+                    <p className="text-xs text-amber-400/70 mt-1">Configure your Resend API key in environment variables (<code className="font-mono">RESEND_API_KEY</code>) or switch to the <strong>Mail Gateway</strong> tab to configure your own direct SMTP credentials (Gmail, Outlook, Mailgun, etc.).</p>
                   </div>
                 </div>
+              </div>
+            </>
+          )}
+
+          {activeTab === 'mail' && (
+            <>
+              <SectionHeader
+                icon={Mail}
+                title="Mail Gateway (SMTP Configuration)"
+                description="Configure outgoing SMTP mail server to receive instant customer inquiry alerts directly in your inbox."
+              />
+
+              <div className="rounded-xl border border-sky-800/40 bg-sky-950/20 p-4">
+                <div className="flex items-start gap-3">
+                  <Mail className="h-5 w-5 text-sky-400 shrink-0 mt-0.5" />
+                  <div className="text-xs text-sky-200 space-y-1">
+                    <p className="font-semibold text-sky-300">Automatic Inquiry Delivery Gateway</p>
+                    <p>
+                      When a visitor sends a message via the public Contact form or submits a CCTV product/service inquiry, the system immediately dispatches an alert email to <strong className="text-white underline">{settings.notifyEmail || 'admin@triclinium.com'}</strong>.
+                    </p>
+                    <p className="text-slate-400 text-[11px] pt-1">
+                      Works with Gmail, Outlook 365, Mailgun, SendGrid, Amazon SES, or any standard cPanel SMTP server.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <Field label="SMTP Host Server" hint="e.g. smtp.gmail.com or mail.yourdomain.com">
+                  <input
+                    className={inputCls}
+                    value={settings.smtpHost}
+                    onChange={(e) => set('smtpHost', e.target.value)}
+                    placeholder="smtp.gmail.com"
+                  />
+                </Field>
+                <Field label="SMTP Port" hint="Standard ports: 587 (TLS/STARTTLS) or 465 (SSL)">
+                  <input
+                    className={inputCls}
+                    value={settings.smtpPort}
+                    onChange={(e) => set('smtpPort', e.target.value)}
+                    placeholder="587"
+                  />
+                </Field>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <Field label="SMTP Username / Account Email">
+                  <input
+                    className={inputCls}
+                    value={settings.smtpUser}
+                    onChange={(e) => set('smtpUser', e.target.value)}
+                    placeholder="notifications@yourdomain.com"
+                  />
+                </Field>
+                <Field label="SMTP Password" hint="For Gmail, use a generated 16-character App Password">
+                  <input
+                    type="password"
+                    className={inputCls}
+                    value={settings.smtpPass}
+                    onChange={(e) => set('smtpPass', e.target.value)}
+                    placeholder="••••••••••••••••"
+                  />
+                </Field>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <Field label="Sender Email Address (From)" hint="Address displayed to recipients">
+                  <input
+                    type="email"
+                    className={inputCls}
+                    value={settings.smtpFromEmail}
+                    onChange={(e) => set('smtpFromEmail', e.target.value)}
+                    placeholder="notifications@triclinium.com"
+                  />
+                </Field>
+                <Field label="Sender Display Name">
+                  <input
+                    className={inputCls}
+                    value={settings.smtpFromName}
+                    onChange={(e) => set('smtpFromName', e.target.value)}
+                    placeholder="TRICLINIUM Security Enterprise"
+                  />
+                </Field>
+              </div>
+
+              <div className="rounded-xl border border-slate-800 p-4">
+                <ToggleField
+                  label="Use SSL/TLS Connection"
+                  hint="Enable if connecting via port 465. Leave disabled if connecting via port 587 (STARTTLS)."
+                  checked={settings.smtpSecure}
+                  onChange={(v) => set('smtpSecure', v)}
+                />
+              </div>
+
+              <div className="flex items-center justify-between pt-2 border-t border-slate-800">
+                <p className="text-xs text-slate-400">
+                  Sends a test message to: <strong className="text-slate-200">{settings.notifyEmail || 'admin@triclinium.com'}</strong>
+                </p>
+                <button
+                  type="button"
+                  onClick={handleTestEmail}
+                  disabled={testingEmail || saving}
+                  className="flex items-center gap-2 rounded-lg border border-sky-700 bg-sky-900/30 px-4 py-2 text-xs font-semibold text-sky-300 hover:bg-sky-900/60 disabled:opacity-50 transition-colors"
+                >
+                  {testingEmail ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />}
+                  <span>{testingEmail ? 'Dispatching Test Email...' : 'Send Test Email'}</span>
+                </button>
               </div>
             </>
           )}

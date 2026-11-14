@@ -58,20 +58,20 @@ export const PERMISSIONS = {
 
 export const DEFAULT_WEBSITE_SETTINGS: WebsiteSettingsDTO = {
   general: {
-    companyName: 'TRICLINIUM Commercial & Industrial Enterprise',
+    companyName: 'TRICLINIUM CCTV & Security Systems',
     logoUrl: '/images/triclinium-logo.svg',
     faviconUrl: '/favicon.ico',
     websiteUrl: 'https://triclinium.com',
-    description: 'Premier provider of high-grade architectural elements, custom manufactured products, and comprehensive commercial services.',
+    description: 'Premier manufacturer and integrator of enterprise 4K AI CCTV surveillance systems, Network Video Recorders (NVR), and smart wireless home alarm systems.',
     language: 'en',
     timezone: 'UTC',
     currency: 'USD',
   },
   contact: {
-    email: 'info@triclinium.com',
+    email: 'inquiries@triclinium.com',
     phone: '+1 (800) 555-0199',
-    address: '742 Evergreen Boulevard, Suite 500, Industrial District, NY 10001',
-    businessHours: 'Monday - Friday: 8:00 AM - 6:00 PM EST',
+    address: '742 Security Parkway, Suite 500, Tech & Security District, NY 10001',
+    businessHours: 'Monday - Friday: 8:00 AM - 6:00 PM EST (24/7 Monitoring Center)',
   },
   social: {
     facebook: 'https://facebook.com/triclinium',
@@ -87,13 +87,13 @@ export const DEFAULT_WEBSITE_SETTINGS: WebsiteSettingsDTO = {
     fontFamily: 'Inter, sans-serif',
   },
   seo: {
-    defaultTitle: 'TRICLINIUM | Premium Products & Engineering Services',
-    defaultDescription: 'Explore our catalog of precision-engineered physical & digital products, and bespoke enterprise consulting and industrial services.',
-    ogImageUrl: '/images/og-default.jpg',
+    defaultTitle: 'TRICLINIUM | CCTV Surveillance & Advanced Alarm Systems',
+    defaultDescription: 'Explore our catalog of high-definition 4K AI CCTV cameras, commercial NVR video storage, wireless intruder alarms, and biometric access control systems.',
+    ogImageUrl: '/images/og-cctv.jpg',
     robotsTxt: 'User-agent: *\nAllow: /\nDisallow: /admin/\nDisallow: /api/\nSitemap: https://triclinium.com/sitemap.xml',
   },
   email: {
-    senderName: 'TRICLINIUM Enterprise',
+    senderName: 'TRICLINIUM Security Enterprise',
     senderEmail: 'notifications@triclinium.com',
     notificationRecipients: ['admin@triclinium.com', 'sales@triclinium.com'],
   },

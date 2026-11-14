@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^3.6.0",
+    "@react-pdf/renderer": "^4.9.0",
     "@tanstack/react-query": "^5.45.0",
     "@triclinium/shared": "*",
     "@triclinium/types": "*",

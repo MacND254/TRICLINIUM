@@ -6,38 +6,70 @@ import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
   Package,
-  FolderTree,
   Wrench,
   Inbox,
-  FileSpreadsheet,
-  Star,
   FileText,
   Home,
   BookOpen,
   HelpCircle,
   Image as ImageIcon,
   Users,
-  Shield,
   Activity,
   Settings,
   LogOut,
   ExternalLink,
   Menu,
   X,
-  ChevronDown,
+  ShieldAlert,
 } from 'lucide-react';
 import { AdminAuthProvider, useAdminAuth } from '@/lib/admin-auth-context';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+
+function AdminFooter() {
+  return (
+    <footer className="mt-auto border-t border-slate-800 bg-slate-950/80 px-6 py-4 text-xs text-slate-500">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 max-w-7xl mx-auto">
+        <p className="text-center sm:text-left">
+          © 2026 TRICLINIUM Commercial & Industrial Enterprise. All rights reserved.
+        </p>
+        <div className="flex items-center gap-4 flex-wrap justify-center text-slate-400">
+          <Link href="/privacy-policy" target="_blank" className="hover:text-sky-400 transition-colors">
+            Privacy Policy
+          </Link>
+          <span className="text-slate-700">·</span>
+          <Link href="/terms-and-conditions" target="_blank" className="hover:text-sky-400 transition-colors">
+            Terms & Conditions
+          </Link>
+          <span className="text-slate-700">·</span>
+          <Link href="/cookie-policy" target="_blank" className="hover:text-sky-400 transition-colors">
+            Cookie Policy
+          </Link>
+          <span className="text-slate-700">·</span>
+          <Link href="/admin/login" className="hover:text-sky-400 text-sky-500 font-medium transition-colors">
+            Admin Access
+          </Link>
+        </div>
+      </div>
+    </footer>
+  );
+}
 
 function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, logout, hasRole } = useAdminAuth();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
-  // If on public login/recovery pages, render children without sidebar
+  // If on login/recovery pages, render clean standalone view with minimal admin footer
   if (['/admin/login', '/admin/forgot-password', '/admin/reset-password'].includes(pathname)) {
-    return <>{children}</>;
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col justify-between">
+        <div className="flex-1 flex items-center justify-center p-4">
+          {children}
+        </div>
+        <AdminFooter />
+      </div>
+    );
   }
 
   const navSections = [
@@ -48,14 +80,14 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     {
       title: 'Catalog Management',
       items: [
-        { label: 'Products', href: '/admin/products', icon: Package },
-        { label: 'Services', href: '/admin/services', icon: Wrench },
+        { label: 'Surveillance Products', href: '/admin/products', icon: Package },
+        { label: 'Security Services', href: '/admin/services', icon: Wrench },
       ],
     },
     {
       title: 'Customer Relations',
       items: [
-        { label: 'Inquiries & RFQs', href: '/admin/inquiries', icon: Inbox },
+        { label: 'Inquiries & Quotations (RFQ)', href: '/admin/inquiries', icon: Inbox },
         { label: 'Media Library', href: '/admin/media', icon: ImageIcon },
       ],
     },
@@ -64,7 +96,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
       items: [
         { label: 'Homepage Editor', href: '/admin/cms/homepage', icon: Home },
         { label: 'Custom Pages', href: '/admin/cms/pages', icon: FileText },
-        { label: 'Blog Publications', href: '/admin/cms/blog', icon: BookOpen },
+        { label: 'Security Insights / Blog', href: '/admin/cms/blog', icon: BookOpen },
         { label: 'FAQs', href: '/admin/cms/faqs', icon: HelpCircle },
       ],
     },
@@ -75,7 +107,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
             items: [
               { label: 'Administrators', href: '/admin/users', icon: Users },
               { label: 'Audit Logs', href: '/admin/audit-logs', icon: Activity },
-              { label: 'Settings', href: '/admin/settings', icon: Settings },
+              { label: 'Mail Gateway & Settings', href: '/admin/settings', icon: Settings },
             ],
           },
         ]
@@ -85,12 +117,15 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col md:flex-row">
       {/* Mobile Top Bar */}
-      <div className="md:hidden flex items-center justify-between p-4 bg-slate-900 border-b border-slate-800">
+      <div className="md:hidden flex items-center justify-between p-4 bg-slate-900 border-b border-slate-800 shrink-0">
         <div className="flex items-center gap-2.5">
           <div className="h-8 w-8 rounded-lg bg-sky-600 flex items-center justify-center font-bold text-white text-base">
             T
           </div>
-          <span className="font-bold text-white tracking-tight">TRICLINIUM Console</span>
+          <div>
+            <span className="font-bold text-white tracking-tight block text-sm leading-tight">TRICLINIUM</span>
+            <span className="text-[10px] text-sky-400 font-semibold block leading-tight">CCTV & Security Console</span>
+          </div>
         </div>
         <button
           onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
@@ -104,9 +139,9 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
       <aside
         className={`${
           mobileSidebarOpen ? 'block' : 'hidden'
-        } md:block w-full md:w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between shrink-0 h-auto md:h-screen md:sticky md:top-0 z-30`}
+        } md:flex w-full md:w-64 bg-slate-900 border-r border-slate-800 flex-col justify-between shrink-0 h-auto md:h-screen md:sticky md:top-0 z-30`}
       >
-        <div className="p-5 overflow-y-auto space-y-6">
+        <div className="p-5 overflow-y-auto space-y-6 flex-1">
           {/* Logo Header */}
           <div className="hidden md:flex items-center gap-3 pb-4 border-b border-slate-800">
             <div className="h-9 w-9 rounded-lg bg-sky-600 flex items-center justify-center font-bold text-white text-lg shadow-md shadow-sky-600/30">
@@ -115,7 +150,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
             <div>
               <div className="font-extrabold text-sm text-white tracking-tight">TRICLINIUM</div>
               <div className="text-[10px] uppercase font-semibold text-sky-400 tracking-wider">
-                Admin Console
+                CCTV & Alarms Admin
               </div>
             </div>
           </div>
@@ -154,7 +189,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* User Card & Logout at bottom */}
-        <div className="p-4 border-t border-slate-800 bg-slate-950/60 space-y-3">
+        <div className="p-4 border-t border-slate-800 bg-slate-950/60 space-y-3 shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex flex-col min-w-0 pr-2">
               <span className="text-xs font-bold text-white truncate">{user?.firstName} {user?.lastName}</span>
@@ -190,8 +225,9 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main Admin Content Body */}
-      <div className="flex-1 min-w-0 flex flex-col bg-slate-900">
-        <main className="flex-1 p-6 sm:p-10 overflow-y-auto">{children}</main>
+      <div className="flex-1 min-w-0 flex flex-col bg-slate-900 min-h-screen">
+        <main className="flex-1 p-6 sm:p-10">{children}</main>
+        <AdminFooter />
       </div>
     </div>
   );

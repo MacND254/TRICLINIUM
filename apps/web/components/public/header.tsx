@@ -47,7 +47,7 @@ export function Header() {
             </span>
           </div>
           <div className="flex items-center space-x-4">
-            <span className="text-slate-400">Enterprise Engineering & Architectural Systems</span>
+            <span className="text-slate-400">Advanced CCTV & Home Alarm Systems</span>
             <Link
               href="/admin/login"
               className="flex items-center gap-1 text-slate-300 hover:text-white transition-colors"
@@ -71,7 +71,7 @@ export function Header() {
               TRICLINIUM
             </span>
             <span className="text-[10px] tracking-widest text-slate-500 uppercase -mt-1 font-medium">
-              Commercial & Industrial
+              CCTV & Security Systems
             </span>
           </div>
         </Link>
@@ -84,9 +84,8 @@ export function Header() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`transition-colors hover:text-sky-600 ${
-                  isActive ? 'text-sky-600 font-semibold' : 'text-slate-600 dark:text-slate-300'
-                }`}
+                className={`transition-colors hover:text-sky-600 ${isActive ? 'text-sky-600 font-semibold' : 'text-slate-600 dark:text-slate-300'
+                  }`}
               >
                 {link.label}
               </Link>

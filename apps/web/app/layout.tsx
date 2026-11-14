@@ -1,42 +1,41 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import { Header } from '@/components/public/header';
-import { Footer } from '@/components/public/footer';
 import { QuoteProvider } from '@/lib/quote-context';
-import { QuoteDrawer } from '@/components/public/quote-drawer';
 
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: {
-    default: 'TRICLINIUM | Precision Industrial Engineering & Architectural Hardware',
-    template: '%s | TRICLINIUM',
+    default: 'TRICLINIUM | CCTV Surveillance & Advanced Alarm Systems',
+    template: '%s | TRICLINIUM Surveillance',
   },
   description:
-    'Premier manufacturer and supplier of heavy-capacity architectural pivot hardware, precision mechanical couplings, and enterprise industrial telemetry software.',
+    'Leading provider of commercial and residential CCTV surveillance systems, AI-powered IP cameras, Network Video Recorders (NVR), biometric access control, and smart home alarm systems.',
   keywords: [
-    'architectural hardware',
-    'pivot hinge 750kg',
-    'precision couplings',
-    'industrial telemetry',
-    '5-axis CNC machining',
-    'structural FEA analysis',
+    'CCTV surveillance',
+    'security cameras',
+    'IP cameras',
+    'NVR storage',
+    'smart home alarm',
+    'intruder detection',
+    'video security',
+    'biometric access control',
     'TRICLINIUM',
   ],
-  authors: [{ name: 'TRICLINIUM Engineering Enterprise' }],
+  authors: [{ name: 'TRICLINIUM Security Systems' }],
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
   openGraph: {
-    title: 'TRICLINIUM | Precision Industrial Engineering & Architectural Hardware',
-    description: 'Premier manufacturer of precision-engineered physical & digital products, and bespoke commercial services.',
+    title: 'TRICLINIUM | CCTV Surveillance & Advanced Alarm Systems',
+    description: 'Enterprise-grade CCTV surveillance solutions, smart intruder alarms, and high-resolution video security hardware.',
     url: 'https://triclinium.com',
-    siteName: 'TRICLINIUM',
+    siteName: 'TRICLINIUM Surveillance',
     images: [
       {
-        url: '/images/og-default.jpg',
+        url: '/images/og-cctv.jpg',
         width: 1200,
         height: 630,
-        alt: 'TRICLINIUM Enterprise Industrial Portals',
+        alt: 'TRICLINIUM CCTV & Security Systems',
       },
     ],
     locale: 'en_US',
@@ -57,12 +56,7 @@ export default function RootLayout({
     <html lang="en" className="scroll-smooth">
       <body className={inter.className}>
         <QuoteProvider>
-          <div className="flex min-h-screen flex-col bg-background text-foreground">
-            <Header />
-            <main className="flex-1">{children}</main>
-            <Footer />
-            <QuoteDrawer />
-          </div>
+          {children}
         </QuoteProvider>
       </body>
     </html>

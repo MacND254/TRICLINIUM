@@ -18,12 +18,12 @@ export function Footer() {
               <span className="text-xl font-bold tracking-tight text-white">TRICLINIUM</span>
             </div>
             <p className="text-sm text-slate-400 leading-relaxed max-w-sm">
-              Global manufacturer and distributor of high-tolerance mechanical assemblies, heavy-capacity architectural pivot hardware, and enterprise industrial telemetry software.
+              Premier provider and certified installer of enterprise 4K AI CCTV surveillance systems, Network Video Recorders (NVR), smart intruder alarms, and biometric access control solutions.
             </p>
             <div className="pt-2 text-xs text-slate-400 space-y-2">
               <div className="flex items-start gap-2">
                 <MapPin className="h-4 w-4 text-sky-400 shrink-0 mt-0.5" />
-                <span>742 Evergreen Boulevard, Suite 500, Industrial District, NY 10001</span>
+                <span>742 Security Parkway, Suite 500, Tech & Security District, NY 10001</span>
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="h-4 w-4 text-sky-400 shrink-0" />
@@ -35,7 +35,7 @@ export function Footer() {
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-sky-400 shrink-0" />
-                <span>Mon - Fri: 8:00 AM - 6:00 PM EST</span>
+                <span>Mon - Fri: 8:00 AM - 6:00 PM EST (24/7 Monitoring)</span>
               </div>
             </div>
           </div>
@@ -86,28 +86,28 @@ export function Footer() {
             </h4>
             <ul className="space-y-2.5 text-sm text-slate-400">
               <li>
-                <Link href="/products?category=architectural-hardware" className="hover:text-white transition-colors">
-                  Architectural Hardware
+                <Link href="/products?category=ip-cameras" className="hover:text-white transition-colors">
+                  4K IP Dome & Bullet Cameras
                 </Link>
               </li>
               <li>
-                <Link href="/products?category=precision-assemblies" className="hover:text-white transition-colors">
-                  Precision Couplers
+                <Link href="/products?category=nvr-systems" className="hover:text-white transition-colors">
+                  NVR & DVR Video Storage
                 </Link>
               </li>
               <li>
-                <Link href="/products?category=digital-industrial-software" className="hover:text-white transition-colors">
-                  Telemetry Software
+                <Link href="/products?category=alarm-systems" className="hover:text-white transition-colors">
+                  Wireless Home Alarm Kits
                 </Link>
               </li>
               <li>
-                <Link href="/services/5-axis-cnc-machining-fabrication" className="hover:text-white transition-colors">
-                  5-Axis CNC Milling
+                <Link href="/services/professional-cctv-installation" className="hover:text-white transition-colors">
+                  CCTV Installation Services
                 </Link>
               </li>
               <li>
-                <Link href="/services/structural-fea-verification" className="hover:text-white transition-colors">
-                  FEA Stress Verification
+                <Link href="/services/security-system-maintenance" className="hover:text-white transition-colors">
+                  Maintenance & Support
                 </Link>
               </li>
             </ul>
@@ -119,17 +119,17 @@ export function Footer() {
               Request Quotation
             </h4>
             <p className="text-xs text-slate-400 leading-relaxed mb-4">
-              Have complex engineering specifications or custom fabrication requirements? Contact our registered mechanical engineers today.
+              Need a custom CCTV or home alarm setup? Contact our certified security specialists today for a free site assessment and quote.
             </p>
             <Link href="/contact">
               <button className="w-full inline-flex items-center justify-center rounded-md bg-sky-600 px-4 py-2.5 text-xs font-semibold text-white shadow-sm hover:bg-sky-500 transition-colors gap-2">
-                <span>Submit RFQ Specifications</span>
+                <span>Request Free Security Quote</span>
                 <ArrowRight className="h-3.5 w-3.5" />
               </button>
             </Link>
             <div className="flex items-center gap-2 mt-4 text-xs text-slate-400">
               <ShieldCheck className="h-4 w-4 text-emerald-400" />
-              <span>ISO 9001:2015 & EN 1154 Quality Compliant</span>
+              <span>Certified Security Installers | Warranty Backed</span>
             </div>
           </div>
         </div>
