@@ -1,9 +1,13 @@
+'use client';
+
 import React from 'react';
 import Link from 'next/link';
 import { Mail, Phone, MapPin, Clock, ArrowRight, ShieldCheck } from 'lucide-react';
+import { usePublicSettings } from '@/lib/settings-context';
 
 export function Footer() {
   const currentYear = new Date().getFullYear();
+  const { settings } = usePublicSettings();
 
   return (
     <footer className="border-t bg-slate-950 text-slate-300">
@@ -12,30 +16,38 @@ export function Footer() {
           {/* Column 1: Company Profile */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center space-x-3">
-              <div className="h-8 w-8 rounded bg-sky-600 flex items-center justify-center text-white font-extrabold text-base">
-                TS
-              </div>
-              <span className="text-xl font-extrabold tracking-tight text-white">TRICLINIUM SYSTEMS</span>
+              {settings.logoUrl ? (
+                <img
+                  src={settings.logoUrl}
+                  alt={settings.siteName}
+                  className="h-8 w-auto max-w-[120px] object-contain rounded"
+                />
+              ) : (
+                <div className="h-8 w-8 rounded bg-sky-600 flex items-center justify-center text-white font-extrabold text-base">
+                  TS
+                </div>
+              )}
+              <span className="text-xl font-extrabold tracking-tight text-white">{settings.siteName || 'TRICLINIUM SYSTEMS'}</span>
             </div>
             <p className="text-sm text-slate-400 leading-relaxed max-w-sm">
-              Kenya&apos;s trusted supplier and certified installer of 4K AI CCTV surveillance systems, smart video doorbells, door cams, wireless intruder alarms, video intercoms, whole-home mesh Wi-Fi, and electric fencing.
+              {settings.metaDescription || "Kenya's trusted supplier and certified installer of 4K AI CCTV surveillance systems, smart video doorbells, door cams, wireless intruder alarms, video intercoms, whole-home mesh Wi-Fi, and electric fencing."}
             </p>
             <div className="pt-2 text-xs text-slate-400 space-y-2">
               <div className="flex items-start gap-2">
                 <MapPin className="h-4 w-4 text-sky-400 shrink-0 mt-0.5" />
-                <span>Westlands Commercial Center, Ring Road, Nairobi, Kenya</span>
+                <span>{settings.address}, {settings.city}, {settings.country}</span>
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="h-4 w-4 text-sky-400 shrink-0" />
-                <span>+254 700 555 199</span>
+                <a href={`tel:${settings.phone}`} className="hover:text-white transition-colors">{settings.phone}</a>
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-sky-400 shrink-0" />
-                <span>inquiries@triclinium.com</span>
+                <a href={`mailto:${settings.contactEmail}`} className="hover:text-white transition-colors">{settings.contactEmail}</a>
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-sky-400 shrink-0" />
-                <span>Mon – Sat: 8:00 AM – 6:00 PM EAT (24/7 Monitoring Station)</span>
+                <span>{settings.businessHours}</span>
               </div>
             </div>
           </div>

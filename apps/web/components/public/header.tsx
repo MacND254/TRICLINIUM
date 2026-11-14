@@ -15,10 +15,12 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/public/theme-toggle';
+import { usePublicSettings } from '@/lib/settings-context';
 
 export function Header() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { settings } = usePublicSettings();
 
   const navLinks = [
     { label: 'Home', href: '/' },
@@ -36,17 +38,17 @@ export function Header() {
       <div className="hidden border-b bg-slate-900 text-slate-300 text-xs py-1.5 px-4 sm:flex justify-between items-center">
         <div className="container mx-auto flex justify-between items-center">
           <div className="flex items-center space-x-6">
-            <span className="flex items-center gap-1.5">
+            <a href={`tel:${settings.phone}`} className="flex items-center gap-1.5 hover:text-white transition-colors">
               <Phone className="h-3 w-3 text-sky-400" />
-              <span>+254 (0) 700 555 199</span>
-            </span>
-            <span className="flex items-center gap-1.5">
+              <span>{settings.phone}</span>
+            </a>
+            <a href={`mailto:${settings.contactEmail}`} className="flex items-center gap-1.5 hover:text-white transition-colors">
               <Mail className="h-3 w-3 text-sky-400" />
-              <span>info@tricliniumsystems.com</span>
-            </span>
+              <span>{settings.contactEmail}</span>
+            </a>
           </div>
           <div className="flex items-center space-x-4">
-            <span className="text-slate-400">CCTV · Door Cams · Alarms · Intercoms · Networking</span>
+            <span className="text-slate-400">{settings.tagline || 'CCTV · Door Cams · Alarms · Intercoms · Networking'}</span>
             <Link
               href="/admin/login"
               className="flex items-center gap-1 text-slate-300 hover:text-white transition-colors"
@@ -62,12 +64,20 @@ export function Header() {
       <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-8">
         {/* Brand Logo */}
         <Link href="/" className="flex items-center space-x-3 group">
-          <div className="h-9 w-9 rounded-md bg-sky-600 flex items-center justify-center text-white font-extrabold text-base shadow-sm group-hover:bg-sky-500 transition-colors">
-            TS
-          </div>
+          {settings.logoUrl ? (
+            <img
+              src={settings.logoUrl}
+              alt={settings.siteName}
+              className="h-9 w-auto max-w-[140px] object-contain rounded"
+            />
+          ) : (
+            <div className="h-9 w-9 rounded-md bg-sky-600 flex items-center justify-center text-white font-extrabold text-base shadow-sm group-hover:bg-sky-500 transition-colors">
+              TS
+            </div>
+          )}
           <div className="flex flex-col">
             <span className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-              TRICLINIUM SYSTEMS
+              {settings.siteName || 'TRICLINIUM SYSTEMS'}
             </span>
             <span className="text-[10px] tracking-wider text-sky-600 dark:text-sky-400 uppercase -mt-0.5 font-bold">
               Security &amp; Smart Tech

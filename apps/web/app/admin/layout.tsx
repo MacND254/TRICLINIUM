@@ -21,6 +21,7 @@ import {
   Menu,
   X,
   ShieldAlert,
+  Palette,
 } from 'lucide-react';
 import { AdminAuthProvider, useAdminAuth } from '@/lib/admin-auth-context';
 import { Badge } from '@/components/ui/badge';
@@ -95,6 +96,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
       title: 'Content & CMS',
       items: [
         { label: 'Homepage Editor', href: '/admin/cms/homepage', icon: Home },
+        { label: 'Theme & Color Grading', href: '/admin/cms/theme', icon: Palette },
         { label: 'Custom Pages', href: '/admin/cms/pages', icon: FileText },
         { label: 'Security Insights / Blog', href: '/admin/cms/blog', icon: BookOpen },
         { label: 'FAQs', href: '/admin/cms/faqs', icon: HelpCircle },

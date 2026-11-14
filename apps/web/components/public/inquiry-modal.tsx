@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { fetchApi } from '@/lib/api-client';
+import { handleKenyanPhoneChange, formatKenyanPhone } from '@/lib/phone';
 
 interface InquiryModalProps {
   isOpen: boolean;
@@ -147,11 +148,12 @@ export function InquiryModal({ isOpen, onClose, targetId, targetName, type }: In
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-xs font-medium text-slate-700">Phone</label>
+                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Phone</label>
                   <Input
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+1 555-0199"
+                    onChange={(e) => handleKenyanPhoneChange(e, setPhone)}
+                    onBlur={() => setPhone(formatKenyanPhone(phone))}
+                    placeholder="e.g. 0712 345 678"
                     className="mt-1"
                   />
                 </div>

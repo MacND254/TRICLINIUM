@@ -28,6 +28,7 @@ import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { fetchApi } from '@/lib/api-client';
 import { formatDate } from '@/lib/utils';
+import { handleKenyanPhoneChange, formatKenyanPhone } from '@/lib/phone';
 import type { QuotationData, LineItem } from '@/components/admin/quotation-pdf';
 import { QuotationPDF } from '@/components/admin/quotation-pdf';
 import type { InvoiceData, InvoiceLineItem } from '@/components/admin/invoice-pdf';
@@ -115,6 +116,7 @@ export default function AdminInquiryDetailPage() {
   });
 
   const [isSavingDoc, setIsSavingDoc] = useState(false);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
 
   const loadInquiry = async () => {
     try {
@@ -251,6 +253,87 @@ export default function AdminInquiryDetailPage() {
       alert('Tax Invoice generated and recorded in inquiry timeline.');
     } catch (err: any) {
       alert(err.message || 'Failed to save invoice record');
+    } finally {
+      setIsSavingDoc(false);
+    }
+  };
+
+  const handleSendQuoteEmail = async () => {
+    setIsSendingEmail(true);
+    try {
+      await fetchApi(`/admin/inquiries/${id}/send-quote`, {
+        method: 'POST',
+        body: JSON.stringify({
+          quoteData: {
+            ...quoteData,
+            items,
+          },
+        }),
+      });
+      await loadInquiry();
+      alert(`Quotation successfully dispatched to ${quoteData.clientEmail || inquiry.email} via Mail Gateway.`);
+    } catch (err: any) {
+      alert(err.message || 'Failed to send quotation email');
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
+
+  const handleSendInvoiceEmail = async () => {
+    setIsSendingEmail(true);
+    try {
+      await fetchApi(`/admin/inquiries/${id}/send-invoice`, {
+        method: 'POST',
+        body: JSON.stringify({
+          invoiceData: {
+            ...invoiceData,
+            items,
+          },
+        }),
+      });
+      await loadInquiry();
+      alert(`Tax Invoice successfully dispatched to ${invoiceData.clientEmail || inquiry.email} via Mail Gateway.`);
+    } catch (err: any) {
+      alert(err.message || 'Failed to send invoice email');
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
+
+  const handleConvertToInvoice = async () => {
+    const paymentRef = prompt('Enter M-Pesa Transaction Code or Payment Reference (e.g. QHA7821990):', 'MPESA-CONFIRMED');
+    if (paymentRef === null) return; // User cancelled
+
+    setIsSavingDoc(true);
+    try {
+      const invNo = `INV-${inquiry.referenceNumber || Date.now().toString().slice(-6)}`;
+      await fetchApi(`/admin/inquiries/${id}/convert-to-invoice`, {
+        method: 'POST',
+        body: JSON.stringify({
+          invoiceNumber: invNo,
+          totalAmount: grandTotal,
+          paymentReference: paymentRef,
+          notes: 'Quotation verified and approved. Converted to Tax Invoice upon full payment.',
+        }),
+      });
+
+      // Update invoice state
+      setInvoiceData((prev) => ({
+        ...prev,
+        invoiceNumber: invNo,
+        paymentStatus: 'PAID',
+        notes: `Paid in full via ${paymentRef}. Includes 1-year on-site equipment warranty.`,
+        items,
+      }));
+
+      // Switch view to Invoice mode
+      setDocType('INVOICE');
+      setShowDocGenerator(true);
+      setStatus('CONVERTED');
+      await loadInquiry();
+      alert(`✅ Quotation successfully converted to Tax Invoice ${invNo} (Marked as PAID IN FULL).`);
+    } catch (err: any) {
+      alert(err.message || 'Conversion failed');
     } finally {
       setIsSavingDoc(false);
     }
@@ -764,9 +847,18 @@ export default function AdminInquiryDetailPage() {
                     type="text"
                     value={docType === 'QUOTATION' ? (quoteData.clientPhone || '') : (invoiceData.clientPhone || '')}
                     onChange={(e) => {
-                      setQuoteData((p) => ({ ...p, clientPhone: e.target.value }));
-                      setInvoiceData((p) => ({ ...p, clientPhone: e.target.value }));
+                      handleKenyanPhoneChange(e, (val) => {
+                        setQuoteData((p) => ({ ...p, clientPhone: val }));
+                        setInvoiceData((p) => ({ ...p, clientPhone: val }));
+                      });
                     }}
+                    onBlur={() => {
+                      const cur = docType === 'QUOTATION' ? quoteData.clientPhone : invoiceData.clientPhone;
+                      const formatted = formatKenyanPhone(cur || '');
+                      setQuoteData((p) => ({ ...p, clientPhone: formatted }));
+                      setInvoiceData((p) => ({ ...p, clientPhone: formatted }));
+                    }}
+                    placeholder="e.g. 0722 000 000 -> +254..."
                     className="w-full h-8 rounded-md border border-slate-700 bg-slate-950 px-3 text-xs text-white focus:outline-none"
                   />
                 </div>
@@ -971,88 +1063,148 @@ export default function AdminInquiryDetailPage() {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
-              {docType === 'QUOTATION' ? (
-                <>
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-slate-800">
+              {/* Left quick actions */}
+              <div className="flex flex-wrap items-center gap-2">
+                {docType === 'QUOTATION' ? (
                   <Button
                     type="button"
                     size="sm"
-                    onClick={handleSaveQuoted}
+                    onClick={handleConvertToInvoice}
                     disabled={isSavingDoc}
-                    className="bg-sky-800 hover:bg-sky-700 text-white text-xs flex items-center gap-1.5"
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md shadow-emerald-900/40"
                   >
-                    {isSavingDoc ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <FileCheck className="h-3.5 w-3.5" />
-                    )}
-                    Save &amp; Mark as QUOTED
+                    <Receipt className="h-4 w-4" />
+                    <span>Convert to Invoice Upon Full Payment</span>
                   </Button>
-
-                  {/* @ts-ignore */}
-                  <PDFDownloadLink
-                    document={<QuotationPDF quoteData={{ ...quoteData, items }} />}
-                    fileName={`${quoteData.quoteRef || 'quotation'}.pdf`}
-                  >
-                    {/* @ts-ignore */}
-                    {({ loading }: { loading: boolean }) => (
-                      <Button
-                        type="button"
-                        size="sm"
-                        disabled={loading}
-                        className="bg-sky-600 hover:bg-sky-500 text-white text-xs flex items-center gap-1.5"
-                      >
-                        {loading ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <Download className="h-3.5 w-3.5" />
-                        )}
-                        {loading ? 'Generating Quotation...' : 'Download Quotation PDF'}
-                      </Button>
-                    )}
-                  </PDFDownloadLink>
-                </>
-              ) : (
-                <>
+                ) : (
                   <Button
                     type="button"
                     size="sm"
-                    onClick={handleSaveInvoiced}
-                    disabled={isSavingDoc}
-                    className="bg-emerald-800 hover:bg-emerald-700 text-white text-xs flex items-center gap-1.5"
+                    variant="outline"
+                    onClick={() => setDocType('QUOTATION')}
+                    className="border-slate-700 bg-slate-950 text-slate-300 hover:text-white text-xs flex items-center gap-1.5"
                   >
-                    {isSavingDoc ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <FileCheck className="h-3.5 w-3.5" />
-                    )}
-                    Save &amp; Record INVOICE
+                    <FileText className="h-3.5 w-3.5 text-sky-400" />
+                    <span>Switch Back to Quotation</span>
                   </Button>
+                )}
+              </div>
 
-                  {/* @ts-ignore */}
-                  <PDFDownloadLink
-                    document={<InvoicePDF invoiceData={{ ...invoiceData, items }} />}
-                    fileName={`${invoiceData.invoiceNumber || 'tax-invoice'}.pdf`}
-                  >
+              {/* Right document & dispatch actions */}
+              <div className="flex flex-wrap items-center gap-2">
+                {docType === 'QUOTATION' ? (
+                  <>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleSendQuoteEmail}
+                      disabled={isSendingEmail || isSavingDoc}
+                      className="bg-sky-900 hover:bg-sky-800 text-sky-100 text-xs flex items-center gap-1.5 border border-sky-700/60"
+                    >
+                      {isSendingEmail ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Mail className="h-3.5 w-3.5 text-sky-400" />
+                      )}
+                      <span>Email Quote to Client</span>
+                    </Button>
+
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleSaveQuoted}
+                      disabled={isSavingDoc}
+                      className="bg-sky-800 hover:bg-sky-700 text-white text-xs flex items-center gap-1.5"
+                    >
+                      {isSavingDoc ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <FileCheck className="h-3.5 w-3.5" />
+                      )}
+                      <span>Save &amp; Mark as QUOTED</span>
+                    </Button>
+
                     {/* @ts-ignore */}
-                    {({ loading }: { loading: boolean }) => (
-                      <Button
-                        type="button"
-                        size="sm"
-                        disabled={loading}
-                        className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs flex items-center gap-1.5"
-                      >
-                        {loading ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <Download className="h-3.5 w-3.5" />
-                        )}
-                        {loading ? 'Generating Invoice...' : 'Download Tax Invoice PDF'}
-                      </Button>
-                    )}
-                  </PDFDownloadLink>
-                </>
-              )}
+                    <PDFDownloadLink
+                      document={<QuotationPDF quoteData={{ ...quoteData, items }} />}
+                      fileName={`${quoteData.quoteRef || 'quotation'}.pdf`}
+                    >
+                      {/* @ts-ignore */}
+                      {({ loading }: { loading: boolean }) => (
+                        <Button
+                          type="button"
+                          size="sm"
+                          disabled={loading}
+                          className="bg-sky-600 hover:bg-sky-500 text-white text-xs flex items-center gap-1.5"
+                        >
+                          {loading ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Download className="h-3.5 w-3.5" />
+                          )}
+                          {loading ? 'Generating Quotation...' : 'Download Quotation PDF'}
+                        </Button>
+                      )}
+                    </PDFDownloadLink>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleSendInvoiceEmail}
+                      disabled={isSendingEmail || isSavingDoc}
+                      className="bg-emerald-950 hover:bg-emerald-900 text-emerald-100 text-xs flex items-center gap-1.5 border border-emerald-700/60"
+                    >
+                      {isSendingEmail ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Mail className="h-3.5 w-3.5 text-emerald-400" />
+                      )}
+                      <span>Email Invoice to Client</span>
+                    </Button>
+
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleSaveInvoiced}
+                      disabled={isSavingDoc}
+                      className="bg-emerald-800 hover:bg-emerald-700 text-white text-xs flex items-center gap-1.5"
+                    >
+                      {isSavingDoc ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <FileCheck className="h-3.5 w-3.5" />
+                      )}
+                      <span>Save &amp; Record INVOICE</span>
+                    </Button>
+
+                    {/* @ts-ignore */}
+                    <PDFDownloadLink
+                      document={<InvoicePDF invoiceData={{ ...invoiceData, items }} />}
+                      fileName={`${invoiceData.invoiceNumber || 'tax-invoice'}.pdf`}
+                    >
+                      {/* @ts-ignore */}
+                      {({ loading }: { loading: boolean }) => (
+                        <Button
+                          type="button"
+                          size="sm"
+                          disabled={loading}
+                          className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs flex items-center gap-1.5"
+                        >
+                          {loading ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Download className="h-3.5 w-3.5" />
+                          )}
+                          {loading ? 'Generating Invoice...' : 'Download Tax Invoice PDF'}
+                        </Button>
+                      )}
+                    </PDFDownloadLink>
+                  </>
+                )}
+              </div>
             </div>
           </div>
         )}

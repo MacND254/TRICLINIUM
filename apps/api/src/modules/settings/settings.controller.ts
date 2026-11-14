@@ -28,19 +28,45 @@ export class SettingsController {
         return res.json({ success: true, data: cached });
       }
 
-      const dbSetting = await prisma.websiteSetting.findUnique({
-        where: { key: 'global_settings' },
-      });
+      const allRows = await prisma.websiteSetting.findMany();
+      const rowMap: Record<string, any> = {};
+      for (const r of allRows) {
+        rowMap[r.key] = r.value;
+      }
 
-      const settings = dbSetting ? (dbSetting.value as any) : DEFAULT_WEBSITE_SETTINGS;
+      const globalSetting = rowMap['global_settings'] || DEFAULT_WEBSITE_SETTINGS;
 
-      // Filter out sensitive administrative notification recipients for public consumption
+      // Filter and merge for public consumption
       const publicSettings = {
-        general: settings.general,
-        contact: settings.contact,
-        social: settings.social,
-        appearance: settings.appearance,
-        seo: settings.seo,
+        siteName: rowMap['siteName'] || globalSetting?.general?.companyName || 'TRICLINIUM SYSTEMS',
+        tagline: rowMap['tagline'] || globalSetting?.general?.tagline || 'CCTV Surveillance & Smart Security',
+        logoUrl: rowMap['logoUrl'] || globalSetting?.general?.logoUrl || '',
+        faviconUrl: rowMap['faviconUrl'] || globalSetting?.general?.faviconUrl || '',
+        contactEmail: rowMap['contactEmail'] || globalSetting?.contact?.email || 'inquiries@triclinium.com',
+        supportEmail: rowMap['supportEmail'] || globalSetting?.contact?.supportEmail || 'support@triclinium.com',
+        phone: rowMap['phone'] || globalSetting?.contact?.phone || '+254 700 555 199',
+        phoneAlt: rowMap['phoneAlt'] || globalSetting?.contact?.phoneAlt || '+254 711 555 198',
+        address: rowMap['address'] || globalSetting?.contact?.address || 'Westlands Commercial Center, Ring Road',
+        city: rowMap['city'] || 'Nairobi',
+        country: rowMap['country'] || 'Kenya',
+        postalCode: rowMap['postalCode'] || '00100',
+        businessHours: rowMap['businessHours'] || globalSetting?.contact?.businessHours || 'Mon–Sat: 08:00–18:00 EAT (24/7 Monitoring Station)',
+        currency: rowMap['currency'] || 'KES',
+        currencySymbol: rowMap['currencySymbol'] || 'Ksh',
+        primaryColor: rowMap['primaryColor'] || globalSetting?.appearance?.primaryColor || '#0ea5e9',
+        accentColor: rowMap['accentColor'] || globalSetting?.appearance?.accentColor || '#0284c7',
+        themeMode: rowMap['themeMode'] || 'system',
+        colorGrading: rowMap['colorGrading'] || 'cyber-security',
+        borderRadius: rowMap['borderRadius'] || 'rounded-xl',
+        metaTitle: rowMap['metaTitle'] || globalSetting?.seo?.defaultTitle || 'TRICLINIUM SYSTEMS — CCTV Surveillance & Smart Security',
+        metaDescription: rowMap['metaDescription'] || globalSetting?.seo?.defaultDescription || 'Kenya premier supplier & installer of 4K CCTV surveillance cameras, smart video doorbells, wireless home alarms, and video intercoms.',
+        googleAnalyticsId: rowMap['googleAnalyticsId'] || '',
+        googleTagManagerId: rowMap['googleTagManagerId'] || '',
+        general: globalSetting?.general,
+        contact: globalSetting?.contact,
+        social: globalSetting?.social,
+        appearance: globalSetting?.appearance,
+        seo: globalSetting?.seo,
       };
 
       await cache.set(CACHE_KEYS.SETTINGS, publicSettings, 3600);

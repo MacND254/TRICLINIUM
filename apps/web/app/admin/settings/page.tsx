@@ -4,7 +4,9 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   Save, Loader2, X, Globe, Mail, Phone, MapPin, Share2,
   Search, Image, Palette, Bell, AlertCircle, CheckCircle2, Building2,
+  Upload, Trash2,
 } from 'lucide-react';
+import { handleKenyanPhoneChange, formatKenyanPhone } from '@/lib/phone';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -183,8 +185,39 @@ export default function SettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testingEmail, setTestingEmail] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>('general');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingLogo(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch(`${API}/api/v1/admin/media/upload`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || 'Logo upload failed');
+      }
+      const json = await res.json();
+      const uploadedUrl = json.data?.url || json.url || '';
+      if (uploadedUrl) {
+        set('logoUrl', uploadedUrl);
+        showToast('Logo image uploaded successfully. Click Save to persist.');
+      }
+    } catch (err: any) {
+      alert('Logo upload failed: ' + (err.message || 'Unknown error'));
+    } finally {
+      setUploadingLogo(false);
+      e.target.value = '';
+    }
+  };
 
   const showToast = (message: string, type: 'success' | 'error' = 'success') => {
     setToast({ message, type });
@@ -326,11 +359,39 @@ export default function SettingsPage() {
                   <input className={inputCls} value={settings.tagline} onChange={e => set('tagline', e.target.value)} placeholder="Precision Engineering Excellence" />
                 </Field>
               </div>
-              <div className="grid grid-cols-2 gap-5">
-                <Field label="Logo URL" hint="Hosted on Cloudinary or external CDN.">
-                  <input className={inputCls} value={settings.logoUrl} onChange={e => set('logoUrl', e.target.value)} placeholder="https://res.cloudinary.com/..." />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <Field label="Website Brand Logo" hint="Upload company logo (PNG/SVG transparent recommended).">
+                  <div className="flex items-center gap-4 p-3 rounded-lg border border-slate-700 bg-slate-800/80">
+                    {settings.logoUrl ? (
+                      <div className="relative h-14 w-28 rounded-md bg-slate-900 border border-slate-700 p-1 flex items-center justify-center shrink-0 overflow-hidden">
+                        <img src={settings.logoUrl} alt="Brand Logo" className="h-full w-full object-contain" />
+                      </div>
+                    ) : (
+                      <div className="h-14 w-28 rounded-md bg-slate-900 border border-dashed border-slate-700 flex flex-col items-center justify-center shrink-0 text-slate-500 text-[10px]">
+                        <Image className="h-5 w-5 mb-0.5 text-slate-600" />
+                        No Logo
+                      </div>
+                    )}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <label className="cursor-pointer inline-flex items-center gap-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 px-3 py-1.5 text-xs font-semibold text-white transition-colors">
+                        {uploadingLogo ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+                        <span>{uploadingLogo ? 'Uploading...' : 'Upload Logo Image'}</span>
+                        <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} disabled={uploadingLogo} />
+                      </label>
+                      {settings.logoUrl && (
+                        <button
+                          type="button"
+                          onClick={() => set('logoUrl', '')}
+                          className="inline-flex items-center gap-1 rounded-lg border border-rose-800/60 bg-rose-950/40 hover:bg-rose-900/60 px-2.5 py-1.5 text-xs text-rose-300 transition-colors"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                          <span>Remove</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </Field>
-                <Field label="Favicon URL">
+                <Field label="Favicon URL" hint="Browser tab icon.">
                   <input className={inputCls} value={settings.faviconUrl} onChange={e => set('faviconUrl', e.target.value)} placeholder="https://..." />
                 </Field>
               </div>
@@ -363,11 +424,23 @@ export default function SettingsPage() {
                 </Field>
               </div>
               <div className="grid grid-cols-2 gap-5">
-                <Field label="Primary Phone">
-                  <input className={inputCls} value={settings.phone} onChange={e => set('phone', e.target.value)} placeholder="+1 (555) 000-0000" />
+                <Field label="Primary Phone (Auto +254)" hint="e.g. 0700 555 199 -> +254700555199">
+                  <input
+                    className={inputCls}
+                    value={settings.phone}
+                    onChange={e => handleKenyanPhoneChange(e, val => set('phone', val))}
+                    onBlur={() => set('phone', formatKenyanPhone(settings.phone))}
+                    placeholder="+254 700 555 199"
+                  />
                 </Field>
-                <Field label="Secondary Phone">
-                  <input className={inputCls} value={settings.phoneAlt} onChange={e => set('phoneAlt', e.target.value)} placeholder="+1 (555) 000-0001" />
+                <Field label="Secondary Phone (Auto +254)">
+                  <input
+                    className={inputCls}
+                    value={settings.phoneAlt}
+                    onChange={e => handleKenyanPhoneChange(e, val => set('phoneAlt', val))}
+                    onBlur={() => set('phoneAlt', formatKenyanPhone(settings.phoneAlt))}
+                    placeholder="+254 711 555 198"
+                  />
                 </Field>
               </div>
               <Field label="Street Address">

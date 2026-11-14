@@ -54,3 +54,31 @@ inquiriesRouter.post(
   requirePermission(PERMISSIONS.INQUIRIES_EDIT),
   InquiriesController.addInquiryNote
 );
+
+inquiriesRouter.post(
+  '/admin/inquiries/custom-quote',
+  authenticate,
+  requirePermission(PERMISSIONS.INQUIRIES_EDIT),
+  InquiriesController.createCustomQuote
+);
+
+inquiriesRouter.post(
+  '/admin/inquiries/:id/send-quote',
+  authenticate,
+  requirePermission(PERMISSIONS.INQUIRIES_EDIT),
+  InquiriesController.sendQuoteToClient
+);
+
+inquiriesRouter.post(
+  '/admin/inquiries/:id/send-invoice',
+  authenticate,
+  requirePermission(PERMISSIONS.INQUIRIES_EDIT),
+  InquiriesController.sendInvoiceToClient
+);
+
+inquiriesRouter.post(
+  '/admin/inquiries/:id/convert-to-invoice',
+  authenticate,
+  requirePermission(PERMISSIONS.INQUIRIES_EDIT),
+  InquiriesController.convertToInvoice
+);

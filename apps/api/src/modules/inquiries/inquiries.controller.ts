@@ -7,7 +7,12 @@ import {
   generateQuotationNotificationEmail,
   generateInquiryStatusUpdateEmail,
 } from '../../integrations/resend';
-import { sendMailGateway, getNotifyEmail } from '../../integrations/mailer';
+import {
+  sendMailGateway,
+  getNotifyEmail,
+  generateClientQuotationEmail,
+  generateClientInvoiceEmail,
+} from '../../integrations/mailer';
 import { config } from '../../config';
 import {
   productInquirySchema,
@@ -575,6 +580,196 @@ export class InquiriesController {
       res.setHeader('Content-Type', 'text/csv');
       res.setHeader('Content-Disposition', `attachment; filename=triclinium-inquiries-${Date.now()}.csv`);
       return res.status(200).send(csvContent);
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  // POST /admin/inquiries/custom-quote (Create custom quote directly in admin)
+  static async createCustomQuote(req: Request, res: Response, next: NextFunction) {
+    try {
+      const {
+        customerName,
+        email,
+        phone,
+        company,
+        subject,
+        notes,
+        paymentTerms,
+        validUntil,
+        items = [],
+      } = req.body;
+
+      if (!customerName || !email) {
+        return res.status(400).json({ success: false, message: 'Customer name and email are required' });
+      }
+
+      const referenceNumber = `QT-${Date.now().toString().slice(-6)}`;
+      const itemsSummary = items
+        .map((i: any) => `${i.description} (x${i.qty || 1} @ Ksh ${i.unitPrice?.toLocaleString() || 0})`)
+        .join(', ');
+
+      const inquiry = await prisma.inquiry.create({
+        data: {
+          referenceNumber,
+          type: 'QUOTATION',
+          status: 'QUOTED',
+          urgency: 'HIGH',
+          customerName,
+          email: email.toLowerCase().trim(),
+          phone: phone || null,
+          company: company || null,
+          subject: subject || 'Custom Security Quotation',
+          message: `Custom Quote Items:\n${itemsSummary || 'Standard package'}\n\nNotes: ${notes || 'None'}\nTerms: ${paymentTerms || 'Standard'}`,
+          notes: {
+            create: [
+              {
+                content: `Custom Quotation ${referenceNumber} drafted with ${items.length} line items. Valid until ${validUntil || '30 days'}.`,
+                authorId: (req as any).user?.id,
+              },
+            ],
+          },
+        },
+      });
+
+      return res.status(201).json({
+        success: true,
+        data: inquiry,
+        message: 'Custom quotation created successfully',
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  // POST /admin/inquiries/:id/send-quote (Send quotation to client via Mail Gateway)
+  static async sendQuoteToClient(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const { quoteData } = req.body;
+
+      const inquiry = await prisma.inquiry.findUnique({ where: { id } });
+      if (!inquiry) return res.status(404).json({ success: false, message: 'Inquiry not found' });
+
+      const emailRecipient = quoteData?.clientEmail || inquiry.email;
+      const html = generateClientQuotationEmail({
+        quoteRef: quoteData?.quoteRef || inquiry.referenceNumber,
+        clientName: quoteData?.clientName || inquiry.customerName,
+        date: quoteData?.date || new Date().toISOString().split('T')[0],
+        validUntil: quoteData?.validUntil || '30 Days',
+        items: quoteData?.items || [],
+        taxRate: quoteData?.taxRate ?? 16,
+        notes: quoteData?.notes,
+        paymentTerms: quoteData?.paymentTerms,
+        phone: quoteData?.clientPhone || inquiry.phone || undefined,
+      });
+
+      const mailRes = await sendMailGateway({
+        to: emailRecipient,
+        subject: `Official Quotation [${quoteData?.quoteRef || inquiry.referenceNumber}] — TRICLINIUM SYSTEMS`,
+        html,
+      });
+
+      if (!mailRes.success) {
+        return res.status(500).json({ success: false, message: mailRes.error || 'Failed to dispatch quotation email' });
+      }
+
+      await prisma.inquiryNote.create({
+        data: {
+          inquiryId: id,
+          content: `Quotation ${quoteData?.quoteRef || inquiry.referenceNumber} successfully emailed to client (${emailRecipient}) via Mail Gateway.`,
+          authorId: (req as any).user?.id,
+        },
+      });
+
+      return res.json({
+        success: true,
+        message: `Quotation successfully sent to ${emailRecipient}`,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  // POST /admin/inquiries/:id/send-invoice (Send invoice to client via Mail Gateway)
+  static async sendInvoiceToClient(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const { invoiceData } = req.body;
+
+      const inquiry = await prisma.inquiry.findUnique({ where: { id } });
+      if (!inquiry) return res.status(404).json({ success: false, message: 'Inquiry not found' });
+
+      const emailRecipient = invoiceData?.clientEmail || inquiry.email;
+      const html = generateClientInvoiceEmail({
+        invoiceNumber: invoiceData?.invoiceNumber || `INV-${inquiry.referenceNumber}`,
+        clientName: invoiceData?.clientName || inquiry.customerName,
+        clientCompany: invoiceData?.clientCompany || inquiry.company || undefined,
+        date: invoiceData?.date || new Date().toISOString().split('T')[0],
+        dueDate: invoiceData?.dueDate || 'Upon Receipt',
+        items: invoiceData?.items || [],
+        taxRate: invoiceData?.taxRate ?? 16,
+        paymentStatus: invoiceData?.paymentStatus || 'PAID',
+        notes: invoiceData?.notes,
+      });
+
+      const mailRes = await sendMailGateway({
+        to: emailRecipient,
+        subject: `Tax Invoice [${invoiceData?.invoiceNumber || `INV-${inquiry.referenceNumber}`}] — TRICLINIUM SYSTEMS`,
+        html,
+      });
+
+      if (!mailRes.success) {
+        return res.status(500).json({ success: false, message: mailRes.error || 'Failed to dispatch invoice email' });
+      }
+
+      await prisma.inquiryNote.create({
+        data: {
+          inquiryId: id,
+          content: `Tax Invoice ${invoiceData?.invoiceNumber || `INV-${inquiry.referenceNumber}`} (${invoiceData?.paymentStatus || 'PAID'}) successfully emailed to ${emailRecipient} via Mail Gateway.`,
+          authorId: (req as any).user?.id,
+        },
+      });
+
+      return res.json({
+        success: true,
+        message: `Tax Invoice successfully sent to ${emailRecipient}`,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  // POST /admin/inquiries/:id/convert-to-invoice (Convert quote to invoice upon full payment)
+  static async convertToInvoice(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const { invoiceNumber, totalAmount, paymentReference, notes } = req.body;
+
+      const inquiry = await prisma.inquiry.findUnique({ where: { id } });
+      if (!inquiry) return res.status(404).json({ success: false, message: 'Inquiry not found' });
+
+      const invNo = invoiceNumber || `INV-${inquiry.referenceNumber}`;
+      const updated = await prisma.inquiry.update({
+        where: { id },
+        data: {
+          status: 'CONVERTED',
+        },
+      });
+
+      await prisma.inquiryNote.create({
+        data: {
+          inquiryId: id,
+          content: `✅ Quotation converted to Tax Invoice ${invNo} upon full payment confirmation (KES ${totalAmount?.toLocaleString() || 'N/A'}${paymentReference ? `, Ref: ${paymentReference}` : ''}). ${notes || ''}`,
+          authorId: (req as any).user?.id,
+        },
+      });
+
+      return res.json({
+        success: true,
+        data: updated,
+        message: `Quotation converted to Invoice ${invNo} successfully`,
+      });
     } catch (err) {
       next(err);
     }

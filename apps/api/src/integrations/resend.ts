@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
 import { config } from '../config';
+import { sendMailGateway, getSmtpConfig } from './mailer';
 
 const resendClient = config.resend.apiKey ? new Resend(config.resend.apiKey) : null;
 
@@ -11,8 +12,25 @@ export interface EmailPayload {
 }
 
 export async function sendEmail(payload: EmailPayload): Promise<{ success: boolean; id?: string; error?: string }> {
+  // 1. First prioritize the Mail Gateway (SMTP configured in admin settings)
+  try {
+    const smtpCfg = await getSmtpConfig();
+    if (smtpCfg.smtpHost && smtpCfg.smtpUser) {
+      const gwRes = await sendMailGateway({
+        to: payload.to,
+        subject: payload.subject,
+        html: payload.html,
+        text: payload.text,
+      });
+      return { success: gwRes.success, id: `smtp-${Date.now()}`, error: gwRes.error };
+    }
+  } catch (smtpErr) {
+    console.warn('[Mail Gateway Check Error]:', smtpErr);
+  }
+
+  // 2. If SMTP is not set, try Resend
   if (!resendClient) {
-    console.info(`[Email Service (Simulated - No API Key)]:`, {
+    console.info(`[Email Service (Simulated - No SMTP/Resend configured)]:`, {
       to: payload.to,
       subject: payload.subject,
     });

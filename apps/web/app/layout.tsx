@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { QuoteProvider } from '@/lib/quote-context';
 import { ThemeProvider } from '@/components/theme-provider';
+import { SettingsProvider } from '@/lib/settings-context';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -61,9 +62,11 @@ export default function RootLayout({
     <html lang="en" className="scroll-smooth" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <QuoteProvider>
-            {children}
-          </QuoteProvider>
+          <SettingsProvider>
+            <QuoteProvider>
+              {children}
+            </QuoteProvider>
+          </SettingsProvider>
         </ThemeProvider>
       </body>
     </html>
