@@ -24,6 +24,7 @@ import {
   Palette,
 } from 'lucide-react';
 import { AdminAuthProvider, useAdminAuth } from '@/lib/admin-auth-context';
+import { usePublicSettings } from '@/lib/settings-context';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
@@ -59,6 +60,7 @@ function AdminFooter() {
 function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, logout, hasRole } = useAdminAuth();
+  const { settings } = usePublicSettings();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   // If on login/recovery pages, render clean standalone view with minimal admin footer
@@ -120,15 +122,25 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     <div className="dark min-h-screen bg-slate-950 text-slate-100 flex flex-col md:flex-row">
       {/* Mobile Top Bar */}
       <div className="md:hidden flex items-center justify-between p-4 bg-slate-900 border-b border-slate-800 shrink-0">
-        <div className="flex items-center gap-2.5">
-          <div className="h-8 w-8 rounded-lg bg-sky-600 flex items-center justify-center font-bold text-white text-base">
-            TS
-          </div>
-          <div>
-            <span className="font-bold text-white tracking-tight block text-sm leading-tight">TRICLINIUM SYSTEMS</span>
-            <span className="text-[10px] text-sky-400 font-semibold block leading-tight">Security &amp; Tech Console</span>
-          </div>
-        </div>
+        <Link href="/admin" className="flex items-center gap-2.5">
+          {settings.logoUrl ? (
+            <img
+              src={settings.logoUrl}
+              alt={settings.siteName || 'TRICLINIUM SYSTEMS'}
+              className="max-h-8 h-auto w-auto max-w-[150px] object-contain object-left shrink-0"
+            />
+          ) : (
+            <>
+              <div className="h-8 w-8 rounded-lg bg-sky-600 flex items-center justify-center font-bold text-white text-base shrink-0">
+                TS
+              </div>
+              <div>
+                <span className="font-bold text-white tracking-tight block text-sm leading-tight">{settings.siteName || 'TRICLINIUM SYSTEMS'}</span>
+                <span className="text-[10px] text-sky-400 font-semibold block leading-tight">Security &amp; Tech Console</span>
+              </div>
+            </>
+          )}
+        </Link>
         <button
           onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
           className="p-1.5 text-slate-400 hover:text-white"
@@ -144,17 +156,29 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
       >
         <div className="p-5 overflow-y-auto space-y-6 flex-1">
           {/* Logo Header */}
-          <div className="hidden md:flex items-center gap-3 pb-4 border-b border-slate-800">
-            <div className="h-9 w-9 rounded-lg bg-sky-600 flex items-center justify-center font-bold text-white text-lg shadow-md shadow-sky-600/30">
-              TS
-            </div>
-            <div>
-              <div className="font-extrabold text-sm text-white tracking-tight">TRICLINIUM SYSTEMS</div>
-              <div className="text-[10px] uppercase font-semibold text-sky-400 tracking-wider">
-                Security &amp; Tech Admin
+          <Link href="/admin" className="hidden md:flex items-center gap-3 pb-4 border-b border-slate-800">
+            {settings.logoUrl ? (
+              <div className="flex items-center h-10 w-full overflow-hidden">
+                <img
+                  src={settings.logoUrl}
+                  alt={settings.siteName || 'TRICLINIUM SYSTEMS'}
+                  className="max-h-9 h-auto w-auto max-w-[180px] object-contain object-left shrink-0"
+                />
               </div>
-            </div>
-          </div>
+            ) : (
+              <>
+                <div className="h-9 w-9 rounded-lg bg-sky-600 flex items-center justify-center font-bold text-white text-lg shadow-md shadow-sky-600/30 shrink-0">
+                  TS
+                </div>
+                <div>
+                  <div className="font-extrabold text-sm text-white tracking-tight">{settings.siteName || 'TRICLINIUM SYSTEMS'}</div>
+                  <div className="text-[10px] uppercase font-semibold text-sky-400 tracking-wider">
+                    Security &amp; Tech Admin
+                  </div>
+                </div>
+              </>
+            )}
+          </Link>
 
           {/* Navigation Groups */}
           <nav className="space-y-6">
