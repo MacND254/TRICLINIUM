@@ -127,19 +127,17 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
             <img
               src={settings.logoUrl}
               alt={settings.siteName || 'TRICLINIUM SYSTEMS'}
-              className="max-h-8 h-auto w-auto max-w-[150px] object-contain object-left shrink-0"
+              className="h-8 w-8 object-contain rounded shrink-0"
             />
           ) : (
-            <>
-              <div className="h-8 w-8 rounded-lg bg-sky-600 flex items-center justify-center font-bold text-white text-base shrink-0">
-                TS
-              </div>
-              <div>
-                <span className="font-bold text-white tracking-tight block text-sm leading-tight">{settings.siteName || 'TRICLINIUM SYSTEMS'}</span>
-                <span className="text-[10px] text-sky-400 font-semibold block leading-tight">Security &amp; Tech Console</span>
-              </div>
-            </>
+            <div className="h-8 w-8 rounded-lg bg-sky-600 flex items-center justify-center font-bold text-white text-base shrink-0">
+              TS
+            </div>
           )}
+          <div>
+            <span className="font-bold text-white tracking-tight block text-sm leading-tight">{settings.siteName || 'TRICLINIUM SYSTEMS'}</span>
+            <span className="text-[10px] text-sky-400 font-semibold block leading-tight">Security &amp; Tech Console</span>
+          </div>
         </Link>
         <button
           onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
@@ -158,26 +156,22 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
           {/* Logo Header */}
           <Link href="/admin" className="hidden md:flex items-center gap-3 pb-4 border-b border-slate-800">
             {settings.logoUrl ? (
-              <div className="flex items-center h-10 w-full overflow-hidden">
-                <img
-                  src={settings.logoUrl}
-                  alt={settings.siteName || 'TRICLINIUM SYSTEMS'}
-                  className="max-h-9 h-auto w-auto max-w-[180px] object-contain object-left shrink-0"
-                />
-              </div>
+              <img
+                src={settings.logoUrl}
+                alt={settings.siteName || 'TRICLINIUM SYSTEMS'}
+                className="h-9 w-9 object-contain rounded shrink-0"
+              />
             ) : (
-              <>
-                <div className="h-9 w-9 rounded-lg bg-sky-600 flex items-center justify-center font-bold text-white text-lg shadow-md shadow-sky-600/30 shrink-0">
-                  TS
-                </div>
-                <div>
-                  <div className="font-extrabold text-sm text-white tracking-tight">{settings.siteName || 'TRICLINIUM SYSTEMS'}</div>
-                  <div className="text-[10px] uppercase font-semibold text-sky-400 tracking-wider">
-                    Security &amp; Tech Admin
-                  </div>
-                </div>
-              </>
+              <div className="h-9 w-9 rounded-lg bg-sky-600 flex items-center justify-center font-bold text-white text-lg shadow-md shadow-sky-600/30 shrink-0">
+                TS
+              </div>
             )}
+            <div>
+              <div className="font-extrabold text-sm text-white tracking-tight">{settings.siteName || 'TRICLINIUM SYSTEMS'}</div>
+              <div className="text-[10px] uppercase font-semibold text-sky-400 tracking-wider">
+                Security &amp; Tech Admin
+              </div>
+            </div>
           </Link>
 
           {/* Navigation Groups */}

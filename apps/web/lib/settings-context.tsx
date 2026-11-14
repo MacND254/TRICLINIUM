@@ -30,27 +30,29 @@ export interface PublicSettings {
 
 const DEFAULT_SETTINGS: PublicSettings = {
   siteName: 'TRICLINIUM SYSTEMS',
-  tagline: 'CCTV Surveillance, Smart Alarms & Home Network Infrastructure',
-  logoUrl: '',
-  faviconUrl: '',
+  tagline: 'Next-Generation CCTV Surveillance, Smart Alarms & Home Network Infrastructure',
+  logoUrl: '/uploads/1794689746754-Futuristic_Purple_TRI.CLINIUM_Emblem.png',
+  faviconUrl: '/favicon.ico',
   contactEmail: 'inquiries@triclinium.com',
   supportEmail: 'support@triclinium.com',
-  phone: '+254 700 555 199',
-  phoneAlt: '+254 711 555 198',
-  address: 'Westlands Commercial Center, Ring Road',
+  phone: '+254 715399369',
+  phoneAlt: '+254 747399369',
+  address: 'Westlands Commercial Center, Ring Road, Nairobi, Kenya',
   city: 'Nairobi',
   country: 'Kenya',
-  businessHours: 'Mon–Sat: 08:00–18:00 EAT (24/7 Monitoring Station)',
+  businessHours: 'Monday - Saturday: 8:00 AM - 6:00 PM EAT (24/7 Monitoring Station)',
   currency: 'KES',
   currencySymbol: 'Ksh',
-  primaryColor: '#0ea5e9',
+  primaryColor: '#0f172a',
   accentColor: '#0284c7',
   colorGrading: 'cyber-security',
-  metaTitle: 'TRICLINIUM SYSTEMS — CCTV Surveillance & Smart Security',
-  metaDescription: 'Kenya premier supplier & installer of 4K CCTV surveillance cameras, smart video doorbells, wireless home alarms, and video intercoms.',
+  metaTitle: 'TRICLINIUM SYSTEMS | CCTV Surveillance & Smart Security',
+  metaDescription: 'Commercial and residential video surveillance, 4K AI IP cameras, smart video doorbells, wireless home alarms, and certified installation across Kenya.',
   googleAnalyticsId: '',
   googleTagManagerId: '',
 };
+
+const SETTINGS_STORAGE_KEY = 'triclinium_public_settings_cache_v2';
 
 const SettingsContext = createContext<{
   settings: PublicSettings;
@@ -69,9 +71,22 @@ export function SettingsProvider({
   children: React.ReactNode;
   initialSettings?: Partial<PublicSettings>;
 }) {
-  const [settings, setSettings] = useState<PublicSettings>({
-    ...DEFAULT_SETTINGS,
-    ...(initialSettings || {}),
+  const [settings, setSettings] = useState<PublicSettings>(() => {
+    // 1. If server passed initialSettings, use them immediately
+    if (initialSettings && Object.keys(initialSettings).length > 0) {
+      return { ...DEFAULT_SETTINGS, ...initialSettings };
+    }
+    // 2. Client-side local storage cache fallback
+    if (typeof window !== 'undefined') {
+      try {
+        const cached = localStorage.getItem(SETTINGS_STORAGE_KEY);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          return { ...DEFAULT_SETTINGS, ...parsed };
+        }
+      } catch {}
+    }
+    return DEFAULT_SETTINGS;
   });
   const [isLoading, setIsLoading] = useState(false);
 
@@ -84,6 +99,9 @@ export function SettingsProvider({
         const json = await res.json();
         if (json.data) {
           setSettings((prev) => ({ ...prev, ...json.data }));
+          try {
+            localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(json.data));
+          } catch {}
         }
       }
     } catch (err) {
@@ -92,6 +110,15 @@ export function SettingsProvider({
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (initialSettings && Object.keys(initialSettings).length > 0) {
+      setSettings((prev) => ({ ...prev, ...initialSettings }));
+      try {
+        localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(initialSettings));
+      } catch {}
+    }
+  }, [initialSettings]);
 
   useEffect(() => {
     refreshSettings();

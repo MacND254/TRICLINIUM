@@ -53,16 +53,34 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+async function getInitialPublicSettings() {
+  try {
+    const apiUrl = process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    const res = await fetch(`${apiUrl}/api/v1/settings/public`, {
+      next: { revalidate: 30 },
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return data.data || null;
+    }
+  } catch (err) {
+    // API not reachable during cold start or build
+  }
+  return null;
+}
+
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const initialSettings = await getInitialPublicSettings();
+
   return (
     <html lang="en" className="scroll-smooth" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <SettingsProvider>
+          <SettingsProvider initialSettings={initialSettings || undefined}>
             <QuoteProvider>
               {children}
             </QuoteProvider>

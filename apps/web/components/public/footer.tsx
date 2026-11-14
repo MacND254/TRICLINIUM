@@ -15,21 +15,22 @@ export function Footer() {
         <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-5">
           {/* Column 1: Company Profile */}
           <div className="lg:col-span-2 space-y-4">
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center gap-3">
               {settings.logoUrl ? (
                 <img
                   src={settings.logoUrl}
                   alt={settings.siteName || 'TRICLINIUM SYSTEMS'}
-                  className="max-h-12 h-auto w-auto max-w-[220px] object-contain object-left shrink-0"
+                  className="h-10 w-10 sm:h-11 sm:w-11 object-contain rounded-md shrink-0"
                 />
               ) : (
-                <>
-                  <div className="h-8 w-8 rounded bg-sky-600 flex items-center justify-center text-white font-extrabold text-base shrink-0">
-                    TS
-                  </div>
-                  <span className="text-xl font-extrabold tracking-tight text-white">{settings.siteName || 'TRICLINIUM SYSTEMS'}</span>
-                </>
+                <div className="h-9 w-9 rounded-lg bg-sky-600 flex items-center justify-center text-white font-extrabold text-base shrink-0">
+                  TS
+                </div>
               )}
+              <div className="flex flex-col leading-tight">
+                <span className="text-xl font-extrabold tracking-tight text-white">{settings.siteName || 'TRICLINIUM SYSTEMS'}</span>
+                <span className="text-[10px] tracking-wider text-sky-400 uppercase font-semibold">Security &amp; Smart Tech</span>
+              </div>
             </div>
             <p className="text-sm text-slate-400 leading-relaxed max-w-sm">
               {settings.metaDescription || "Kenya's trusted supplier and certified installer of 4K AI CCTV surveillance systems, smart video doorbells, door cams, wireless intruder alarms, video intercoms, whole-home mesh Wi-Fi, and electric fencing."}
