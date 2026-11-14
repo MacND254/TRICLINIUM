@@ -2,10 +2,9 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Plus, Check, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useQuote } from '@/lib/quote-context';
 import { formatPrice } from '@/lib/utils';
 
 export interface ProductCardProps {
@@ -33,13 +32,10 @@ export function ProductCard({
   price,
   promotionalPrice,
   priceVisible = true,
-  currency = 'USD',
+  currency = 'KES',
   availability = 'IN_STOCK',
-  imageUrl = 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80',
+  imageUrl = 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=800&q=80',
 }: ProductCardProps) {
-  const { addItem, items } = useQuote();
-  const isInQuote = items.some((i) => i.productId === id);
-
   const displayPrice = promotionalPrice ?? price;
 
   const availabilityLabels: Record<string, { label: string; variant: 'success' | 'warning' | 'outline' }> = {
@@ -96,7 +92,7 @@ export function ProductCard({
         <div>
           {priceVisible && displayPrice ? (
             <div className="flex flex-col">
-              <span className="text-xs text-muted-foreground uppercase font-medium">Starting at</span>
+              <span className="text-[10px] text-muted-foreground uppercase font-medium">Price</span>
               <div className="flex items-baseline gap-1.5">
                 <span className="text-base font-bold text-slate-900 dark:text-white">
                   {formatPrice(displayPrice, currency)}
@@ -111,44 +107,16 @@ export function ProductCard({
           ) : (
             <div className="flex flex-col">
               <span className="text-[11px] text-muted-foreground font-medium uppercase">Pricing</span>
-              <span className="text-xs font-semibold text-sky-700 dark:text-sky-400">Quote on Request</span>
+              <span className="text-xs font-semibold text-sky-700 dark:text-sky-400">Price on Request</span>
             </div>
           )}
         </div>
 
         <div className="flex items-center gap-1.5">
-          <Button
-            size="sm"
-            variant={isInQuote ? 'secondary' : 'outline'}
-            onClick={() =>
-              addItem({
-                productId: id,
-                name,
-                sku,
-                price: displayPrice,
-                imageUrl,
-              })
-            }
-            className="h-8 px-2.5 text-xs flex items-center gap-1"
-            title="Add to RFQ Quote list"
-          >
-            {isInQuote ? (
-              <>
-                <Check className="h-3 w-3 text-emerald-600" />
-                <span className="hidden sm:inline">Quoted</span>
-              </>
-            ) : (
-              <>
-                <Plus className="h-3 w-3" />
-                <span className="hidden sm:inline">Quote</span>
-              </>
-            )}
-          </Button>
-
           <Link href={`/products/${slug}`}>
-            <Button size="sm" className="h-8 px-2.5 text-xs bg-slate-900 hover:bg-slate-800 text-white">
-              <span>Details</span>
-              <ArrowRight className="h-3 w-3 ml-1" />
+            <Button size="sm" className="h-8 px-3 text-xs bg-sky-600 hover:bg-sky-500 text-white font-medium flex items-center gap-1 shadow-sm">
+              <span>View Product</span>
+              <ArrowRight className="h-3 w-3" />
             </Button>
           </Link>
         </div>

@@ -13,11 +13,11 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       'inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 select-none';
 
     const variants = {
-      default: 'bg-primary text-primary-foreground hover:bg-primary/90',
-      destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
-      outline: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
-      secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-      ghost: 'hover:bg-accent hover:text-accent-foreground',
+      default: 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm',
+      destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90 shadow-sm',
+      outline: 'border border-slate-300 dark:border-slate-700 bg-transparent text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors',
+      secondary: 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 hover:bg-slate-200 dark:hover:bg-slate-700',
+      ghost: 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white',
       link: 'text-primary underline-offset-4 hover:underline',
       accent: 'bg-sky-600 text-white hover:bg-sky-700 shadow-sm',
     };

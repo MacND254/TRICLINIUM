@@ -19,10 +19,10 @@ export function ServiceDetailClient({ service }: { service: any }) {
           <MessageSquare className="h-4 w-4" />
           <span>Inquire About This Service</span>
         </Button>
-        <a href="tel:+18005550199">
+        <a href="tel:+254700555199">
           <Button size="lg" variant="outline" className="flex items-center gap-2">
             <PhoneCall className="h-4 w-4" />
-            <span>Speak with an Engineer</span>
+            <span>Call Security Specialist</span>
           </Button>
         </a>
       </div>

@@ -74,21 +74,21 @@ export default function AdminDashboardPage() {
     {
       title: 'Active Inquiries',
       value: metrics?.newInquiries ?? 0,
-      sub: `${metrics?.pendingQuotations ?? 0} Pending RFQ Quotes`,
+      sub: `${metrics?.pendingQuotations ?? 0} Pending Quotes & Invoices`,
       icon: Inbox,
       color: 'text-amber-400',
     },
     {
-      title: 'Engineering Services',
+      title: 'Security & Tech Services',
       value: metrics?.totalServices ?? 0,
-      sub: `${metrics?.serviceCategories ?? 0} Specialization Disciplines`,
+      sub: `${metrics?.serviceCategories ?? 0} Service Categories`,
       icon: Wrench,
       color: 'text-emerald-400',
     },
     {
-      title: 'Technical Publications',
+      title: 'Security Knowledge Base',
       value: metrics?.publishedArticles ?? 0,
-      sub: 'Published Articles & Whitepapers',
+      sub: 'Published Articles & Guides',
       icon: Layers,
       color: 'text-purple-400',
     },
@@ -100,7 +100,7 @@ export default function AdminDashboardPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
-            System Overview & Operations
+            TRICLINIUM SYSTEMS · Admin Console
           </h1>
           <p className="text-xs text-slate-400 mt-1">
             Real-time telemetry, product catalog inventory, and incoming customer inquiries.
@@ -109,14 +109,14 @@ export default function AdminDashboardPage() {
 
         <div className="flex items-center gap-2.5">
           <Link href="/admin/products/new">
-            <Button size="sm" className="bg-sky-600 hover:bg-sky-500 text-white text-xs flex items-center gap-1.5 shadow-sm">
+            <Button size="sm" className="bg-sky-600 hover:bg-sky-500 text-white text-xs flex items-center gap-1.5 shadow-sm font-semibold">
               <Plus className="h-3.5 w-3.5" />
               <span>Create Product</span>
             </Button>
           </Link>
           <Link href="/admin/inquiries">
-            <Button size="sm" variant="outline" className="border-slate-700 text-slate-200 hover:bg-slate-800 text-xs flex items-center gap-1.5">
-              <Inbox className="h-3.5 w-3.5" />
+            <Button size="sm" className="border border-slate-700 bg-slate-800/90 hover:bg-slate-700 text-slate-100 text-xs flex items-center gap-1.5 shadow-sm font-semibold">
+              <Inbox className="h-3.5 w-3.5 text-sky-400" />
               <span>Review Inquiries</span>
             </Button>
           </Link>

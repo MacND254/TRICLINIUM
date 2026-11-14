@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import {
   Plus,
   Check,
@@ -147,44 +148,27 @@ export function ProductDetailClient({ product }: { product: any }) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Button
               size="lg"
-              onClick={() =>
-                addItem({
-                  productId: product.id,
-                  name: product.name,
-                  sku: product.sku,
-                  price: displayPrice,
-                  imageUrl: images[0],
-                })
-              }
-              className="bg-sky-600 hover:bg-sky-500 text-white font-semibold flex items-center justify-center gap-2"
+              onClick={() => setInquiryModalOpen(true)}
+              className="bg-sky-600 hover:bg-sky-500 text-white font-semibold flex items-center justify-center gap-2 shadow-md"
             >
-              {isInQuote ? (
-                <>
-                  <Check className="h-4 w-4 text-white" />
-                  <span>Added to RFQ Quote</span>
-                </>
-              ) : (
-                <>
-                  <FileSpreadsheet className="h-4 w-4" />
-                  <span>Add to RFQ Quote</span>
-                </>
-              )}
+              <MessageSquare className="h-4 w-4" />
+              <span>Inquire / Request Order</span>
             </Button>
 
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => setInquiryModalOpen(true)}
-              className="border-slate-300 text-slate-800 hover:bg-slate-100 flex items-center justify-center gap-2"
-            >
-              <MessageSquare className="h-4 w-4 text-slate-600" />
-              <span>Inquire on Product</span>
-            </Button>
+            <Link href="/contact" className="w-full">
+              <Button
+                size="lg"
+                variant="outline"
+                className="w-full border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center gap-2"
+              >
+                <span>Book Site Survey &amp; Installation</span>
+              </Button>
+            </Link>
           </div>
 
           <div className="flex items-center gap-2 text-xs text-muted-foreground pt-1">
             <ShieldCheck className="h-4 w-4 text-emerald-600" />
-            <span>EN 1154 Quality Assured. Mill Test Reports provided with order.</span>
+            <span>1-Year Hardware Warranty &amp; Certified Installation Support Included.</span>
           </div>
         </div>
       </div>

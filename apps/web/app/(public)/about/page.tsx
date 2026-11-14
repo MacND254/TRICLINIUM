@@ -2,8 +2,8 @@ import React from 'react';
 import { ShieldCheck, Award, Layers, Users, CheckCircle2, Video, Bell, Lock } from 'lucide-react';
 
 export const metadata = {
-  title: 'About Us | TRICLINIUM CCTV Surveillance & Home Alarm Systems',
-  description: 'Learn about TRICLINIUM, our certified security technicians, 4K AI surveillance cameras, and smart wireless home alarm systems.',
+  title: 'About Us | TRICLINIUM SYSTEMS · CCTV Surveillance & Security',
+  description: 'Learn about TRICLINIUM SYSTEMS, our certified security technicians, 4K AI surveillance cameras, and smart wireless home alarm systems.',
 };
 
 export default function AboutPage() {
@@ -13,7 +13,7 @@ export default function AboutPage() {
       <div className="max-w-3xl space-y-4">
         <span className="text-xs font-bold text-sky-600 uppercase tracking-widest flex items-center gap-1.5">
           <ShieldCheck className="h-4 w-4" />
-          <span>About TRICLINIUM Security Enterprise</span>
+          <span>About TRICLINIUM SYSTEMS</span>
         </span>
         <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white">
           Dedicated to Total Situational Awareness & Proactive Security

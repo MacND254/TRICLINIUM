@@ -19,6 +19,161 @@ interface ProductsPageProps {
   };
 }
 
+const FALLBACK_SECURITY_PRODUCTS = [
+  {
+    id: 'prod-1',
+    name: 'ProSight 4K PoE IP Dome Camera',
+    slug: 'prosight-4k-poe-dome-camera',
+    sku: 'TRC-CAM-4K-DOM',
+    shortDescription: 'Commercial 4K Ultra HD dome camera with AI motion classification, ColorNight vision up to 30m, and weatherproof IP67 housing.',
+    category: { name: 'IP & CCTV Cameras', slug: 'ip-surveillance-cameras' },
+    price: 18500,
+    promotionalPrice: 16500,
+    currency: 'KES',
+    priceVisible: true,
+    availability: 'IN_STOCK',
+    imageUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?auto=format&fit=crop&w=1200&q=80',
+  },
+  {
+    id: 'prod-2',
+    name: 'Smart Video Doorbell Pro 2K with Wireless Chime',
+    slug: 'smart-video-doorbell-pro-2k',
+    sku: 'TRIC-DRB-2K',
+    shortDescription: 'Crystal-clear 2K HDR smart video doorbell with head-to-toe 160° view, two-way audio talk, package detection, and indoor chime.',
+    category: { name: 'Smart Doorbells & Door Cams', slug: 'smart-doorbells-door-cams' },
+    price: 16800,
+    promotionalPrice: 14500,
+    currency: 'KES',
+    priceVisible: true,
+    availability: 'IN_STOCK',
+    imageUrl: 'https://images.unsplash.com/photo-1558618047-f4e70e3e6fa7?auto=format&fit=crop&w=1200&q=80',
+  },
+  {
+    id: 'prod-3',
+    name: 'UltraView Wireless Door Camera & Digital Peephole',
+    slug: 'ultraview-wireless-door-cam',
+    sku: 'TRIC-DCAM-WIFI',
+    shortDescription: 'Wire-free door peephole security camera with 4.3-inch indoor color monitor, auto human detection, and night vision.',
+    category: { name: 'Smart Doorbells & Door Cams', slug: 'smart-doorbells-door-cams' },
+    price: 13500,
+    promotionalPrice: 11900,
+    currency: 'KES',
+    priceVisible: true,
+    availability: 'IN_STOCK',
+    imageUrl: 'https://images.unsplash.com/photo-1558618047-f4e70e3e6fa7?auto=format&fit=crop&w=1200&q=80',
+  },
+  {
+    id: 'prod-4',
+    name: 'SecureHome Pro Wireless Alarm Kit',
+    slug: 'securehome-pro-wireless-alarm-kit',
+    sku: 'TRC-ALM-PRO-KIT',
+    shortDescription: 'Complete wireless home alarm system with motion sensors, door/window contacts, outdoor solar siren, and mobile app control.',
+    category: { name: 'Home Alarm Systems', slug: 'home-alarm-systems' },
+    price: 36500,
+    promotionalPrice: 32000,
+    currency: 'KES',
+    priceVisible: true,
+    availability: 'IN_STOCK',
+    imageUrl: 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&w=1200&q=80',
+  },
+  {
+    id: 'prod-5',
+    name: '360° Smart Baby & Nanny Cam with Two-Way Audio',
+    slug: 'nanny-cam-360-indoor-wifi',
+    sku: 'TRIC-NCAM-360',
+    shortDescription: 'Indoor pan-tilt smart Wi-Fi camera with 2K Quad-HD video, baby crying detection, soothing lullabies, and crystal two-way audio.',
+    category: { name: 'Nanny Cams & Indoor Monitoring', slug: 'nanny-cams-indoor' },
+    price: 8500,
+    promotionalPrice: 7200,
+    currency: 'KES',
+    priceVisible: true,
+    availability: 'IN_STOCK',
+    imageUrl: 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&w=1200&q=80',
+  },
+  {
+    id: 'prod-6',
+    name: 'TouchScreen IP Video Intercom Villa Kit',
+    slug: 'video-intercom-touchscreen-system',
+    sku: 'TRIC-INT-VILLA',
+    shortDescription: 'Modern IP video intercom kit with 7-inch indoor touchscreen monitor, weatherproof outdoor camera station, and remote gate release.',
+    category: { name: 'Intercoms & Access Control', slug: 'intercoms-access-control' },
+    price: 36000,
+    promotionalPrice: 32500,
+    currency: 'KES',
+    priceVisible: true,
+    availability: 'IN_STOCK',
+    imageUrl: 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&w=1200&q=80',
+  },
+  {
+    id: 'prod-7',
+    name: 'MeshGuard Whole-Home WiFi 6 & Network Rack Setup',
+    slug: 'meshguard-wifi6-home-network-setup',
+    sku: 'TRIC-NET-MESH6',
+    shortDescription: 'Enterprise whole-home mesh Wi-Fi 6 kit with gigabit PoE switch and wall access points for bufferless 4K CCTV streaming.',
+    category: { name: 'Home Network & Mesh WiFi', slug: 'home-networking-mesh-wifi' },
+    price: 28500,
+    promotionalPrice: 24900,
+    currency: 'KES',
+    priceVisible: true,
+    availability: 'IN_STOCK',
+    imageUrl: 'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=1200&q=80',
+  },
+  {
+    id: 'prod-8',
+    name: 'VaultGuard 8-Channel 4K NVR System',
+    slug: 'vaultguard-8ch-nvr-system',
+    sku: 'TRC-NVR-8CH-4K',
+    shortDescription: 'Professional 8-channel 4K NVR with 2TB surveillance storage, PoE ports, remote mobile app, and AI intelligent alerts.',
+    category: { name: 'NVR & Storage Systems', slug: 'nvr-dvr-systems' },
+    price: 54000,
+    promotionalPrice: 48500,
+    currency: 'KES',
+    priceVisible: true,
+    availability: 'IN_STOCK',
+    imageUrl: 'https://images.unsplash.com/photo-1586771107445-d3ca888129ff?auto=format&fit=crop&w=1200&q=80',
+  },
+  {
+    id: 'prod-9',
+    name: 'Biometric Smart Digital Door Lock D100',
+    slug: 'biometric-smart-door-lock-d100',
+    sku: 'TRIC-LCK-BIO',
+    shortDescription: 'Keyless smart door lock featuring 3D semiconductor fingerprint reader, anti-peep PIN code, RFID card, and smartphone app unlock.',
+    category: { name: 'Smart Biometric Locks', slug: 'smart-locks' },
+    price: 24500,
+    promotionalPrice: 21900,
+    currency: 'KES',
+    priceVisible: true,
+    availability: 'IN_STOCK',
+    imageUrl: 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&w=1200&q=80',
+  },
+  {
+    id: 'prod-10',
+    name: 'Electric Fence Energizer & Perimeter Alarm Kit',
+    slug: 'electric-fence-energizer-perimeter-kit',
+    sku: 'TRIC-FNC-5J',
+    shortDescription: 'Heavy-duty 5-Joule perimeter fence energizer with battery backup, cut-wire tampering siren, and key switch control.',
+    category: { name: 'Perimeter Electric Fencing', slug: 'perimeter-security' },
+    price: 42000,
+    promotionalPrice: 38000,
+    currency: 'KES',
+    priceVisible: true,
+    availability: 'IN_STOCK',
+    imageUrl: 'https://images.unsplash.com/photo-1508873696983-2df57046475a?auto=format&fit=crop&w=1200&q=80',
+  },
+];
+
+const FALLBACK_SECURITY_CATEGORIES = [
+  { id: 'cat-1', name: 'IP & CCTV Cameras', slug: 'ip-surveillance-cameras', productCount: 2 },
+  { id: 'cat-2', name: 'Smart Doorbells & Door Cams', slug: 'smart-doorbells-door-cams', productCount: 2 },
+  { id: 'cat-3', name: 'Home Alarm Systems', slug: 'home-alarm-systems', productCount: 1 },
+  { id: 'cat-4', name: 'Nanny Cams & Indoor', slug: 'nanny-cams-indoor', productCount: 1 },
+  { id: 'cat-5', name: 'Intercoms & Access Control', slug: 'intercoms-access-control', productCount: 1 },
+  { id: 'cat-6', name: 'Home Network & Mesh WiFi', slug: 'home-networking-mesh-wifi', productCount: 1 },
+  { id: 'cat-7', name: 'NVR & Storage Systems', slug: 'nvr-dvr-systems', productCount: 1 },
+  { id: 'cat-8', name: 'Smart Biometric Locks', slug: 'smart-locks', productCount: 1 },
+  { id: 'cat-9', name: 'Perimeter Electric Fencing', slug: 'perimeter-security', productCount: 1 },
+];
+
 export default async function ProductsPage({ searchParams }: ProductsPageProps) {
   const queryParams = new URLSearchParams();
   if (searchParams.category) queryParams.set('category', searchParams.category);
@@ -37,62 +192,43 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
       fetchApi(`/products?${queryParams.toString()}`),
       fetchApi('/product-categories'),
     ]);
-    productsData = prods;
-    categoriesData = cats;
+    if (prods?.items && prods.items.length > 0) {
+      productsData = prods;
+    } else {
+      productsData = {
+        items: FALLBACK_SECURITY_PRODUCTS,
+        pagination: { total: FALLBACK_SECURITY_PRODUCTS.length, page: 1, limit: 12, totalPages: 1 },
+      };
+    }
+    categoriesData = cats?.length > 0 ? cats : FALLBACK_SECURITY_CATEGORIES;
   } catch (err) {
-    // Graceful fallback for initial build without running backend
     productsData = {
-      items: [
-        {
-          id: 'prod-seed-1',
-          name: 'Titan-Forged Pivot Hinge 750',
-          slug: 'titan-pivot-hinge-750',
-          sku: 'TRIC-HW-750',
-          shortDescription: 'Industrial-grade architectural pivot hinge engineered for doors up to 750kg.',
-          category: { name: 'Architectural Hardware' },
-          price: 1250.0,
-          promotionalPrice: 1120.0,
-          priceVisible: true,
-          availability: 'IN_STOCK',
-          imageUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1200&q=80',
-        },
-        {
-          id: 'prod-seed-2',
-          name: 'AeroLock High-Torque Linear Coupler',
-          slug: 'aerolock-linear-coupler',
-          sku: 'TRIC-PC-420',
-          shortDescription: 'Zero-backlash precision coupling designed for high-dynamic servomotor drives.',
-          category: { name: 'Precision Assemblies' },
-          price: 485.0,
-          priceVisible: true,
-          availability: 'IN_STOCK',
-          imageUrl: 'https://images.unsplash.com/photo-1581092580497-e0d23cbdf1dc?auto=format&fit=crop&w=1200&q=80',
-        },
-        {
-          id: 'prod-seed-3',
-          name: 'OmniFlow Industrial SCADA Telemetry Suite',
-          slug: 'omniflow-scada-telemetry-suite',
-          sku: 'TRIC-SW-OMNI',
-          shortDescription: 'Cloud-native digital asset telemetry, real-time edge monitoring, and predictive maintenance platform.',
-          category: { name: 'Industrial Software' },
-          price: 3400.0,
-          promotionalPrice: 2950.0,
-          priceVisible: true,
-          availability: 'IN_STOCK',
-          imageUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=1200&q=80',
-        },
-      ],
-      pagination: { total: 3, page: 1, limit: 12, totalPages: 1 },
+      items: FALLBACK_SECURITY_PRODUCTS,
+      pagination: { total: FALLBACK_SECURITY_PRODUCTS.length, page: 1, limit: 12, totalPages: 1 },
     };
-
-    categoriesData = [
-      { id: '1', name: 'Architectural Hardware', slug: 'architectural-hardware', productCount: 1 },
-      { id: '2', name: 'Precision Assemblies', slug: 'precision-assemblies', productCount: 1 },
-      { id: '3', name: 'Industrial Software', slug: 'digital-industrial-software', productCount: 1 },
-    ];
+    categoriesData = FALLBACK_SECURITY_CATEGORIES;
   }
 
-  const { items, pagination } = productsData;
+  // Filter fallback items locally if search or category param was supplied
+  let displayedItems = productsData.items || [];
+  if (searchParams.category) {
+    displayedItems = displayedItems.filter(
+      (p: any) =>
+        p.category?.slug === searchParams.category ||
+        p.category?.name?.toLowerCase().includes(searchParams.category!.toLowerCase())
+    );
+  }
+  if (searchParams.search) {
+    const q = searchParams.search.toLowerCase();
+    displayedItems = displayedItems.filter(
+      (p: any) =>
+        p.name?.toLowerCase().includes(q) ||
+        p.shortDescription?.toLowerCase().includes(q) ||
+        p.sku?.toLowerCase().includes(q)
+    );
+  }
+
+  const { pagination } = productsData;
   const currentPage = pagination?.page || 1;
   const totalPages = pagination?.totalPages || 1;
 
@@ -100,11 +236,14 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     <div className="container mx-auto px-4 sm:px-8 py-12">
       {/* Page Header */}
       <div className="border-b pb-8 mb-8">
+        <div className="text-xs font-bold text-sky-600 uppercase tracking-widest mb-1.5">
+          Surveillance &amp; Intelligent Security Systems
+        </div>
         <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-          Product Catalog & Assemblies
+          Security Products &amp; Hardware Equipment
         </h1>
         <p className="mt-2 text-sm text-muted-foreground max-w-2xl">
-          Explore our certified range of heavy-capacity architectural pivot systems, zero-backlash mechanical drive couplings, and cloud telemetry solutions.
+          Explore our certified 4K AI CCTV cameras, smart video doorbells, door cams, wireless intruder alarm systems, nanny cameras, video intercoms, home mesh networking, and perimeter defense systems — priced in Kenyan Shillings (KES).
         </p>
       </div>
 
@@ -122,7 +261,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                   type="text"
                   name="search"
                   defaultValue={searchParams.search || ''}
-                  placeholder="SKU, keyword, part name..."
+                  placeholder="Camera, doorbell, alarm, nanny..."
                   className="pr-8 text-xs"
                 />
                 <button type="submit" className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400">
@@ -145,7 +284,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                       : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300'
                   }`}
                 >
-                  All Categories ({pagination?.total || 0})
+                  All Security Products ({displayedItems.length})
                 </Link>
                 {categoriesData.map((cat: any) => (
                   <Link
@@ -157,7 +296,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                         : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300'
                     }`}
                   >
-                    {cat.name} {cat.productCount !== undefined && `(${cat.productCount})`}
+                    {cat.name}
                   </Link>
                 ))}
               </div>
@@ -166,18 +305,16 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
             {/* Availability Filter */}
             <div>
               <label className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 block mb-2">
-                Availability
+                Stock Availability
               </label>
               <select
                 name="availability"
                 defaultValue={searchParams.availability || ''}
                 className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs"
               >
-                <option value="">All Availabilities</option>
-                <option value="IN_STOCK">In Stock</option>
-                <option value="LOW_STOCK">Low Stock</option>
-                <option value="MADE_TO_ORDER">Made to Order</option>
-                <option value="PREORDER">Pre-Order</option>
+                <option value="">All Items</option>
+                <option value="IN_STOCK">In Stock (Nairobi Warehouses)</option>
+                <option value="PREORDER">Available on Order</option>
               </select>
             </div>
 
@@ -191,7 +328,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                 defaultValue={searchParams.sort || 'newest'}
                 className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-xs"
               >
-                <option value="newest">Newest Releases</option>
+                <option value="newest">Newest Security Equipment</option>
                 <option value="price">Price: Low to High</option>
                 <option value="name">Product Name (A-Z)</option>
               </select>
@@ -216,26 +353,26 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
         <main className="lg:col-span-3 space-y-6">
           <div className="flex items-center justify-between text-xs text-muted-foreground pb-2">
             <span>
-              Showing {items.length} of {pagination?.total || items.length} results
+              Showing {displayedItems.length} security equipment items
             </span>
           </div>
 
-          {items.length === 0 ? (
+          {displayedItems.length === 0 ? (
             <div className="text-center py-24 border rounded-xl bg-card space-y-4">
               <PackageX className="h-16 w-16 text-slate-300 mx-auto" />
-              <h3 className="text-lg font-bold text-slate-800">No Products Matched Your Criteria</h3>
+              <h3 className="text-lg font-bold text-slate-800">No Security Products Matched Your Criteria</h3>
               <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                Try clearing your search query or selecting a broader category filter.
+                Try clearing your search query or selecting a broader security category.
               </p>
               <Link href="/products">
                 <Button variant="outline" size="sm">
-                  View Full Catalog
+                  View Full Security Catalog
                 </Button>
               </Link>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {items.map((prod: any) => (
+              {displayedItems.map((prod: any) => (
                 <ProductCard
                   key={prod.id}
                   id={prod.id}
@@ -247,7 +384,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
                   price={prod.price}
                   promotionalPrice={prod.promotionalPrice}
                   priceVisible={prod.priceVisible}
-                  currency={prod.currency}
+                  currency={prod.currency || 'KES'}
                   availability={prod.availability}
                   imageUrl={prod.images?.[0]?.url || prod.imageUrl}
                 />

@@ -2,40 +2,45 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { QuoteProvider } from '@/lib/quote-context';
+import { ThemeProvider } from '@/components/theme-provider';
 
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: {
-    default: 'TRICLINIUM | CCTV Surveillance & Advanced Alarm Systems',
-    template: '%s | TRICLINIUM Surveillance',
+    default: 'TRICLINIUM SYSTEMS | CCTV Cameras, Home Alarms, Intercoms & Smart Tech',
+    template: '%s | TRICLINIUM SYSTEMS',
   },
   description:
-    'Leading provider of commercial and residential CCTV surveillance systems, AI-powered IP cameras, Network Video Recorders (NVR), biometric access control, and smart home alarm systems.',
+    'Kenya’s premier provider of CCTV surveillance, smart video door bells, door cams, home alarm systems, video intercoms, home network setup, nanny cams, electric fencing, and expert installation services.',
   keywords: [
-    'CCTV surveillance',
-    'security cameras',
-    'IP cameras',
-    'NVR storage',
-    'smart home alarm',
-    'intruder detection',
-    'video security',
-    'biometric access control',
-    'TRICLINIUM',
+    'TRICLINIUM SYSTEMS',
+    'CCTV surveillance Kenya',
+    'security cameras Nairobi',
+    'smart video doorbell',
+    'door cams',
+    'wireless home alarm',
+    'video intercom',
+    'home network setup',
+    'mesh wifi installation',
+    'nanny cams',
+    'electric fencing',
+    'automatic gate motors',
+    'smart door locks',
   ],
-  authors: [{ name: 'TRICLINIUM Security Systems' }],
+  authors: [{ name: 'TRICLINIUM SYSTEMS' }],
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
   openGraph: {
-    title: 'TRICLINIUM | CCTV Surveillance & Advanced Alarm Systems',
-    description: 'Enterprise-grade CCTV surveillance solutions, smart intruder alarms, and high-resolution video security hardware.',
+    title: 'TRICLINIUM SYSTEMS | CCTV, Home Alarms & Smart Security',
+    description: 'Protect what matters most. Professional CCTV, smart doorbells, home alarms, intercoms, and structured networking with certified installation.',
     url: 'https://triclinium.com',
-    siteName: 'TRICLINIUM Surveillance',
+    siteName: 'TRICLINIUM SYSTEMS',
     images: [
       {
         url: '/images/og-cctv.jpg',
         width: 1200,
         height: 630,
-        alt: 'TRICLINIUM CCTV & Security Systems',
+        alt: 'TRICLINIUM SYSTEMS Security & Tech Solutions',
       },
     ],
     locale: 'en_US',
@@ -53,11 +58,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="scroll-smooth">
+    <html lang="en" className="scroll-smooth" suppressHydrationWarning>
       <body className={inter.className}>
-        <QuoteProvider>
-          {children}
-        </QuoteProvider>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <QuoteProvider>
+            {children}
+          </QuoteProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

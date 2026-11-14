@@ -7,19 +7,18 @@ import {
   Menu,
   X,
   Search,
-  FileSpreadsheet,
   Lock,
   ChevronRight,
   Phone,
   Mail,
+  ShieldCheck,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useQuote } from '@/lib/quote-context';
+import { ThemeToggle } from '@/components/public/theme-toggle';
 
 export function Header() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { totalCount, setIsOpen } = useQuote();
 
   const navLinks = [
     { label: 'Home', href: '/' },
@@ -39,15 +38,15 @@ export function Header() {
           <div className="flex items-center space-x-6">
             <span className="flex items-center gap-1.5">
               <Phone className="h-3 w-3 text-sky-400" />
-              <span>+1 (800) 555-0199</span>
+              <span>+254 (0) 700 555 199</span>
             </span>
             <span className="flex items-center gap-1.5">
               <Mail className="h-3 w-3 text-sky-400" />
-              <span>inquiries@triclinium.com</span>
+              <span>info@tricliniumsystems.com</span>
             </span>
           </div>
           <div className="flex items-center space-x-4">
-            <span className="text-slate-400">Advanced CCTV & Home Alarm Systems</span>
+            <span className="text-slate-400">CCTV · Door Cams · Alarms · Intercoms · Networking</span>
             <Link
               href="/admin/login"
               className="flex items-center gap-1 text-slate-300 hover:text-white transition-colors"
@@ -63,15 +62,15 @@ export function Header() {
       <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-8">
         {/* Brand Logo */}
         <Link href="/" className="flex items-center space-x-3 group">
-          <div className="h-9 w-9 rounded-md bg-slate-900 flex items-center justify-center text-white font-bold text-lg shadow-sm border border-slate-700 group-hover:bg-sky-700 transition-colors">
-            T
+          <div className="h-9 w-9 rounded-md bg-sky-600 flex items-center justify-center text-white font-extrabold text-base shadow-sm group-hover:bg-sky-500 transition-colors">
+            TS
           </div>
           <div className="flex flex-col">
-            <span className="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
-              TRICLINIUM
+            <span className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+              TRICLINIUM SYSTEMS
             </span>
-            <span className="text-[10px] tracking-widest text-slate-500 uppercase -mt-1 font-medium">
-              CCTV & Security Systems
+            <span className="text-[10px] tracking-wider text-sky-600 dark:text-sky-400 uppercase -mt-0.5 font-bold">
+              Security &amp; Smart Tech
             </span>
           </div>
         </Link>
@@ -84,8 +83,9 @@ export function Header() {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`transition-colors hover:text-sky-600 ${isActive ? 'text-sky-600 font-semibold' : 'text-slate-600 dark:text-slate-300'
-                  }`}
+                className={`transition-colors hover:text-sky-600 ${
+                  isActive ? 'text-sky-600 font-semibold' : 'text-slate-600 dark:text-slate-300'
+                }`}
               >
                 {link.label}
               </Link>
@@ -94,30 +94,17 @@ export function Header() {
         </nav>
 
         {/* Right action group */}
-        <div className="flex items-center space-x-3">
-          <Link href="/search" className="p-2 text-slate-600 hover:text-slate-900 dark:text-slate-300 transition-colors">
+        <div className="flex items-center space-x-2 sm:space-x-3">
+          {/* Light / Dark Mode Toggle */}
+          <ThemeToggle />
+
+          <Link href="/search" className="p-2 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition-colors">
             <Search className="h-5 w-5" />
             <span className="sr-only">Search</span>
           </Link>
 
-          {/* Quotation Request Drawer Button */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setIsOpen(true)}
-            className="relative flex items-center gap-2 border-slate-300 dark:border-slate-700"
-          >
-            <FileSpreadsheet className="h-4 w-4 text-sky-600" />
-            <span className="hidden sm:inline">RFQ Quote</span>
-            {totalCount > 0 && (
-              <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white bg-sky-600 rounded-full">
-                {totalCount}
-              </span>
-            )}
-          </Button>
-
-          <Link href="/contact" className="hidden lg:inline-flex">
-            <Button size="sm" className="bg-slate-900 text-white hover:bg-slate-800">
+          <Link href="/contact" className="hidden sm:inline-flex">
+            <Button size="sm" className="bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs shadow-sm">
               Get in Touch
             </Button>
           </Link>
@@ -125,7 +112,7 @@ export function Header() {
           {/* Mobile menu hamburger */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 text-slate-600 hover:text-slate-900 focus:outline-none"
+            className="md:hidden p-2 text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white focus:outline-none"
             aria-label="Toggle navigation menu"
           >
             {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -148,12 +135,25 @@ export function Header() {
                 <ChevronRight className="h-4 w-4 text-slate-400" />
               </Link>
             ))}
+            <div className="pt-3 flex items-center justify-between">
+              <span className="text-xs text-slate-500">Appearance Theme:</span>
+              <ThemeToggle />
+            </div>
+            <Link
+              href="/contact"
+              onClick={() => setMobileMenuOpen(false)}
+              className="pt-2"
+            >
+              <Button size="sm" className="w-full bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs">
+                Get in Touch / Request Service
+              </Button>
+            </Link>
             <Link
               href="/admin/login"
               onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-2 py-2 text-sm font-medium text-sky-600 pt-3"
+              className="flex items-center gap-2 py-2 text-xs font-medium text-sky-600 pt-2"
             >
-              <Lock className="h-4 w-4" />
+              <Lock className="h-3.5 w-3.5" />
               <span>Administrator Portal</span>
             </Link>
           </div>

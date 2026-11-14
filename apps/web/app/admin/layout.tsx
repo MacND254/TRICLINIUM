@@ -31,7 +31,7 @@ function AdminFooter() {
     <footer className="mt-auto border-t border-slate-800 bg-slate-950/80 px-6 py-4 text-xs text-slate-500">
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 max-w-7xl mx-auto">
         <p className="text-center sm:text-left">
-          © 2026 TRICLINIUM Commercial & Industrial Enterprise. All rights reserved.
+          © 2026 TRICLINIUM SYSTEMS. All rights reserved.
         </p>
         <div className="flex items-center gap-4 flex-wrap justify-center text-slate-400">
           <Link href="/privacy-policy" target="_blank" className="hover:text-sky-400 transition-colors">
@@ -39,7 +39,7 @@ function AdminFooter() {
           </Link>
           <span className="text-slate-700">·</span>
           <Link href="/terms-and-conditions" target="_blank" className="hover:text-sky-400 transition-colors">
-            Terms & Conditions
+            Terms &amp; Conditions
           </Link>
           <span className="text-slate-700">·</span>
           <Link href="/cookie-policy" target="_blank" className="hover:text-sky-400 transition-colors">
@@ -87,7 +87,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     {
       title: 'Customer Relations',
       items: [
-        { label: 'Inquiries & Quotations (RFQ)', href: '/admin/inquiries', icon: Inbox },
+        { label: 'Inquiries, Quotes & Invoices', href: '/admin/inquiries', icon: Inbox },
         { label: 'Media Library', href: '/admin/media', icon: ImageIcon },
       ],
     },
@@ -115,16 +115,16 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   ];
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col md:flex-row">
+    <div className="dark min-h-screen bg-slate-950 text-slate-100 flex flex-col md:flex-row">
       {/* Mobile Top Bar */}
       <div className="md:hidden flex items-center justify-between p-4 bg-slate-900 border-b border-slate-800 shrink-0">
         <div className="flex items-center gap-2.5">
           <div className="h-8 w-8 rounded-lg bg-sky-600 flex items-center justify-center font-bold text-white text-base">
-            T
+            TS
           </div>
           <div>
-            <span className="font-bold text-white tracking-tight block text-sm leading-tight">TRICLINIUM</span>
-            <span className="text-[10px] text-sky-400 font-semibold block leading-tight">CCTV & Security Console</span>
+            <span className="font-bold text-white tracking-tight block text-sm leading-tight">TRICLINIUM SYSTEMS</span>
+            <span className="text-[10px] text-sky-400 font-semibold block leading-tight">Security &amp; Tech Console</span>
           </div>
         </div>
         <button
@@ -145,12 +145,12 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
           {/* Logo Header */}
           <div className="hidden md:flex items-center gap-3 pb-4 border-b border-slate-800">
             <div className="h-9 w-9 rounded-lg bg-sky-600 flex items-center justify-center font-bold text-white text-lg shadow-md shadow-sky-600/30">
-              T
+              TS
             </div>
             <div>
-              <div className="font-extrabold text-sm text-white tracking-tight">TRICLINIUM</div>
+              <div className="font-extrabold text-sm text-white tracking-tight">TRICLINIUM SYSTEMS</div>
               <div className="text-[10px] uppercase font-semibold text-sky-400 tracking-wider">
-                CCTV & Alarms Admin
+                Security &amp; Tech Admin
               </div>
             </div>
           </div>

@@ -5,14 +5,10 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatPrice(amount?: number | null, currency: string = 'USD') {
+export function formatPrice(amount?: number | null, currency: string = 'KES') {
   if (amount === undefined || amount === null) return null;
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amount);
+  const num = Number(amount);
+  return `KES ${num.toLocaleString('en-KE', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }
 
 export function formatDate(dateStr?: string | Date | null) {
