@@ -66,6 +66,8 @@ export function createApp(): Express {
   // Mount API Modules under /api/v1
   const v1 = express.Router();
   v1.use(authRouter);
+  v1.use('/admin/auth', authRouter);
+  v1.use('/auth', authRouter);
   v1.use(productsRouter);
   v1.use(servicesRouter);
   v1.use(inquiriesRouter);

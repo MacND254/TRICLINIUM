@@ -6,9 +6,9 @@
     "outDir": "./dist",
     "rootDir": "./src",
     "paths": {
-      "@triclinium/types": ["../../packages/types/dist/index.d.ts"],
-      "@triclinium/shared": ["../../packages/shared/dist/index.d.ts"],
-      "@triclinium/validation": ["../../packages/validation/dist/index.d.ts"]
+      "@triclinium/types": ["../../packages/types/dist/index"],
+      "@triclinium/shared": ["../../packages/shared/dist/index"],
+      "@triclinium/validation": ["../../packages/validation/dist/index"]
     }
   },
   "include": ["src/**/*"]
