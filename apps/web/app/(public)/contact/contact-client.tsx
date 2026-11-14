@@ -52,9 +52,9 @@ export function ContactClient() {
       {/* Contact Details Column */}
       <div className="lg:col-span-2 space-y-8 bg-slate-900 text-white p-8 rounded-xl shadow-lg">
         <div>
-          <h2 className="text-xl font-bold tracking-tight">Corporate Desk & Inquiries</h2>
+          <h2 className="text-xl font-bold tracking-tight">Security Consultations &amp; Site Surveys</h2>
           <p className="text-xs text-slate-300 mt-2 leading-relaxed">
-            Directly connect with our engineering and procurement team for custom hardware orders, technical questions, or project quotations.
+            Directly connect with our certified security technicians for free site surveys, custom CCTV proposals, smart alarm installations, and technical support.
           </p>
         </div>
 
@@ -62,10 +62,10 @@ export function ContactClient() {
           <div className="flex items-start gap-3">
             <MapPin className="h-4 w-4 text-sky-400 shrink-0 mt-0.5" />
             <div>
-              <p className="font-semibold text-white">Headquarters & Fabrication</p>
+              <p className="font-semibold text-white">Nairobi Office &amp; Operations Center</p>
               <p className="text-slate-300 mt-0.5">
-                742 Evergreen Boulevard, Suite 500<br />
-                Industrial District, NY 10001
+                Westlands Commercial Center, Ring Road<br />
+                Nairobi, Kenya
               </p>
             </div>
           </div>
@@ -73,8 +73,8 @@ export function ContactClient() {
           <div className="flex items-center gap-3">
             <Phone className="h-4 w-4 text-sky-400 shrink-0" />
             <div>
-              <p className="font-semibold text-white">Telephone</p>
-              <p className="text-slate-300">+1 (800) 555-0199 / +1 (212) 555-8842</p>
+              <p className="font-semibold text-white">Telephone / WhatsApp</p>
+              <p className="text-slate-300">+254 700 555 199 / +254 711 555 198</p>
             </div>
           </div>
 
@@ -89,16 +89,15 @@ export function ContactClient() {
           <div className="flex items-center gap-3">
             <Clock className="h-4 w-4 text-sky-400 shrink-0" />
             <div>
-              <p className="font-semibold text-white">Engineering Hours</p>
-              <p className="text-slate-300">Monday - Friday: 8:00 AM - 6:00 PM EST</p>
+              <p className="font-semibold text-white">Operating Hours</p>
+              <p className="text-slate-300">Monday – Saturday: 8:00 AM – 6:00 PM EAT (24/7 Monitoring Desk)</p>
             </div>
           </div>
         </div>
 
         <div className="pt-6 border-t border-slate-800 text-xs text-slate-400">
           <p>
-            Need to submit a multi-product RFQ with specific quantities? Use our{' '}
-            <span className="text-sky-400 font-semibold">Quotation Builder</span> tool in the header navigation.
+            Need an urgent quotation or booking a site survey? Send us an inquiry below or reach out via WhatsApp for immediate response from our Nairobi dispatch team.
           </p>
         </div>
       </div>
@@ -191,7 +190,7 @@ export function ContactClient() {
                   required
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
-                  placeholder="e.g. Pivot Hinge Technical Query"
+                  placeholder="e.g. 4K CCTV Home Installation Quote"
                   className="mt-1"
                 />
               </div>
@@ -216,7 +215,7 @@ export function ContactClient() {
                 rows={5}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder="Please describe your requirements, specifications, or inquiry details..."
+                placeholder="Please describe your security requirements (number of cameras, premises type, alarm needs, site survey date)..."
                 className="mt-1"
               />
             </div>
@@ -229,12 +228,12 @@ export function ContactClient() {
               {isSubmitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Transmitting Message...</span>
+                  <span>Transmitting Inquiry...</span>
                 </>
               ) : (
                 <>
                   <Send className="h-4 w-4" />
-                  <span>Transmit Corporate Message</span>
+                  <span>Send Security Inquiry</span>
                 </>
               )}
             </Button>

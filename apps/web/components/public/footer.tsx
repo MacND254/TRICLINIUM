@@ -12,22 +12,22 @@ export function Footer() {
           {/* Column 1: Company Profile */}
           <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center space-x-3">
-              <div className="h-8 w-8 rounded bg-sky-600 flex items-center justify-center text-white font-bold text-base">
-                T
+              <div className="h-8 w-8 rounded bg-sky-600 flex items-center justify-center text-white font-extrabold text-base">
+                TS
               </div>
-              <span className="text-xl font-bold tracking-tight text-white">TRICLINIUM</span>
+              <span className="text-xl font-extrabold tracking-tight text-white">TRICLINIUM SYSTEMS</span>
             </div>
             <p className="text-sm text-slate-400 leading-relaxed max-w-sm">
-              Premier provider and certified installer of enterprise 4K AI CCTV surveillance systems, Network Video Recorders (NVR), smart intruder alarms, and biometric access control solutions.
+              Kenya&apos;s trusted supplier and certified installer of 4K AI CCTV surveillance systems, smart video doorbells, door cams, wireless intruder alarms, video intercoms, whole-home mesh Wi-Fi, and electric fencing.
             </p>
             <div className="pt-2 text-xs text-slate-400 space-y-2">
               <div className="flex items-start gap-2">
                 <MapPin className="h-4 w-4 text-sky-400 shrink-0 mt-0.5" />
-                <span>742 Security Parkway, Suite 500, Tech & Security District, NY 10001</span>
+                <span>Westlands Commercial Center, Ring Road, Nairobi, Kenya</span>
               </div>
               <div className="flex items-center gap-2">
                 <Phone className="h-4 w-4 text-sky-400 shrink-0" />
-                <span>+1 (800) 555-0199</span>
+                <span>+254 700 555 199</span>
               </div>
               <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-sky-400 shrink-0" />
@@ -35,7 +35,7 @@ export function Footer() {
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-sky-400 shrink-0" />
-                <span>Mon - Fri: 8:00 AM - 6:00 PM EST (24/7 Monitoring)</span>
+                <span>Mon – Sat: 8:00 AM – 6:00 PM EAT (24/7 Monitoring Station)</span>
               </div>
             </div>
           </div>
@@ -53,27 +53,27 @@ export function Footer() {
               </li>
               <li>
                 <Link href="/services" className="hover:text-white transition-colors">
-                  Engineering Services
+                  Security Services
                 </Link>
               </li>
               <li>
                 <Link href="/about" className="hover:text-white transition-colors">
-                  Company Overview
+                  About Us
                 </Link>
               </li>
               <li>
                 <Link href="/testimonials" className="hover:text-white transition-colors">
-                  Client Case Studies
+                  Client Reviews
                 </Link>
               </li>
               <li>
                 <Link href="/blog" className="hover:text-white transition-colors">
-                  Engineering Insights
+                  Security Insights
                 </Link>
               </li>
               <li>
                 <Link href="/faq" className="hover:text-white transition-colors">
-                  Procurement FAQs
+                  Security FAQs
                 </Link>
               </li>
             </ul>
@@ -82,22 +82,27 @@ export function Footer() {
           {/* Column 3: Product Capabilities */}
           <div>
             <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">
-              Catalog
+              Security Catalog
             </h4>
             <ul className="space-y-2.5 text-sm text-slate-400">
               <li>
-                <Link href="/products?category=ip-cameras" className="hover:text-white transition-colors">
-                  4K IP Dome & Bullet Cameras
+                <Link href="/products?category=cctv-cameras" className="hover:text-white transition-colors">
+                  4K IP Dome &amp; Turret Cameras
                 </Link>
               </li>
               <li>
-                <Link href="/products?category=nvr-systems" className="hover:text-white transition-colors">
-                  NVR & DVR Video Storage
+                <Link href="/products?category=video-doorbells" className="hover:text-white transition-colors">
+                  Smart Video Doorbells &amp; Door Cams
                 </Link>
               </li>
               <li>
                 <Link href="/products?category=alarm-systems" className="hover:text-white transition-colors">
                   Wireless Home Alarm Kits
+                </Link>
+              </li>
+              <li>
+                <Link href="/products?category=intercoms" className="hover:text-white transition-colors">
+                  HD Video Intercom Systems
                 </Link>
               </li>
               <li>
@@ -107,42 +112,42 @@ export function Footer() {
               </li>
               <li>
                 <Link href="/services/security-system-maintenance" className="hover:text-white transition-colors">
-                  Maintenance & Support
+                  Maintenance &amp; Support
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Column 4: Newsletter & RFQ CTA */}
+          {/* Column 4: Request Quotation CTA */}
           <div>
             <h4 className="text-sm font-semibold text-white uppercase tracking-wider mb-4">
-              Request Quotation
+              Free Site Survey
             </h4>
             <p className="text-xs text-slate-400 leading-relaxed mb-4">
-              Need a custom CCTV or home alarm setup? Contact our certified security specialists today for a free site assessment and quote.
+              Planning to secure your residential property or business premises? Book a free on-site survey and tailored security quotation today.
             </p>
             <Link href="/contact">
               <button className="w-full inline-flex items-center justify-center rounded-md bg-sky-600 px-4 py-2.5 text-xs font-semibold text-white shadow-sm hover:bg-sky-500 transition-colors gap-2">
-                <span>Request Free Security Quote</span>
+                <span>Book Site Survey &amp; Quote</span>
                 <ArrowRight className="h-3.5 w-3.5" />
               </button>
             </Link>
             <div className="flex items-center gap-2 mt-4 text-xs text-slate-400">
               <ShieldCheck className="h-4 w-4 text-emerald-400" />
-              <span>Certified Security Installers | Warranty Backed</span>
+              <span>Certified Installers · 1-Year Warranty</span>
             </div>
           </div>
         </div>
 
         {/* Bottom Bar: Copyright & Legal */}
         <div className="mt-12 pt-8 border-t border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-400">
-          <p>© {currentYear} TRICLINIUM Commercial & Industrial Enterprise. All rights reserved.</p>
+          <p>© {currentYear} TRICLINIUM SYSTEMS. All rights reserved.</p>
           <div className="flex flex-wrap items-center gap-6">
             <Link href="/privacy-policy" className="hover:text-white transition-colors">
               Privacy Policy
             </Link>
             <Link href="/terms-and-conditions" className="hover:text-white transition-colors">
-              Terms & Conditions
+              Terms &amp; Conditions
             </Link>
             <Link href="/cookie-policy" className="hover:text-white transition-colors">
               Cookie Policy
@@ -156,3 +161,4 @@ export function Footer() {
     </footer>
   );
 }
+
