@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "paths": {
+      "@triclinium/types": ["../../packages/types/dist/index.d.ts"],
+      "@triclinium/shared": ["../../packages/shared/dist/index.d.ts"],
+      "@triclinium/validation": ["../../packages/validation/dist/index.d.ts"]
+    }
+  },
+  "include": ["src/**/*"]
+}

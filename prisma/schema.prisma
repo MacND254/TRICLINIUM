@@ -1,0 +1,709 @@
+// Prisma Schema for TRICLINIUM Business Platform
+// Datasource: PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// AUTHENTICATION & RBAC
+// ==========================================
+
+model User {
+  id                 String               @id @default(uuid())
+  email              String               @unique
+  passwordHash       String
+  firstName          String
+  lastName           String
+  avatarUrl          String?
+  isActive           Boolean              @default(true)
+  failedAttempts     Int                  @default(0)
+  lockedUntil        DateTime?
+  lastLoginAt        DateTime?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  
+  userRoles          UserRole[]
+  sessions           Session[]
+  passwordResetTokens PasswordResetToken[]
+  assignedInquiries  Inquiry[]            @relation("InquiryAssignee")
+  inquiryNotes       InquiryNote[]
+  auditLogs          AuditLog[]
+
+  @@map("users")
+}
+
+model Role {
+  id              String           @id @default(uuid())
+  name            String           @unique // SUPER_ADMIN, ADMIN, EDITOR, SALES_MANAGER
+  description     String?
+  isSystem        Boolean          @default(false)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  userRoles       UserRole[]
+  rolePermissions RolePermission[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id              String           @id @default(uuid())
+  code            String           @unique // e.g. products.create
+  name            String
+  module          String
+  createdAt       DateTime         @default(now())
+
+  rolePermissions RolePermission[]
+
+  @@map("permissions")
+}
+
+model UserRole {
+  id        String   @id @default(uuid())
+  userId    String
+  roleId    String
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@map("user_roles")
+}
+
+model RolePermission {
+  id           String     @id @default(uuid())
+  roleId       String
+  permissionId String
+  createdAt    DateTime   @default(now())
+
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  userId       String
+  tokenHash    String   @unique
+  userAgent    String?
+  ipAddress    String?
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tokenHash])
+  @@index([userId])
+  @@map("sessions")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  isUsed    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tokenHash])
+  @@map("password_reset_tokens")
+}
+
+// ==========================================
+// PRODUCTS
+// ==========================================
+
+enum ProductAvailability {
+  IN_STOCK
+  LOW_STOCK
+  OUT_OF_STOCK
+  PREORDER
+  MADE_TO_ORDER
+}
+
+enum PublicationStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+model ProductCategory {
+  id           String            @id @default(uuid())
+  name         String
+  slug         String            @unique
+  description  String?
+  imageUrl     String?
+  parentId     String?
+  displayOrder Int               @default(0)
+  seoTitle     String?
+  seoDescription String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  parent       ProductCategory?  @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children     ProductCategory[] @relation("CategoryHierarchy")
+  products     Product[]
+
+  @@index([slug])
+  @@index([parentId])
+  @@map("product_categories")
+}
+
+model Product {
+  id               String               @id @default(uuid())
+  name             String
+  slug             String               @unique
+  sku              String               @unique
+  shortDescription String
+  fullDescription  String
+  categoryId       String
+  price            Decimal?             @db.Decimal(12, 2)
+  promotionalPrice Decimal?             @db.Decimal(12, 2)
+  currency         String               @default("USD")
+  priceVisible     Boolean              @default(true)
+  availability     ProductAvailability  @default(IN_STOCK)
+  isFeatured       Boolean              @default(false)
+  status           PublicationStatus    @default(DRAFT)
+  seoTitle         String?
+  seoDescription   String?
+  deletedAt        DateTime?
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  category         ProductCategory      @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  images           ProductImage[]
+  features         ProductFeature[]
+  specifications   ProductSpecification[]
+  inquiryItems     InquiryItem[]
+  inquiries        Inquiry[]            @relation("ProductDirectInquiries")
+
+  // Related products self-relation
+  relatedFrom      ProductRelated[]     @relation("ProductRelationSource")
+  relatedTo        ProductRelated[]     @relation("ProductRelationTarget")
+
+  @@index([slug])
+  @@index([categoryId])
+  @@index([status])
+  @@index([isFeatured])
+  @@map("products")
+}
+
+model ProductImage {
+  id           String   @id @default(uuid())
+  productId    String
+  url          String
+  altText      String?
+  isPrimary    Boolean  @default(false)
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_images")
+}
+
+model ProductFeature {
+  id           String   @id @default(uuid())
+  productId    String
+  featureText  String
+  displayOrder Int      @default(0)
+
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_features")
+}
+
+model ProductSpecification {
+  id           String   @id @default(uuid())
+  productId    String
+  name         String
+  value        String
+  group        String?
+  displayOrder Int      @default(0)
+
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@map("product_specifications")
+}
+
+model ProductRelated {
+  id               String   @id @default(uuid())
+  productId        String
+  relatedProductId String
+
+  product          Product  @relation("ProductRelationSource", fields: [productId], references: [id], onDelete: Cascade)
+  relatedProduct   Product  @relation("ProductRelationTarget", fields: [relatedProductId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, relatedProductId])
+  @@map("product_related_products")
+}
+
+// ==========================================
+// SERVICES
+// ==========================================
+
+enum ServicePricingModel {
+  FIXED
+  HOURLY
+  CUSTOM_QUOTE
+  TIERED
+}
+
+model ServiceCategory {
+  id           String    @id @default(uuid())
+  name         String
+  slug         String    @unique
+  description  String?
+  displayOrder Int       @default(0)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  services     Service[]
+
+  @@index([slug])
+  @@map("service_categories")
+}
+
+model Service {
+  id               String              @id @default(uuid())
+  name             String
+  slug             String              @unique
+  shortDescription String
+  fullDescription  String
+  categoryId       String
+  featuredImage    String?
+  pricingModel     ServicePricingModel @default(CUSTOM_QUOTE)
+  price            Decimal?            @db.Decimal(12, 2)
+  currency         String              @default("USD")
+  isFeatured       Boolean             @default(false)
+  status           PublicationStatus   @default(DRAFT)
+  seoTitle         String?
+  seoDescription   String?
+  displayOrder     Int                 @default(0)
+  deletedAt        DateTime?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
+  category         ServiceCategory     @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  images           ServiceImage[]
+  features         ServiceFeature[]
+  inquiries        Inquiry[]
+
+  relatedFrom      ServiceRelated[]    @relation("ServiceRelationSource")
+  relatedTo        ServiceRelated[]    @relation("ServiceRelationTarget")
+
+  @@index([slug])
+  @@index([categoryId])
+  @@index([status])
+  @@index([isFeatured])
+  @@map("services")
+}
+
+model ServiceImage {
+  id           String   @id @default(uuid())
+  serviceId    String
+  url          String
+  altText      String?
+  displayOrder Int      @default(0)
+
+  service      Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@index([serviceId])
+  @@map("service_images")
+}
+
+model ServiceFeature {
+  id           String   @id @default(uuid())
+  serviceId    String
+  featureType  String   @default("feature") // 'feature', 'benefit', 'process_step'
+  title        String
+  description  String?
+  displayOrder Int      @default(0)
+
+  service      Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@index([serviceId])
+  @@map("service_features")
+}
+
+model ServiceRelated {
+  id               String   @id @default(uuid())
+  serviceId        String
+  relatedServiceId String
+
+  service          Service  @relation("ServiceRelationSource", fields: [serviceId], references: [id], onDelete: Cascade)
+  relatedService   Service  @relation("ServiceRelationTarget", fields: [relatedServiceId], references: [id], onDelete: Cascade)
+
+  @@unique([serviceId, relatedServiceId])
+  @@map("service_related_services")
+}
+
+// ==========================================
+// INQUIRIES & QUOTATIONS
+// ==========================================
+
+enum InquiryType {
+  PRODUCT
+  SERVICE
+  GENERAL
+  QUOTATION
+}
+
+enum InquiryStatus {
+  NEW
+  IN_PROGRESS
+  AWAITING_CUSTOMER
+  QUOTED
+  CONVERTED
+  CLOSED
+  SPAM
+}
+
+enum UrgencyLevel {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum ContactPreference {
+  EMAIL
+  PHONE
+  WHATSAPP
+}
+
+model Inquiry {
+  id               String            @id @default(uuid())
+  referenceNumber  String            @unique
+  type             InquiryType
+  status           InquiryStatus     @default(NEW)
+  urgency          UrgencyLevel      @default(MEDIUM)
+  customerName     String
+  email            String
+  phone            String?
+  company          String?
+  subject          String?
+  message          String
+  preferredContact ContactPreference @default(EMAIL)
+  assignedToId     String?
+  productId        String?
+  serviceId        String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  assignedTo       User?             @relation("InquiryAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  product          Product?          @relation("ProductDirectInquiries", fields: [productId], references: [id], onDelete: SetNull)
+  service          Service?          @relation(fields: [serviceId], references: [id], onDelete: SetNull)
+
+  items            InquiryItem[]
+  notes            InquiryNote[]
+  activity         InquiryActivity[]
+
+  @@index([referenceNumber])
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+  @@map("inquiries")
+}
+
+model InquiryItem {
+  id          String   @id @default(uuid())
+  inquiryId   String
+  productId   String?
+  productName String?
+  quantity    Int      @default(1)
+  notes       String?
+
+  inquiry     Inquiry  @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([inquiryId])
+  @@map("inquiry_items")
+}
+
+model InquiryNote {
+  id         String   @id @default(uuid())
+  inquiryId  String
+  authorId   String
+  content    String
+  createdAt  DateTime @default(now())
+
+  inquiry    Inquiry  @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+  author     User     @relation(fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@index([inquiryId])
+  @@map("inquiry_notes")
+}
+
+model InquiryActivity {
+  id         String   @id @default(uuid())
+  inquiryId  String
+  actorId    String?
+  actorName  String
+  action     String
+  details    String?
+  createdAt  DateTime @default(now())
+
+  inquiry    Inquiry  @relation(fields: [inquiryId], references: [id], onDelete: Cascade)
+
+  @@index([inquiryId])
+  @@map("inquiry_activity")
+}
+
+// ==========================================
+// CMS & CONTENT
+// ==========================================
+
+model Page {
+  id             String            @id @default(uuid())
+  title          String
+  slug           String            @unique
+  content        String
+  status         PublicationStatus @default(PUBLISHED)
+  seoTitle       String?
+  seoDescription String?
+  publishedAt    DateTime?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  sections       PageSection[]
+  revisions      PageRevision[]
+
+  @@index([slug])
+  @@map("pages")
+}
+
+model PageSection {
+  id           String   @id @default(uuid())
+  pageId       String
+  key          String   // e.g., 'hero', 'features', 'mission'
+  title        String?
+  content      Json?
+  displayOrder Int      @default(0)
+  isEnabled    Boolean  @default(true)
+
+  page         Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@index([pageId])
+  @@map("page_sections")
+}
+
+model PageRevision {
+  id        String   @id @default(uuid())
+  pageId    String
+  content   String
+  authorId  String?
+  createdAt DateTime @default(now())
+
+  page      Page     @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@index([pageId])
+  @@map("page_revisions")
+}
+
+model BlogCategory {
+  id        String     @id @default(uuid())
+  name      String
+  slug      String     @unique
+  posts     BlogPost[]
+
+  @@map("blog_categories")
+}
+
+model BlogTag {
+  id        String        @id @default(uuid())
+  name      String        @unique
+  slug      String        @unique
+  posts     BlogPostTag[]
+
+  @@map("blog_tags")
+}
+
+model BlogPost {
+  id             String            @id @default(uuid())
+  title          String
+  slug           String            @unique
+  excerpt        String
+  content        String
+  featuredImage  String?
+  authorName     String            @default("TRICLINIUM Team")
+  categoryId     String?
+  status         PublicationStatus @default(DRAFT)
+  seoTitle       String?
+  seoDescription String?
+  publishedAt    DateTime?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  category       BlogCategory?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  tags           BlogPostTag[]
+
+  @@index([slug])
+  @@index([status])
+  @@map("blog_posts")
+}
+
+model BlogPostTag {
+  id        String   @id @default(uuid())
+  postId    String
+  tagId     String
+
+  post      BlogPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag       BlogTag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, tagId])
+  @@map("blog_post_tags")
+}
+
+model Testimonial {
+  id           String            @id @default(uuid())
+  clientName   String
+  clientRole   String?
+  companyName  String?
+  clientAvatar String?
+  content      String
+  rating       Int               @default(5)
+  isFeatured   Boolean           @default(false)
+  status       PublicationStatus @default(PUBLISHED)
+  displayOrder Int               @default(0)
+  createdAt    DateTime          @default(now())
+
+  @@map("testimonials")
+}
+
+model FaqCategory {
+  id           String   @id @default(uuid())
+  name         String
+  displayOrder Int      @default(0)
+  faqs         Faq[]
+
+  @@map("faq_categories")
+}
+
+model Faq {
+  id           String       @id @default(uuid())
+  question     String
+  answer       String
+  category     String       @default("General")
+  categoryId   String?
+  displayOrder Int          @default(0)
+  isPublished  Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+
+  faqCategory  FaqCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  @@map("faqs")
+}
+
+model TeamMember {
+  id           String   @id @default(uuid())
+  name         String
+  role         String
+  bio          String?
+  avatarUrl    String?
+  displayOrder Int      @default(0)
+  isActive     Boolean  @default(true)
+
+  @@map("team_members")
+}
+
+// ==========================================
+// SYSTEM, CONFIG & MEDIA
+// ==========================================
+
+model WebsiteSetting {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt
+
+  @@map("website_settings")
+}
+
+model NavigationItem {
+  id           String           @id @default(uuid())
+  label        String
+  href         String
+  icon         String?
+  displayOrder Int              @default(0)
+  location     String           @default("header") // 'header', 'footer_quick', 'footer_services'
+  parentId     String?
+  isActive     Boolean          @default(true)
+
+  parent       NavigationItem?  @relation("NavHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children     NavigationItem[] @relation("NavHierarchy")
+
+  @@map("navigation_items")
+}
+
+model MediaAsset {
+  id           String   @id @default(uuid())
+  filename     String
+  originalName String
+  url          String
+  mimeType     String
+  size         Int
+  width        Int?
+  height       Int?
+  provider     String   @default("cloudinary") // 'cloudinary', 'blob', 'local'
+  uploadedById String?
+  createdAt    DateTime @default(now())
+
+  @@index([provider])
+  @@map("media_assets")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  userName   String   @default("System")
+  action     String   // e.g., 'PRODUCT_CREATED', 'INQUIRY_STATUS_CHANGED'
+  entityType String   // 'Product', 'Inquiry', 'Setting'
+  entityId   String?
+  details    Json?
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([entityType])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model Redirect {
+  id          String   @id @default(uuid())
+  sourcePath  String   @unique
+  targetPath  String
+  statusCode  Int      @default(301)
+  createdAt   DateTime @default(now())
+
+  @@map("redirects")
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(uuid())
+  eventName String
+  path      String
+  metadata  Json?
+  ipHash    String?
+  createdAt DateTime @default(now())
+
+  @@index([eventName])
+  @@index([createdAt])
+  @@map("analytics_events")
+}
