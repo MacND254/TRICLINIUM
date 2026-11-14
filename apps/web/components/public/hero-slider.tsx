@@ -57,15 +57,27 @@ export function HeroSlider({ slides }: HeroSliderProps) {
   const activeSlides = slides && slides.length > 0 ? slides : DEFAULT_SLIDES;
   const [currentIdx, setCurrentIdx] = useState(0);
 
+  // Change slide on each page refresh or visit, without auto-rotating on a timer
   useEffect(() => {
     if (activeSlides.length <= 1) return;
-    const interval = setInterval(() => {
-      setCurrentIdx((prev) => (prev + 1) % activeSlides.length);
-    }, 7000);
-    return () => clearInterval(interval);
+    try {
+      const storedIdx = sessionStorage.getItem('triclinium_slide_idx');
+      let nextIdx: number;
+      if (storedIdx !== null) {
+        nextIdx = (parseInt(storedIdx, 10) + 1) % activeSlides.length;
+      } else {
+        // Randomize initial visit slide
+        nextIdx = Math.floor(Math.random() * activeSlides.length);
+      }
+      sessionStorage.setItem('triclinium_slide_idx', nextIdx.toString());
+      setCurrentIdx(nextIdx);
+    } catch {
+      const randomIdx = Math.floor(Math.random() * activeSlides.length);
+      setCurrentIdx(randomIdx);
+    }
   }, [activeSlides.length]);
 
-  const slide = activeSlides[currentIdx];
+  const slide = activeSlides[currentIdx] || activeSlides[0];
 
   const prevSlide = () => {
     setCurrentIdx((prev) => (prev === 0 ? activeSlides.length - 1 : prev - 1));
