@@ -734,9 +734,22 @@ To learn how our team can design an optical coverage plan for your commercial fa
     },
   });
 
+  const slide1Content = {
+    headline: 'Advanced CCTV Surveillance & Smart Security Systems',
+    subheadline: 'High-Definition 4K Cameras • AI Motion Detection • Remote Smartphone Monitoring • 24/7 Wireless Alarms',
+    description: 'TRICLINIUM SYSTEMS delivers complete residential & commercial security solutions. From smart video doorbells and door cams to high-capacity 4K NVRs, wireless intruder alarm systems, and video intercoms across Kenya.',
+    imageUrl: 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&w=1920&q=85',
+    primaryCtaText: 'Explore Security Products',
+    primaryCtaLink: '/products',
+    secondaryCtaText: 'Get Free Security Quote',
+    secondaryCtaLink: '/contact',
+  };
+
   await prisma.pageSection.upsert({
     where: { id: 'seed-hero-slide-1' },
-    update: {},
+    update: {
+      content: slide1Content,
+    },
     create: {
       id: 'seed-hero-slide-1',
       pageId: homePage.id,
@@ -744,22 +757,26 @@ To learn how our team can design an optical coverage plan for your commercial fa
       title: 'Primary Hero Slide',
       displayOrder: 1,
       isEnabled: true,
-      content: {
-        headline: 'Enterprise 4K AI CCTV Surveillance & Intelligent Alarms',
-        subheadline: 'Zero False Alarms • ColorNight Vision • Military-Grade Encryption',
-        description: 'Deploy advanced 4K Ultra-HD security cameras, high-capacity NVRs, and smart wireless intruder alarm hubs with 24/7 emergency dispatch.',
-        imageUrl: 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&w=1600&q=80',
-        primaryCtaText: 'Explore CCTV Catalog',
-        primaryCtaLink: '/products',
-        secondaryCtaText: 'Request Security Quote',
-        secondaryCtaLink: '/contact',
-      },
+      content: slide1Content,
     },
   });
 
+  const slide2Content = {
+    headline: 'Smart Home Alarms, Video Doorbells & Door Cams',
+    subheadline: 'Triple-Path 4G Cellular Redundancy • Pet-Immune Motion Radar • Loud 115dB Sirens',
+    description: 'Defend your home perimeter with wire-free door cameras, 2K video doorbells with two-way talk, smart alarm hubs, and solar sirens that alert you before intruders enter.',
+    imageUrl: 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&w=1920&q=85',
+    primaryCtaText: 'View Alarm Systems',
+    primaryCtaLink: '/products',
+    secondaryCtaText: 'Installation Services',
+    secondaryCtaLink: '/services',
+  };
+
   await prisma.pageSection.upsert({
     where: { id: 'seed-hero-slide-2' },
-    update: {},
+    update: {
+      content: slide2Content,
+    },
     create: {
       id: 'seed-hero-slide-2',
       pageId: homePage.id,
@@ -767,74 +784,98 @@ To learn how our team can design an optical coverage plan for your commercial fa
       title: 'Secondary Hero Slide',
       displayOrder: 2,
       isEnabled: true,
-      content: {
-        headline: 'Smart Home Alarms with Triple-Path 4G Cellular Redundancy',
-        subheadline: 'Wireless Zones • Pet-Immune Dual Radar • Instant Smartphone Alerts',
-        description: 'Defend your property boundaries with solar-powered outdoor PIR detectors, tamper sensors, and 105dB strobe sirens that stop intruders before entry.',
-        imageUrl: 'https://images.unsplash.com/photo-1558002038-1055907df827?auto=format&fit=crop&w=1600&q=80',
-        primaryCtaText: 'View Alarm Systems',
-        primaryCtaLink: '/products',
-        secondaryCtaText: 'Installation Services',
-        secondaryCtaLink: '/services',
-      },
+      content: slide2Content,
     },
   });
 
+  const slide3Content = {
+    headline: 'Video Intercoms, 360° Nanny Cams & Whole-Home Mesh Wi-Fi',
+    subheadline: 'Touchscreen Gate Release • Baby Crying Detection • Zero-Buffering 4K CCTV Streaming',
+    description: 'Screen visitors at your gate with 7-inch touch monitors, monitor children with smart pan-tilt nanny cameras, and eliminate Wi-Fi dead zones with structured CAT6 cabling.',
+    imageUrl: 'https://images.unsplash.com/photo-1586771107445-d3ca888129ff?auto=format&fit=crop&w=1920&q=85',
+    primaryCtaText: 'Explore All Systems',
+    primaryCtaLink: '/products',
+    secondaryCtaText: 'Request Site Survey',
+    secondaryCtaLink: '/contact',
+  };
+
+  await prisma.pageSection.upsert({
+    where: { id: 'seed-hero-slide-3' },
+    update: {
+      content: slide3Content,
+    },
+    create: {
+      id: 'seed-hero-slide-3',
+      pageId: homePage.id,
+      key: 'hero_slide',
+      title: 'Tertiary Hero Slide',
+      displayOrder: 3,
+      isEnabled: true,
+      content: slide3Content,
+    },
+  });
+
+  const whyUsPillars = [
+    {
+      title: 'Forensic 4K Ultra-HD Clarity',
+      description: 'Capture facial features and license plates with crystal-clear 3840x2160 resolution and full-spectrum color night-vision up to 50 meters.',
+      icon: 'Camera',
+    },
+    {
+      title: 'DeepLearning Zero False Alarms',
+      description: 'Neural edge processors filter out foliage, rain, and pets to alert security solely on genuine human and vehicular threats.',
+      icon: 'ShieldCheck',
+    },
+    {
+      title: 'Zero Cloud Fees & 100% On-Premise',
+      description: 'Full ownership of your video footage. High-capacity local NVR RAID storage with zero monthly fees and encrypted remote mobile access.',
+      icon: 'Lock',
+    },
+    {
+      title: 'Triple-Path Alarm Redundancy',
+      description: 'Dual 4G LTE SIM backup plus Wi-Fi and Ethernet ensures alarm dispatch signals reach your phone even if power lines are severed.',
+      icon: 'Radio',
+    },
+  ];
+
   await prisma.pageSection.upsert({
     where: { id: 'seed-why-us-section' },
-    update: {},
+    update: {
+      title: 'Why Property Owners Rely on TRICLINIUM SYSTEMS',
+      content: { pillars: whyUsPillars },
+    },
     create: {
       id: 'seed-why-us-section',
       pageId: homePage.id,
       key: 'why_us',
-      title: 'Why Global Security Directors Rely on TRICLINIUM',
-      displayOrder: 3,
+      title: 'Why Property Owners Rely on TRICLINIUM SYSTEMS',
+      displayOrder: 4,
       isEnabled: true,
-      content: {
-        pillars: [
-          {
-            title: 'Forensic 4K Ultra-HD Clarity',
-            description: 'Capture facial features and license plates with crystal-clear 3840x2160 resolution and full-spectrum color night-vision up to 50 meters.',
-            icon: 'Camera',
-          },
-          {
-            title: 'DeepLearning Zero False Alarms',
-            description: 'Neural edge processors filter out foliage, rain, and pets to alert security solely on genuine human and vehicular threats.',
-            icon: 'ShieldCheck',
-          },
-          {
-            title: 'Zero Cloud Fees & 100% On-Premise',
-            description: 'Full ownership of your video footage. High-capacity local NVR RAID storage with zero monthly fees and encrypted remote mobile access.',
-            icon: 'Lock',
-          },
-          {
-            title: 'Triple-Path Alarm Redundancy',
-            description: 'Dual 4G LTE SIM backup plus Wi-Fi and Ethernet ensures alarm dispatch signals reach emergency personnel even if power lines are severed.',
-            icon: 'Radio',
-          },
-        ],
-      },
+      content: { pillars: whyUsPillars },
     },
   });
 
+  const statsList = [
+    { label: 'Cameras & Sensors Installed', value: '2,500+' },
+    { label: 'System Uptime Reliability', value: '99.98%' },
+    { label: 'Emergency Alert Speed', value: '< 15s' },
+    { label: 'Certified Hardware Warranty', value: '1-Year' },
+  ];
+
   await prisma.pageSection.upsert({
     where: { id: 'seed-stats-section' },
-    update: {},
+    update: {
+      title: 'Security Milestone Statistics',
+      content: { stats: statsList },
+    },
     create: {
       id: 'seed-stats-section',
       pageId: homePage.id,
       key: 'stats',
-      title: 'Key Security Milestones',
-      displayOrder: 4,
+      title: 'Security Milestone Statistics',
+      displayOrder: 5,
       isEnabled: true,
-      content: {
-        stats: [
-          { label: 'Cameras & Sensors Active', value: '15,000+' },
-          { label: 'System Hardware Uptime', value: '99.98%' },
-          { label: 'Central Alarm Dispatch', value: '< 20s' },
-          { label: 'Certified Hardware Warranty', value: '5-Year' },
-        ],
-      },
+      content: { stats: statsList },
     },
   });
 

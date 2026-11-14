@@ -134,7 +134,7 @@ const textareaCls = `${inputCls} min-h-[80px] resize-y`;
 
 function HeroEditor({ content, setContent }: { content: Record<string, unknown>; setContent: (c: Record<string, unknown>) => void }) {
   const slides: HeroSlide[] = Array.isArray(content.slides) ? (content.slides as HeroSlide[]) : [
-    { headline: 'Engineering Excellence', subheadline: 'Precision • Innovation • Reliability', description: 'Industrial solutions built to last.', imageUrl: '', primaryCTA: { label: 'Explore Products', href: '/products' }, secondaryCTA: { label: 'Request Quote', href: '/contact' }, isActive: true }
+    { headline: 'Advanced CCTV Surveillance & Smart Security Systems', subheadline: 'Zero False Alarms • ColorNight Vision • Wireless Redundancy', description: 'Intelligent security solutions designed for modern homes and businesses.', imageUrl: 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&w=1920&q=85', primaryCTA: { label: 'Explore Products', href: '/products' }, secondaryCTA: { label: 'Request Quote', href: '/contact' }, isActive: true }
   ];
 
   const updateSlide = (idx: number, field: string, value: unknown) => {
