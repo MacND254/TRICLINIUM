@@ -104,15 +104,15 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     },
     ...(hasRole('SUPER_ADMIN')
       ? [
-          {
-            title: 'Administration & Security',
-            items: [
-              { label: 'Administrators', href: '/admin/users', icon: Users },
-              { label: 'Audit Logs', href: '/admin/audit-logs', icon: Activity },
-              { label: 'Mail Gateway & Settings', href: '/admin/settings', icon: Settings },
-            ],
-          },
-        ]
+        {
+          title: 'Administration & Security',
+          items: [
+            { label: 'Administrators', href: '/admin/users', icon: Users },
+            { label: 'Audit Logs', href: '/admin/audit-logs', icon: Activity },
+            { label: 'Mail Gateway & Settings', href: '/admin/settings', icon: Settings },
+          ],
+        },
+      ]
       : []),
   ];
 
@@ -139,9 +139,8 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
 
       {/* Sidebar */}
       <aside
-        className={`${
-          mobileSidebarOpen ? 'block' : 'hidden'
-        } md:flex w-full md:w-64 bg-slate-900 border-r border-slate-800 flex-col justify-between shrink-0 h-auto md:h-screen md:sticky md:top-0 z-30`}
+        className={`${mobileSidebarOpen ? 'block' : 'hidden'
+          } md:flex w-full md:w-64 bg-slate-900 border-r border-slate-800 flex-col justify-between shrink-0 h-auto md:h-screen md:sticky md:top-0 z-30`}
       >
         <div className="p-5 overflow-y-auto space-y-6 flex-1">
           {/* Logo Header */}
@@ -173,11 +172,10 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
                         key={item.href}
                         href={item.href}
                         onClick={() => setMobileSidebarOpen(false)}
-                        className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
-                          isActive
-                            ? 'bg-sky-600 text-white font-semibold shadow-sm'
-                            : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60'
-                        }`}
+                        className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${isActive
+                          ? 'bg-sky-600 text-white font-semibold shadow-sm'
+                          : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/60'
+                          }`}
                       >
                         <Icon className="h-4 w-4 shrink-0" />
                         <span>{item.label}</span>

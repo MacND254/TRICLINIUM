@@ -11,7 +11,6 @@ import {
   ChevronRight,
   Phone,
   Mail,
-  ShieldCheck,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/public/theme-toggle';
@@ -63,26 +62,30 @@ export function Header() {
       {/* Main navigation header */}
       <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-8">
         {/* Brand Logo */}
-        <Link href="/" className="flex items-center space-x-3 group">
+        <Link href="/" className="flex items-center group shrink-0">
           {settings.logoUrl ? (
-            <img
-              src={settings.logoUrl}
-              alt={settings.siteName}
-              className="h-9 w-auto max-w-[140px] object-contain rounded"
-            />
+            <div className="flex items-center h-16 py-1.5">
+              <img
+                src={settings.logoUrl}
+                alt={settings.siteName || 'TRICLINIUM SYSTEMS'}
+                className="max-h-12 h-auto w-auto max-w-[200px] object-contain object-left shrink-0 transition-transform duration-200 group-hover:scale-[1.02]"
+              />
+            </div>
           ) : (
-            <div className="h-9 w-9 rounded-md bg-sky-600 flex items-center justify-center text-white font-extrabold text-base shadow-sm group-hover:bg-sky-500 transition-colors">
-              TS
+            <div className="flex items-center gap-2.5">
+              <div className="h-9 w-9 rounded-md bg-sky-600 flex items-center justify-center text-white font-extrabold text-sm shadow-sm group-hover:bg-sky-500 transition-colors shrink-0">
+                TS
+              </div>
+              <div className="flex flex-col leading-tight">
+                <span className="text-base font-extrabold tracking-tight text-slate-900 dark:text-white whitespace-nowrap">
+                  {settings.siteName || 'TRICLINIUM SYSTEMS'}
+                </span>
+                <span className="text-[9px] tracking-widest text-sky-600 dark:text-sky-400 uppercase font-bold whitespace-nowrap">
+                  Security &amp; Smart Tech
+                </span>
+              </div>
             </div>
           )}
-          <div className="flex flex-col">
-            <span className="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-              {settings.siteName || 'TRICLINIUM SYSTEMS'}
-            </span>
-            <span className="text-[10px] tracking-wider text-sky-600 dark:text-sky-400 uppercase -mt-0.5 font-bold">
-              Security &amp; Smart Tech
-            </span>
-          </div>
         </Link>
 
         {/* Desktop Navigation Links */}

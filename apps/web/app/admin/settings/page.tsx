@@ -360,7 +360,7 @@ export default function SettingsPage() {
                 </Field>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <Field label="Website Brand Logo" hint="Upload company logo (PNG/SVG transparent recommended).">
+                <Field label="Website Brand Logo" hint="Upload company logo (PNG, SVG, or JPG). Automatically scaled to fit within the 64px nav menu height.">
                   <div className="flex items-center gap-4 p-3 rounded-lg border border-slate-700 bg-slate-800/80">
                     {settings.logoUrl ? (
                       <div className="relative h-14 w-28 rounded-md bg-slate-900 border border-slate-700 p-1 flex items-center justify-center shrink-0 overflow-hidden">

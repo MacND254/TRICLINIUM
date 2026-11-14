@@ -19,15 +19,17 @@ export function Footer() {
               {settings.logoUrl ? (
                 <img
                   src={settings.logoUrl}
-                  alt={settings.siteName}
-                  className="h-8 w-auto max-w-[120px] object-contain rounded"
+                  alt={settings.siteName || 'TRICLINIUM SYSTEMS'}
+                  className="max-h-12 h-auto w-auto max-w-[220px] object-contain object-left shrink-0"
                 />
               ) : (
-                <div className="h-8 w-8 rounded bg-sky-600 flex items-center justify-center text-white font-extrabold text-base">
-                  TS
-                </div>
+                <>
+                  <div className="h-8 w-8 rounded bg-sky-600 flex items-center justify-center text-white font-extrabold text-base shrink-0">
+                    TS
+                  </div>
+                  <span className="text-xl font-extrabold tracking-tight text-white">{settings.siteName || 'TRICLINIUM SYSTEMS'}</span>
+                </>
               )}
-              <span className="text-xl font-extrabold tracking-tight text-white">{settings.siteName || 'TRICLINIUM SYSTEMS'}</span>
             </div>
             <p className="text-sm text-slate-400 leading-relaxed max-w-sm">
               {settings.metaDescription || "Kenya's trusted supplier and certified installer of 4K AI CCTV surveillance systems, smart video doorbells, door cams, wireless intruder alarms, video intercoms, whole-home mesh Wi-Fi, and electric fencing."}

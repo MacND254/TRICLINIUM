@@ -69,9 +69,12 @@ export async function uploadMedia(file: Express.Multer.File): Promise<UploadResu
     }
   }
 
-  // Local/Dev persistent fallback: store in apps/web/public/uploads if exists or return data-uri for instant preview
+  // Local/Dev persistent fallback: store in apps/web/public/uploads
   try {
-    const uploadDir = path.resolve(process.cwd(), 'apps/web/public/uploads');
+    let uploadDir = path.resolve(process.cwd(), 'apps/web/public/uploads');
+    if (!fs.existsSync(path.resolve(process.cwd(), 'apps/web')) && fs.existsSync(path.resolve(process.cwd(), '../web/public'))) {
+      uploadDir = path.resolve(process.cwd(), '../web/public/uploads');
+    }
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
