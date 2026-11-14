@@ -1,13 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Mail, Phone, MapPin, Clock, CheckCircle, Loader2, Send } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Mail, Phone, MapPin, Clock, CheckCircle, Loader2, Send, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { fetchApi } from '@/lib/api-client';
 import { usePublicSettings } from '@/lib/settings-context';
 import { handleKenyanPhoneChange, formatKenyanPhone } from '@/lib/phone';
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function ContactClient() {
   const { settings } = usePublicSettings();
@@ -22,9 +24,52 @@ export function ContactClient() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submittedRef, setSubmittedRef] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
+
+  // Rate limit cooldown countdown
+  useEffect(() => {
+    if (cooldownSeconds <= 0) return;
+    const interval = setInterval(() => {
+      setCooldownSeconds((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [cooldownSeconds]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (cooldownSeconds > 0) return;
+
+    const cleanName = customerName.trim();
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanSubject = subject.trim();
+    const cleanMessage = message.trim();
+
+    if (cleanName.length < 2) {
+      setErrorMsg('Full name must be at least 2 characters.');
+      return;
+    }
+
+    if (!cleanEmail || !EMAIL_REGEX.test(cleanEmail)) {
+      setErrorMsg('Please enter a valid email address.');
+      return;
+    }
+
+    if (cleanSubject.length < 3) {
+      setErrorMsg('Subject must be at least 3 characters.');
+      return;
+    }
+
+    if (cleanMessage.length < 15) {
+      setErrorMsg('Message must be at least 15 characters to provide adequate detail.');
+      return;
+    }
+
     setIsSubmitting(true);
     setErrorMsg(null);
 
@@ -32,19 +77,23 @@ export function ContactClient() {
       const res = await fetchApi('/contact', {
         method: 'POST',
         body: JSON.stringify({
-          customerName,
-          email,
+          customerName: cleanName,
+          email: cleanEmail,
           phone: phone ? formatKenyanPhone(phone) : undefined,
-          company: company || undefined,
-          subject,
-          message,
+          company: company.trim() || undefined,
+          subject: cleanSubject,
+          message: cleanMessage,
           preferredContact,
         }),
       });
 
       setSubmittedRef(res.referenceNumber);
     } catch (err: any) {
-      setErrorMsg(err.message || 'Failed to submit message. Please try again.');
+      const msg = err.message || 'Failed to submit message. Please try again.';
+      setErrorMsg(msg);
+      if (err.status === 429 || msg.toLowerCase().includes('limit') || msg.toLowerCase().includes('slow down')) {
+        setCooldownSeconds(err.retryAfter || 60);
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -238,15 +287,27 @@ export function ContactClient() {
               />
             </div>
 
+            {cooldownSeconds > 0 && (
+              <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 text-amber-800 dark:text-amber-300 text-xs flex items-center gap-2">
+                <Clock className="h-4 w-4 shrink-0 text-amber-500 animate-pulse" />
+                <span>Rate limit active. Next submission available in <strong>{cooldownSeconds}s</strong>.</span>
+              </div>
+            )}
+
             <Button
               type="submit"
-              disabled={isSubmitting}
-              className="w-full bg-sky-600 hover:bg-sky-500 text-white font-semibold flex items-center justify-center gap-2"
+              disabled={isSubmitting || cooldownSeconds > 0}
+              className="w-full bg-sky-600 hover:bg-sky-500 text-white font-semibold flex items-center justify-center gap-2 disabled:opacity-50"
             >
               {isSubmitting ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
                   <span>Transmitting Inquiry...</span>
+                </>
+              ) : cooldownSeconds > 0 ? (
+                <>
+                  <Clock className="h-4 w-4" />
+                  <span>Cooldown ({cooldownSeconds}s)</span>
                 </>
               ) : (
                 <>

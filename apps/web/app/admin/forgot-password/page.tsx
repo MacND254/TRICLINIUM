@@ -1,31 +1,61 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Mail, ArrowLeft, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { Mail, ArrowLeft, Loader2, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { fetchApi } from '@/lib/api-client';
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
+
+  // Rate limit cooldown countdown
+  useEffect(() => {
+    if (cooldownSeconds <= 0) return;
+    const interval = setInterval(() => {
+      setCooldownSeconds((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [cooldownSeconds]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (cooldownSeconds > 0) return;
+
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !EMAIL_REGEX.test(cleanEmail)) {
+      setErrorMsg('Please enter a valid administrator email address.');
+      return;
+    }
+
     setIsLoading(true);
     setErrorMsg(null);
 
     try {
       await fetchApi('/admin/auth/forgot-password', {
         method: 'POST',
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email: cleanEmail }),
       });
       setIsSuccess(true);
     } catch (err: any) {
-      setErrorMsg(err.message || 'Failed to submit reset request');
+      const msg = err.message || 'Failed to submit reset request';
+      setErrorMsg(msg);
+      if (err.status === 429 || msg.toLowerCase().includes('too many') || msg.toLowerCase().includes('limit')) {
+        setCooldownSeconds(err.retryAfter || 60);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -56,8 +86,18 @@ export default function ForgotPasswordPage() {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               {errorMsg && (
-                <div className="p-3 rounded bg-rose-950/60 border border-rose-800 text-rose-300 text-xs">
-                  {errorMsg}
+                <div className="p-3 rounded bg-rose-950/60 border border-rose-800 text-rose-300 text-xs flex items-start gap-2">
+                  <AlertCircle className="h-4 w-4 shrink-0 text-rose-400 mt-0.5" />
+                  <span>{errorMsg}</span>
+                </div>
+              )}
+
+              {cooldownSeconds > 0 && (
+                <div className="p-3 rounded-lg bg-amber-950/60 border border-amber-800 text-amber-300 text-xs flex items-center gap-2.5">
+                  <Clock className="h-4 w-4 shrink-0 text-amber-400 animate-pulse" />
+                  <span>
+                    Rate limit active. Please wait <strong>{cooldownSeconds}s</strong> before requesting another link.
+                  </span>
                 </div>
               )}
 
@@ -71,10 +111,11 @@ export default function ForgotPasswordPage() {
                   <Input
                     type="email"
                     required
+                    disabled={isLoading || cooldownSeconds > 0}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     placeholder="admin@triclinium.com"
-                    className="bg-slate-950 border-slate-800 text-white placeholder:text-slate-500 pl-10 text-xs h-10"
+                    className="bg-slate-950 border-slate-800 text-white placeholder:text-slate-500 pl-10 text-xs h-10 disabled:opacity-50"
                   />
                   <Mail className="h-4 w-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
                 </div>
@@ -82,10 +123,16 @@ export default function ForgotPasswordPage() {
 
               <Button
                 type="submit"
-                disabled={isLoading}
-                className="w-full bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs h-10"
+                disabled={isLoading || cooldownSeconds > 0}
+                className="w-full bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs h-10 disabled:opacity-50"
               >
-                {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Send Recovery Link'}
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : cooldownSeconds > 0 ? (
+                  `Cooldown (${cooldownSeconds}s)`
+                ) : (
+                  'Send Recovery Link'
+                )}
               </Button>
             </form>
           )}

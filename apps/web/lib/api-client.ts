@@ -8,13 +8,21 @@ export class ApiError extends Error {
   code: string;
   status: number;
   details?: any;
+  retryAfter?: number;
 
-  constructor(message: string, code: string = 'API_ERROR', status: number = 500, details?: any) {
+  constructor(
+    message: string,
+    code: string = 'API_ERROR',
+    status: number = 500,
+    details?: any,
+    retryAfter?: number
+  ) {
     super(message);
     this.name = 'ApiError';
     this.code = code;
     this.status = status;
     this.details = details;
+    this.retryAfter = retryAfter;
   }
 }
 
@@ -43,7 +51,9 @@ export async function fetchApi<T = any>(
     if (!res.ok) {
       const errorMsg = data?.error?.message || data?.message || `Request failed with status ${res.status}`;
       const errorCode = data?.error?.code || 'REQUEST_FAILED';
-      throw new ApiError(errorMsg, errorCode, res.status, data?.error?.details);
+      const retryHeader = res.headers.get('Retry-After');
+      const retryAfter = data?.error?.retryAfter || (retryHeader ? parseInt(retryHeader, 10) : undefined);
+      throw new ApiError(errorMsg, errorCode, res.status, data?.error?.details, retryAfter);
     }
 
     return (data?.data ?? data) as T;

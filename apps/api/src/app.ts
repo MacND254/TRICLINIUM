@@ -6,6 +6,8 @@ import swaggerUi from 'swagger-ui-express';
 import { config } from './config';
 import { openApiSpec } from './docs/openapi';
 import { errorHandler } from './middleware/error-handler';
+import { sanitizeInput } from './middleware/sanitize';
+import { globalApiLimiter } from './middleware/rate-limit';
 
 // Modular Routers
 import { authRouter } from './modules/auth/auth.router';
@@ -20,11 +22,27 @@ import { settingsRouter } from './modules/settings/settings.router';
 export function createApp(): Express {
   const app = express();
 
-  // Security HTTP headers
+  // Trust reverse proxy (Docker, Nginx, Next.js rewrites, Cloudflare) for accurate client IP resolution
+  app.set('trust proxy', 1);
+
+  // Disable technology footprint disclosure header
+  app.disable('x-powered-by');
+
+  // OWASP Hardened HTTP Headers via Helmet
   app.use(
     helmet({
       contentSecurityPolicy: false, // Allows Swagger UI and frontend assets
       crossOriginResourcePolicy: { policy: 'cross-origin' },
+      crossOriginEmbedderPolicy: false,
+      frameguard: { action: 'sameorigin' },
+      hsts: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true,
+      },
+      noSniff: true,
+      referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+      xssFilter: true,
     })
   );
 
@@ -37,7 +55,10 @@ export function createApp(): Express {
         if (config.cors.origins.includes(origin) || config.cors.origins.includes('*')) {
           return callback(null, true);
         }
-        return callback(null, true); // Dev convenience
+        if (!config.isProduction) {
+          return callback(null, true); // Dev convenience
+        }
+        return callback(new Error('CORS origin blocked by security policy'));
       },
       credentials: true,
       methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -45,10 +66,13 @@ export function createApp(): Express {
     })
   );
 
-  // Body and cookie parsing
-  app.use(express.json({ limit: '10mb' }));
-  app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+  // Payload body limits (restricted from 10mb to 2mb to prevent memory exhaustion DoS)
+  app.use(express.json({ limit: '2mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '2mb' }));
   app.use(cookieParser());
+
+  // Input Sanitization: strip null bytes, XSS script injection, and prototype pollution attempts
+  app.use(sanitizeInput);
 
   // Health check endpoint
   app.get('/api/v1/health', (req: Request, res: Response) => {
@@ -63,8 +87,9 @@ export function createApp(): Express {
   // OpenAPI Documentation
   app.use('/api/v1/docs', swaggerUi.serve, swaggerUi.setup(openApiSpec));
 
-  // Mount API Modules under /api/v1
+  // Mount API Modules under /api/v1 with Global Rate Limiting
   const v1 = express.Router();
+  v1.use(globalApiLimiter);
   v1.use(authRouter);
   v1.use('/admin/auth', authRouter);
   v1.use('/auth', authRouter);

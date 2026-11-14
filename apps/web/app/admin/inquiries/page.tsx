@@ -12,6 +12,7 @@ import {
   Clock,
   CheckCircle,
   AlertTriangle,
+  AlertCircle,
   Loader2,
   Plus,
   X,
@@ -43,6 +44,7 @@ export default function AdminInquiriesPage() {
   // Custom Quote Modal State
   const [showQuoteModal, setShowQuoteModal] = useState(false);
   const [isSubmittingQuote, setIsSubmittingQuote] = useState(false);
+  const [modalError, setModalError] = useState<string | null>(null);
   const [quoteCustomerName, setQuoteCustomerName] = useState('');
   const [quoteEmail, setQuoteEmail] = useState('');
   const [quotePhone, setQuotePhone] = useState('');
@@ -106,9 +108,43 @@ export default function AdminInquiriesPage() {
 
   const handleCreateCustomQuote = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!quoteCustomerName.trim() || !quoteEmail.trim()) {
-      alert('Client Name and Email are required.');
+    setModalError(null);
+
+    const cleanName = quoteCustomerName.trim();
+    const cleanEmail = quoteEmail.trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (cleanName.length < 2) {
+      setModalError('Customer Name must be at least 2 characters.');
       return;
+    }
+
+    if (!cleanEmail || !emailRegex.test(cleanEmail)) {
+      setModalError('Please enter a valid client email address.');
+      return;
+    }
+
+    if (quoteItems.length === 0) {
+      setModalError('Please include at least one quote line item.');
+      return;
+    }
+
+    for (let i = 0; i < quoteItems.length; i++) {
+      const itm = quoteItems[i];
+      if (!itm.description.trim()) {
+        setModalError(`Line item #${i + 1} requires a valid description.`);
+        return;
+      }
+      const qtyNum = Number(itm.qty);
+      if (isNaN(qtyNum) || qtyNum < 1) {
+        setModalError(`Line item #${i + 1} quantity must be a positive integer.`);
+        return;
+      }
+      const priceNum = Number(itm.unitPrice);
+      if (isNaN(priceNum) || priceNum < 0) {
+        setModalError(`Line item #${i + 1} unit price cannot be negative.`);
+        return;
+      }
     }
 
     setIsSubmittingQuote(true);
@@ -116,15 +152,19 @@ export default function AdminInquiriesPage() {
       const res = await fetchApi('/admin/inquiries/custom-quote', {
         method: 'POST',
         body: JSON.stringify({
-          customerName: quoteCustomerName,
-          email: quoteEmail,
+          customerName: cleanName,
+          email: cleanEmail,
           phone: quotePhone ? formatKenyanPhone(quotePhone) : undefined,
-          company: quoteCompany || undefined,
-          subject: quoteSubject,
-          notes: quoteNotes,
-          paymentTerms: quotePaymentTerms,
-          validUntil: quoteValidUntil,
-          items: quoteItems,
+          company: quoteCompany.trim() || undefined,
+          subject: quoteSubject.trim(),
+          notes: quoteNotes.trim(),
+          paymentTerms: quotePaymentTerms.trim(),
+          validUntil: quoteValidUntil.trim(),
+          items: quoteItems.map((itm) => ({
+            description: itm.description.trim(),
+            qty: Math.max(1, Math.round(Number(itm.qty))),
+            unitPrice: Math.max(0, Number(itm.unitPrice)),
+          })),
         }),
       });
 
@@ -135,7 +175,7 @@ export default function AdminInquiriesPage() {
         await loadInquiries();
       }
     } catch (err: any) {
-      alert(err.message || 'Failed to create quotation');
+      setModalError(err.message || 'Failed to create quotation');
     } finally {
       setIsSubmittingQuote(false);
     }
@@ -339,6 +379,13 @@ export default function AdminInquiriesPage() {
             </div>
 
             <form onSubmit={handleCreateCustomQuote} className="space-y-5">
+              {modalError && (
+                <div className="p-3 rounded-lg bg-rose-950/60 border border-rose-800 text-rose-300 text-xs flex items-start gap-2">
+                  <AlertCircle className="h-4 w-4 shrink-0 text-rose-400 mt-0.5" />
+                  <span>{modalError}</span>
+                </div>
+              )}
+
               {/* Client Info Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>

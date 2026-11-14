@@ -3,6 +3,7 @@ import multer from 'multer';
 import { MediaController } from './media.controller';
 import { authenticate } from '../../middleware/auth';
 import { requirePermission } from '../../middleware/rbac';
+import { uploadLimiter } from '../../middleware/rate-limit';
 import { PERMISSIONS } from '@triclinium/shared';
 
 export const mediaRouter = Router();
@@ -23,6 +24,7 @@ mediaRouter.post(
   '/admin/media/upload',
   authenticate,
   requirePermission(PERMISSIONS.MEDIA_UPLOAD),
+  uploadLimiter,
   upload.single('file'),
   MediaController.upload
 );

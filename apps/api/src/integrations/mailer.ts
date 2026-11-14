@@ -8,6 +8,16 @@ export interface MailPayload {
   text?: string;
 }
 
+export function escapeHtml(str?: string | null): string {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 // Get SMTP config from individual DB settings keys at runtime
 export async function getSmtpConfig() {
   const settings = await prisma.websiteSetting.findMany({
@@ -78,6 +88,13 @@ export function generateClientQuotationEmail(data: {
   paymentTerms?: string;
   phone?: string;
 }) {
+  const safeClientName = escapeHtml(data.clientName);
+  const safeQuoteRef = escapeHtml(data.quoteRef);
+  const safeDate = escapeHtml(data.date);
+  const safeValidUntil = escapeHtml(data.validUntil);
+  const safeNotes = escapeHtml(data.notes);
+  const safePaymentTerms = escapeHtml(data.paymentTerms);
+
   const subtotal = data.items.reduce((acc, i) => acc + (i.qty * i.unitPrice), 0);
   const vat = Math.round(subtotal * (data.taxRate / 100));
   const grandTotal = subtotal + vat;
@@ -86,10 +103,10 @@ export function generateClientQuotationEmail(data: {
     .map(
       (item) => `
       <tr style="border-bottom: 1px solid #e2e8f0;">
-        <td style="padding: 10px 12px; font-size: 13px; color: #1e293b;">${item.description}</td>
-        <td style="padding: 10px 12px; font-size: 13px; color: #1e293b; text-align: center;">${item.qty}</td>
-        <td style="padding: 10px 12px; font-size: 13px; color: #1e293b; text-align: right;">Ksh ${item.unitPrice.toLocaleString()}</td>
-        <td style="padding: 10px 12px; font-size: 13px; font-weight: 600; color: #0284c7; text-align: right;">Ksh ${(item.qty * item.unitPrice).toLocaleString()}</td>
+        <td style="padding: 10px 12px; font-size: 13px; color: #1e293b;">${escapeHtml(item.description)}</td>
+        <td style="padding: 10px 12px; font-size: 13px; color: #1e293b; text-align: center;">${Number(item.qty) || 1}</td>
+        <td style="padding: 10px 12px; font-size: 13px; color: #1e293b; text-align: right;">Ksh ${(Number(item.unitPrice) || 0).toLocaleString()}</td>
+        <td style="padding: 10px 12px; font-size: 13px; font-weight: 600; color: #0284c7; text-align: right;">Ksh ${((Number(item.qty) || 1) * (Number(item.unitPrice) || 0)).toLocaleString()}</td>
       </tr>`
     )
     .join('');
@@ -103,18 +120,18 @@ export function generateClientQuotationEmail(data: {
       </div>
       <div style="text-align: right;">
         <span style="background: #e0f2fe; color: #0369a1; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 700;">OFFICIAL QUOTATION</span>
-        <p style="margin: 6px 0 0 0; font-size: 13px; color: #475569; font-weight: 600;">Ref: ${data.quoteRef}</p>
+        <p style="margin: 6px 0 0 0; font-size: 13px; color: #475569; font-weight: 600;">Ref: ${safeQuoteRef}</p>
       </div>
     </div>
 
-    <p style="font-size: 15px; color: #1e293b; margin: 0 0 16px 0;">Dear <strong>${data.clientName}</strong>,</p>
+    <p style="font-size: 15px; color: #1e293b; margin: 0 0 16px 0;">Dear <strong>${safeClientName}</strong>,</p>
     <p style="font-size: 13px; color: #475569; line-height: 1.6; margin: 0 0 20px 0;">
       Thank you for contacting TRICLINIUM SYSTEMS. Please find below the tailored quotation for your security and surveillance requirements:
     </p>
 
     <div style="background: #f8fafc; border-radius: 8px; padding: 14px; margin-bottom: 20px; font-size: 12px; color: #475569;">
-      <p style="margin: 0 0 4px 0;"><strong>Quotation Date:</strong> ${data.date}</p>
-      <p style="margin: 0;"><strong>Valid Until:</strong> ${data.validUntil} (30 Days)</p>
+      <p style="margin: 0 0 4px 0;"><strong>Quotation Date:</strong> ${safeDate}</p>
+      <p style="margin: 0;"><strong>Valid Until:</strong> ${safeValidUntil} (30 Days)</p>
     </div>
 
     <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
@@ -137,16 +154,16 @@ export function generateClientQuotationEmail(data: {
       <p style="margin: 8px 0 0 0; font-size: 18px; font-weight: 800; color: #0284c7;">Total (KES): Ksh ${grandTotal.toLocaleString()}</p>
     </div>
 
-    ${data.paymentTerms ? `
+    ${safePaymentTerms ? `
     <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 14px; margin-bottom: 20px;">
       <p style="margin: 0; font-size: 12px; font-weight: 600; color: #166534;">Payment Terms &amp; Scope:</p>
-      <p style="margin: 4px 0 0 0; font-size: 12px; color: #15803d; line-height: 1.5;">${data.paymentTerms}</p>
+      <p style="margin: 4px 0 0 0; font-size: 12px; color: #15803d; line-height: 1.5;">${safePaymentTerms}</p>
     </div>` : ''}
 
-    ${data.notes ? `
+    ${safeNotes ? `
     <div style="margin-bottom: 20px;">
       <p style="margin: 0 0 4px 0; font-size: 12px; font-weight: 600; color: #475569;">Warranty &amp; Notes:</p>
-      <p style="margin: 0; font-size: 12px; color: #64748b; line-height: 1.5;">${data.notes}</p>
+      <p style="margin: 0; font-size: 12px; color: #64748b; line-height: 1.5;">${safeNotes}</p>
     </div>` : ''}
 
     <div style="border-top: 1px solid #e2e8f0; padding-top: 16px; font-size: 12px; color: #64748b; text-align: center;">
@@ -167,6 +184,14 @@ export function generateClientInvoiceEmail(data: {
   paymentStatus: string;
   notes?: string;
 }) {
+  const safeClientName = escapeHtml(data.clientName);
+  const safeClientCompany = escapeHtml(data.clientCompany);
+  const safeInvoiceNumber = escapeHtml(data.invoiceNumber);
+  const safeDate = escapeHtml(data.date);
+  const safeDueDate = escapeHtml(data.dueDate);
+  const safeNotes = escapeHtml(data.notes);
+  const safeStatus = data.paymentStatus === 'PAID' ? 'PAID IN FULL' : 'PAYMENT DUE';
+
   const subtotal = data.items.reduce((acc, i) => acc + (i.qty * i.unitPrice), 0);
   const vat = Math.round(subtotal * (data.taxRate / 100));
   const grandTotal = subtotal + vat;
@@ -175,10 +200,10 @@ export function generateClientInvoiceEmail(data: {
     .map(
       (item) => `
       <tr style="border-bottom: 1px solid #e2e8f0;">
-        <td style="padding: 10px 12px; font-size: 13px; color: #1e293b;">${item.description}</td>
-        <td style="padding: 10px 12px; font-size: 13px; color: #1e293b; text-align: center;">${item.qty}</td>
-        <td style="padding: 10px 12px; font-size: 13px; color: #1e293b; text-align: right;">Ksh ${item.unitPrice.toLocaleString()}</td>
-        <td style="padding: 10px 12px; font-size: 13px; font-weight: 600; color: #0f172a; text-align: right;">Ksh ${(item.qty * item.unitPrice).toLocaleString()}</td>
+        <td style="padding: 10px 12px; font-size: 13px; color: #1e293b;">${escapeHtml(item.description)}</td>
+        <td style="padding: 10px 12px; font-size: 13px; color: #1e293b; text-align: center;">${Number(item.qty) || 1}</td>
+        <td style="padding: 10px 12px; font-size: 13px; color: #1e293b; text-align: right;">Ksh ${(Number(item.unitPrice) || 0).toLocaleString()}</td>
+        <td style="padding: 10px 12px; font-size: 13px; font-weight: 600; color: #0f172a; text-align: right;">Ksh ${((Number(item.qty) || 1) * (Number(item.unitPrice) || 0)).toLocaleString()}</td>
       </tr>`
     )
     .join('');
@@ -192,23 +217,23 @@ export function generateClientInvoiceEmail(data: {
       </div>
       <div style="text-align: right;">
         <span style="background: ${data.paymentStatus === 'PAID' ? '#dcfce7' : '#fef3c7'}; color: ${data.paymentStatus === 'PAID' ? '#15803d' : '#b45309'}; padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 700;">
-          ${data.paymentStatus === 'PAID' ? 'PAID IN FULL' : 'PAYMENT DUE'}
+          ${safeStatus}
         </span>
-        <p style="margin: 6px 0 0 0; font-size: 13px; color: #475569; font-weight: 600;">Inv: ${data.invoiceNumber}</p>
+        <p style="margin: 6px 0 0 0; font-size: 13px; color: #475569; font-weight: 600;">Inv: ${safeInvoiceNumber}</p>
       </div>
     </div>
 
-    <p style="font-size: 15px; color: #1e293b; margin: 0 0 16px 0;">Billed To: <strong>${data.clientName}</strong> ${data.clientCompany ? `(${data.clientCompany})` : ''}</p>
+    <p style="font-size: 15px; color: #1e293b; margin: 0 0 16px 0;">Billed To: <strong>${safeClientName}</strong> ${safeClientCompany ? `(${safeClientCompany})` : ''}</p>
 
     <div style="background: #f8fafc; border-radius: 8px; padding: 14px; margin-bottom: 20px; font-size: 12px; color: #475569;">
-      <p style="margin: 0 0 4px 0;"><strong>Invoice Date:</strong> ${data.date}</p>
-      <p style="margin: 0;"><strong>Payment Due Date:</strong> ${data.dueDate}</p>
+      <p style="margin: 0 0 4px 0;"><strong>Invoice Date:</strong> ${safeDate}</p>
+      <p style="margin: 0;"><strong>Payment Due Date:</strong> ${safeDueDate}</p>
     </div>
 
     <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
       <thead>
         <tr style="background: #f1f5f9; text-align: left;">
-          <th style="padding: 10px 12px; font-size: 12px; color: #475569; text-transform: uppercase;">Item / Service</th>
+          <th style="padding: 10px 12px; font-size: 12px; color: #475569; text-transform: uppercase;">Description</th>
           <th style="padding: 10px 12px; font-size: 12px; color: #475569; text-align: center; text-transform: uppercase;">Qty</th>
           <th style="padding: 10px 12px; font-size: 12px; color: #475569; text-align: right; text-transform: uppercase;">Unit Price</th>
           <th style="padding: 10px 12px; font-size: 12px; color: #475569; text-align: right; text-transform: uppercase;">Total</th>
@@ -221,9 +246,15 @@ export function generateClientInvoiceEmail(data: {
 
     <div style="text-align: right; margin-bottom: 24px; padding-top: 12px; border-top: 2px solid #e2e8f0;">
       <p style="margin: 4px 0; font-size: 13px; color: #64748b;">Subtotal: <strong style="color: #1e293b;">Ksh ${subtotal.toLocaleString()}</strong></p>
-      <p style="margin: 4px 0; font-size: 13px; color: #64748b;">VAT (16%): <strong style="color: #1e293b;">Ksh ${vat.toLocaleString()}</strong></p>
-      <p style="margin: 8px 0 0 0; font-size: 18px; font-weight: 800; color: #059669;">Total Due (KES): Ksh ${grandTotal.toLocaleString()}</p>
+      <p style="margin: 4px 0; font-size: 13px; color: #64748b;">VAT (${data.taxRate}%): <strong style="color: #1e293b;">Ksh ${vat.toLocaleString()}</strong></p>
+      <p style="margin: 8px 0 0 0; font-size: 18px; font-weight: 800; color: #059669;">Total (KES): Ksh ${grandTotal.toLocaleString()}</p>
     </div>
+
+    ${safeNotes ? `
+    <div style="margin-bottom: 20px;">
+      <p style="margin: 0 0 4px 0; font-size: 12px; font-weight: 600; color: #475569;">Payment Instructions &amp; Notes:</p>
+      <p style="margin: 0; font-size: 12px; color: #64748b; line-height: 1.5;">${safeNotes}</p>
+    </div>` : ''}
 
     <!-- Payment Channels -->
     <div style="background: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 16px; margin-bottom: 20px;">

@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { z } from 'zod';
 import prisma from '../../database/client';
 import { logAudit } from '../../middleware/audit';
 import {
@@ -588,25 +589,29 @@ export class InquiriesController {
   // POST /admin/inquiries/custom-quote (Create custom quote directly in admin)
   static async createCustomQuote(req: Request, res: Response, next: NextFunction) {
     try {
-      const {
-        customerName,
-        email,
-        phone,
-        company,
-        subject,
-        notes,
-        paymentTerms,
-        validUntil,
-        items = [],
-      } = req.body;
+      const customQuoteSchema = z.object({
+        customerName: z.string().min(2, 'Customer name must be at least 2 characters'),
+        email: z.string().email('Valid customer email is required'),
+        phone: z.string().optional().nullable(),
+        company: z.string().optional().nullable(),
+        subject: z.string().optional().default('Custom Security Quotation'),
+        notes: z.string().optional().default(''),
+        paymentTerms: z.string().optional().default(''),
+        validUntil: z.string().optional().default('30 Days'),
+        items: z.array(
+          z.object({
+            description: z.string().min(1, 'Line item description is required'),
+            qty: z.coerce.number().int().positive().default(1),
+            unitPrice: z.coerce.number().nonnegative().default(0),
+          })
+        ).min(1, 'At least one line item is required'),
+      });
 
-      if (!customerName || !email) {
-        return res.status(400).json({ success: false, message: 'Customer name and email are required' });
-      }
+      const data = customQuoteSchema.parse(req.body);
 
       const referenceNumber = `QT-${Date.now().toString().slice(-6)}`;
-      const itemsSummary = items
-        .map((i: any) => `${i.description} (x${i.qty || 1} @ Ksh ${i.unitPrice?.toLocaleString() || 0})`)
+      const itemsSummary = data.items
+        .map((i: { description: string; qty: number; unitPrice: number }) => `${i.description} (x${i.qty} @ Ksh ${i.unitPrice.toLocaleString()})`)
         .join(', ');
 
       const inquiry = await prisma.inquiry.create({
@@ -615,16 +620,16 @@ export class InquiriesController {
           type: 'QUOTATION',
           status: 'QUOTED',
           urgency: 'HIGH',
-          customerName,
-          email: email.toLowerCase().trim(),
-          phone: phone || null,
-          company: company || null,
-          subject: subject || 'Custom Security Quotation',
-          message: `Custom Quote Items:\n${itemsSummary || 'Standard package'}\n\nNotes: ${notes || 'None'}\nTerms: ${paymentTerms || 'Standard'}`,
+          customerName: data.customerName,
+          email: data.email.toLowerCase().trim(),
+          phone: data.phone || null,
+          company: data.company || null,
+          subject: data.subject || 'Custom Security Quotation',
+          message: `Custom Quote Items:\n${itemsSummary}\n\nNotes: ${data.notes || 'None'}\nTerms: ${data.paymentTerms || 'Standard'}`,
           notes: {
             create: [
               {
-                content: `Custom Quotation ${referenceNumber} drafted with ${items.length} line items. Valid until ${validUntil || '30 days'}.`,
+                content: `Custom Quotation ${referenceNumber} drafted with ${data.items.length} line items. Valid until ${data.validUntil || '30 days'}.`,
                 authorId: (req as any).user?.id,
               },
             ],
