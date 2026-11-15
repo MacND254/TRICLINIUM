@@ -4,6 +4,58 @@ const API_URL =
   process.env.NEXT_PUBLIC_API_URL ||
   'http://localhost:4000/api/v1';
 
+let reachabilityCache: { [origin: string]: { status: boolean; timestamp: number } } = {};
+
+/**
+ * Fast, silent reachability probe for server-side environments to prevent Next.js fetch ECONNREFUSED build clutter.
+ */
+export async function isApiReachable(urlStr: string): Promise<boolean> {
+  if (typeof window !== 'undefined') return true;
+
+  try {
+    const parsed = new URL(urlStr);
+    const origin = parsed.origin;
+    const now = Date.now();
+    const cached = reachabilityCache[origin];
+    if (cached && now - cached.timestamp < 10000) {
+      return cached.status;
+    }
+
+    const isHttps = parsed.protocol === 'https:';
+    // Use dynamic evaluation to prevent client webpack bundler from trying to resolve Node modules
+    const reqModule = eval('require')(isHttps ? 'https' : 'http');
+    const port = parsed.port ? parseInt(parsed.port, 10) : (isHttps ? 443 : 80);
+
+    return new Promise((resolve) => {
+      const req = reqModule.request(
+        {
+          hostname: parsed.hostname,
+          port,
+          path: '/api/v1/health',
+          method: 'GET',
+          timeout: 150,
+        },
+        () => {
+          reachabilityCache[origin] = { status: true, timestamp: Date.now() };
+          resolve(true);
+        }
+      );
+      req.on('error', () => {
+        reachabilityCache[origin] = { status: false, timestamp: Date.now() };
+        resolve(false);
+      });
+      req.on('timeout', () => {
+        req.destroy();
+        reachabilityCache[origin] = { status: false, timestamp: Date.now() };
+        resolve(false);
+      });
+      req.end();
+    });
+  } catch {
+    return false;
+  }
+}
+
 export class ApiError extends Error {
   code: string;
   status: number;
@@ -33,6 +85,14 @@ export async function fetchApi<T = any>(
   const url = endpoint.startsWith('http')
     ? endpoint
     : `${API_URL.replace(/\/$/, '')}/${endpoint.replace(/^\//, '')}`;
+
+  // If executing in server environment (e.g. Next.js build or SSR), check if API server is reachable
+  if (typeof window === 'undefined') {
+    const reachable = await isApiReachable(url);
+    if (!reachable) {
+      throw new ApiError('API server is unreachable', 'API_UNREACHABLE', 503);
+    }
+  }
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',

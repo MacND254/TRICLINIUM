@@ -4,6 +4,7 @@ import './globals.css';
 import { QuoteProvider } from '@/lib/quote-context';
 import { ThemeProvider } from '@/components/theme-provider';
 import { SettingsProvider } from '@/lib/settings-context';
+import { isApiReachable } from '@/lib/api-client';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -56,6 +57,10 @@ export const metadata: Metadata = {
 async function getInitialPublicSettings() {
   try {
     const apiUrl = process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    if (typeof window === 'undefined') {
+      const reachable = await isApiReachable(apiUrl);
+      if (!reachable) return null;
+    }
     const res = await fetch(`${apiUrl}/api/v1/settings/public`, {
       next: { revalidate: 30 },
     });
