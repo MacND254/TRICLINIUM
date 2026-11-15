@@ -167,9 +167,6 @@ export function Footer() {
             <Link href="/cookie-policy" className="hover:text-white transition-colors">
               Cookie Policy
             </Link>
-            <Link href="/admin/login" className="hover:text-white transition-colors">
-              Admin Access
-            </Link>
           </div>
         </div>
       </div>

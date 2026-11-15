@@ -7,7 +7,6 @@ import {
   Menu,
   X,
   Search,
-  Lock,
   ChevronRight,
   Phone,
   Mail,
@@ -48,13 +47,6 @@ export function Header() {
           </div>
           <div className="flex items-center space-x-4">
             <span className="text-slate-400">{settings.tagline || 'CCTV · Door Cams · Alarms · Intercoms · Networking'}</span>
-            <Link
-              href="/admin/login"
-              className="flex items-center gap-1 text-slate-300 hover:text-white transition-colors"
-            >
-              <Lock className="h-3 w-3 text-sky-400" />
-              <span>Admin Portal</span>
-            </Link>
           </div>
         </div>
       </div>
@@ -156,14 +148,6 @@ export function Header() {
               <Button size="sm" className="w-full bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs">
                 Get in Touch / Request Service
               </Button>
-            </Link>
-            <Link
-              href="/admin/login"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-2 py-2 text-xs font-medium text-sky-600 pt-2"
-            >
-              <Lock className="h-3.5 w-3.5" />
-              <span>Administrator Portal</span>
             </Link>
           </div>
         </div>

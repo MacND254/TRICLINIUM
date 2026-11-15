@@ -114,8 +114,7 @@ export default function ForgotPasswordPage() {
                     disabled={isLoading || cooldownSeconds > 0}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="archer.tritech@gmail.com"
-                    className="bg-slate-950 border-slate-800 text-white placeholder:text-slate-500 pl-10 text-xs h-10 disabled:opacity-50"
+                    className="bg-slate-950 border-slate-800 text-white pl-10 text-xs h-10 disabled:opacity-50"
                   />
                   <Mail className="h-4 w-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
                 </div>

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Lock, Mail, ArrowRight, Loader2, ShieldCheck, AlertCircle, Clock } from 'lucide-react';
+import { Lock, Mail, ArrowRight, Loader2, ShieldCheck, AlertCircle, Clock, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useAdminAuth } from '@/lib/admin-auth-context';
@@ -43,7 +43,7 @@ export default function AdminLoginPage() {
     // Client-side input validation
     const cleanEmail = email.trim();
     if (!cleanEmail || !EMAIL_REGEX.test(cleanEmail)) {
-      setErrorMsg('Please enter a valid administrator email address.');
+      setErrorMsg('Please enter a valid username (email).');
       return;
     }
 
@@ -110,7 +110,7 @@ export default function AdminLoginPage() {
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="text-xs font-semibold text-slate-300 block mb-1.5">
-                Administrator Email
+                Username
               </label>
               <div className="relative">
                 <Input
@@ -119,10 +119,9 @@ export default function AdminLoginPage() {
                   disabled={isLoading || cooldownSeconds > 0}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="archer.tritech@gmail.com"
-                  className="bg-slate-950 border-slate-800 text-white placeholder:text-slate-500 pl-10 h-10 text-xs focus-visible:ring-sky-500 disabled:opacity-50"
+                  className="bg-slate-950 border-slate-800 text-white pl-10 h-10 text-xs focus-visible:ring-sky-500 disabled:opacity-50"
                 />
-                <Mail className="h-4 w-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
+                <User className="h-4 w-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
               </div>
             </div>
 
@@ -143,8 +142,7 @@ export default function AdminLoginPage() {
                   disabled={isLoading || cooldownSeconds > 0}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••••••"
-                  className="bg-slate-950 border-slate-800 text-white placeholder:text-slate-500 pl-10 h-10 text-xs focus-visible:ring-sky-500 disabled:opacity-50"
+                  className="bg-slate-950 border-slate-800 text-white pl-10 h-10 text-xs focus-visible:ring-sky-500 disabled:opacity-50"
                 />
                 <Lock className="h-4 w-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
               </div>
