@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Search, Filter, Shield, User, Package, Wrench, FileText, Settings, MessageSquare, Loader2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Filter, Shield, User, Package, Wrench, FileText, Settings, MessageSquare, Loader2, ChevronLeft, ChevronRight, Download } from 'lucide-react';
 
 interface AuditLog {
   id: string;
@@ -102,9 +102,15 @@ export default function AuditLogsPage() {
         ...(search && { search }),
       });
       const data = await apiFetch(`/admin/audit-logs?${params}`);
-      setLogs(Array.isArray(data.data) ? data.data : []);
-      setTotalPages(data.meta?.totalPages || 1);
-      setTotal(data.meta?.total || 0);
+      const items = Array.isArray(data.data?.items)
+        ? data.data.items
+        : Array.isArray(data.data)
+        ? data.data
+        : [];
+      setLogs(items);
+      const pagination = data.data?.pagination || data.meta || {};
+      setTotalPages(pagination.totalPages || 1);
+      setTotal(pagination.total || items.length);
     } catch {
       setLogs([]);
     } finally {
@@ -116,6 +122,11 @@ export default function AuditLogsPage() {
 
   // Reset to page 1 when filters change
   useEffect(() => { setPage(1); }, [search, entityFilter]);
+
+  const handleExportCsv = () => {
+    const API = process.env.NEXT_PUBLIC_API_URL || '';
+    window.open(`${API}/api/v1/admin/audit-logs/export`, '_blank');
+  };
 
   const entityTypes = ['ALL', 'AUTH', 'USER', 'PRODUCT', 'SERVICE', 'INQUIRY', 'CMS', 'SETTINGS'];
 
@@ -133,9 +144,18 @@ export default function AuditLogsPage() {
 
   return (
     <div className="p-6 lg:p-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-100">Audit Logs</h1>
-        <p className="mt-1 text-slate-400">{total.toLocaleString()} total events recorded</p>
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-100">Audit Logs</h1>
+          <p className="mt-1 text-slate-400">{total.toLocaleString()} total events recorded</p>
+        </div>
+        <button
+          onClick={handleExportCsv}
+          className="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-700 hover:text-white transition-colors shrink-0"
+        >
+          <Download className="h-4 w-4" />
+          <span>Export CSV</span>
+        </button>
       </div>
 
       {/* Filters */}

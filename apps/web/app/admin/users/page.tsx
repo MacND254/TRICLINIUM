@@ -88,7 +88,15 @@ function UserModal({ user, roles, onClose, onSave }: {
     if (form.password && form.password !== form.confirmPassword) { setError('Passwords do not match.'); return; }
     if (form.password && form.password.length < 8) { setError('Password must be at least 8 characters.'); return; }
     setSaving(true);
-    const payload: Record<string, unknown> = { name: form.name, email: form.email, roleId: form.roleId, isActive: form.isActive };
+    const selectedRole = roles.find(r => r.id === form.roleId);
+    const roleName = selectedRole?.name || 'ADMIN';
+    const payload: Record<string, unknown> = {
+      name: form.name,
+      email: form.email,
+      roleId: form.roleId,
+      roles: [roleName],
+      isActive: form.isActive,
+    };
     if (form.password) payload.password = form.password;
     if (user?.id) payload.id = user.id;
     await onSave(payload);
@@ -195,7 +203,17 @@ export default function AdminUsersPage() {
         apiFetch('/admin/roles'),
       ]);
       setUsers(Array.isArray(usersData.data) ? usersData.data : Array.isArray(usersData) ? usersData : []);
-      setRoles(Array.isArray(rolesData.data) ? rolesData.data : Array.isArray(rolesData) ? rolesData : []);
+      const resolvedRoles = Array.isArray(rolesData.data?.roles)
+        ? rolesData.data.roles
+        : Array.isArray(rolesData.data)
+        ? rolesData.data
+        : [
+            { id: '1', name: 'SUPER_ADMIN', description: 'Full system control' },
+            { id: '2', name: 'ADMIN', description: 'Operations and management' },
+            { id: '3', name: 'EDITOR', description: 'Content publishing' },
+            { id: '4', name: 'VIEWER', description: 'Read only access' },
+          ];
+      setRoles(resolvedRoles);
     } catch {
       setUsers([]);
     } finally {
@@ -208,7 +226,7 @@ export default function AdminUsersPage() {
   const handleSave = async (data: Record<string, unknown>) => {
     try {
       if (data.id) {
-        await apiFetch(`/admin/users/${data.id}`, { method: 'PUT', body: JSON.stringify(data) });
+        await apiFetch(`/admin/users/${data.id}`, { method: 'PATCH', body: JSON.stringify(data) });
         showToast('User updated');
       } else {
         await apiFetch('/admin/users', { method: 'POST', body: JSON.stringify(data) });
@@ -223,7 +241,7 @@ export default function AdminUsersPage() {
     const action = user.isActive ? 'deactivate' : 'activate';
     if (!confirm(`${action.charAt(0).toUpperCase() + action.slice(1)} ${user.name}?`)) return;
     try {
-      await apiFetch(`/admin/users/${user.id}`, { method: 'PUT', body: JSON.stringify({ isActive: !user.isActive }) });
+      await apiFetch(`/admin/users/${user.id}`, { method: 'PATCH', body: JSON.stringify({ isActive: !user.isActive }) });
       setUsers(prev => prev.map(u => u.id === user.id ? { ...u, isActive: !u.isActive } : u));
       showToast(`User ${action}d`);
     } catch (e: unknown) { showToast((e as Error).message, 'error'); }
@@ -244,6 +262,24 @@ export default function AdminUsersPage() {
       showToast('Account unlocked');
       await fetchData();
     } catch (e: unknown) { showToast((e as Error).message, 'error'); }
+  };
+
+  const handleResetPassword = async (user: AdminUser) => {
+    const newPass = prompt(`Enter a new temporary password for ${user.name} (min 8 characters):`);
+    if (!newPass) return;
+    if (newPass.length < 8) {
+      alert('Password must be at least 8 characters.');
+      return;
+    }
+    try {
+      await apiFetch(`/admin/users/${user.id}/reset-password`, {
+        method: 'POST',
+        body: JSON.stringify({ password: newPass }),
+      });
+      showToast(`Password for ${user.name} was successfully reset!`);
+    } catch (e: unknown) {
+      showToast((e as Error).message, 'error');
+    }
   };
 
   const filtered = users.filter(u =>
@@ -333,6 +369,10 @@ export default function AdminUsersPage() {
                           <ShieldAlert className="h-4 w-4" />
                         </button>
                       )}
+                      <button onClick={() => handleResetPassword(user)} title="Reset User Password"
+                        className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-amber-400 transition-colors">
+                        <Lock className="h-4 w-4" />
+                      </button>
                       <button onClick={() => handleDeactivate(user)} title={user.isActive ? 'Deactivate' : 'Activate'}
                         className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-slate-100 transition-colors">
                         {user.isActive ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}

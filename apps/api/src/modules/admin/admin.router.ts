@@ -34,6 +34,34 @@ adminRouter.patch(
   AdminController.updateUser
 );
 
+adminRouter.put(
+  '/admin/users/:id',
+  authenticate,
+  requireRole('SUPER_ADMIN'),
+  AdminController.updateUser
+);
+
+adminRouter.delete(
+  '/admin/users/:id',
+  authenticate,
+  requireRole('SUPER_ADMIN'),
+  AdminController.deleteUser
+);
+
+adminRouter.post(
+  '/admin/users/:id/reset-password',
+  authenticate,
+  requireRole('SUPER_ADMIN'),
+  AdminController.resetUserPassword
+);
+
+adminRouter.post(
+  '/admin/users/:id/unlock',
+  authenticate,
+  requireRole('SUPER_ADMIN'),
+  AdminController.unlockUser
+);
+
 // Roles
 adminRouter.get(
   '/admin/roles',
@@ -43,6 +71,13 @@ adminRouter.get(
 );
 
 // Audit Logs
+adminRouter.get(
+  '/admin/audit-logs/export',
+  authenticate,
+  requirePermission(PERMISSIONS.AUDIT_LOGS_VIEW),
+  AdminController.exportAuditLogs
+);
+
 adminRouter.get(
   '/admin/audit-logs',
   authenticate,

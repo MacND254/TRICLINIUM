@@ -64,6 +64,38 @@ const SettingsContext = createContext<{
   refreshSettings: async () => {},
 });
 
+function hexToHsl(hex: string): string | null {
+  try {
+    const cleanHex = hex.replace('#', '').trim();
+    if (cleanHex.length !== 6 && cleanHex.length !== 3) return null;
+    const fullHex = cleanHex.length === 3 ? cleanHex.split('').map((c) => c + c).join('') : cleanHex;
+    const num = parseInt(fullHex, 16);
+    const r = (num >> 16) & 255;
+    const g = (num >> 8) & 255;
+    const b = num & 255;
+
+    const rNorm = r / 255, gNorm = g / 255, bNorm = b / 255;
+    const max = Math.max(rNorm, gNorm, bNorm), min = Math.min(rNorm, gNorm, bNorm);
+    let h = 0, s = 0, l = (max + min) / 2;
+
+    if (max !== min) {
+      const d = max - min;
+      s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+      switch (max) {
+        case rNorm: h = (gNorm - bNorm) / d + (gNorm < bNorm ? 6 : 0); break;
+        case gNorm: h = (bNorm - rNorm) / d + 2; break;
+        case bNorm: h = (rNorm - gNorm) / d + 4; break;
+      }
+      h = Math.round(h * 60);
+    }
+    s = Math.round(s * 100);
+    l = Math.round(l * 100);
+    return `${h} ${s}% ${l}%`;
+  } catch {
+    return null;
+  }
+}
+
 export function SettingsProvider({
   children,
   initialSettings,
@@ -131,9 +163,18 @@ export function SettingsProvider({
 
     if (settings.primaryColor) {
       root.style.setProperty('--user-primary', settings.primaryColor);
+      const hslPrimary = hexToHsl(settings.primaryColor);
+      if (hslPrimary) {
+        root.style.setProperty('--primary', hslPrimary);
+      }
     }
     if (settings.accentColor) {
       root.style.setProperty('--user-accent', settings.accentColor);
+      const hslAccent = hexToHsl(settings.accentColor);
+      if (hslAccent) {
+        root.style.setProperty('--accent', hslAccent);
+        root.style.setProperty('--ring', hslAccent);
+      }
     }
 
     // Color grading classes on body

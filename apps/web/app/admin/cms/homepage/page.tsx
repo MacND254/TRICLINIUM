@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, GripVertical, Eye, EyeOff, Edit2, Save, X, ChevronDown, ChevronUp, Loader2, Image as ImageIcon, Trash2, AlertCircle } from 'lucide-react';
+import { Plus, GripVertical, Eye, EyeOff, Edit2, Save, X, ChevronDown, ChevronUp, Loader2, Image as ImageIcon, Trash2, AlertCircle, UploadCloud } from 'lucide-react';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -130,6 +130,97 @@ function FieldRow({ label, children }: { label: string; children: React.ReactNod
 const inputCls = "w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500";
 const textareaCls = `${inputCls} min-h-[80px] resize-y`;
 
+// ─── Image Upload Field Helper ───────────────────────────────────────────────
+
+function ImageUploadField({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (url: string) => void;
+}) {
+  const [uploading, setUploading] = useState(false);
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setUploading(true);
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch(`${API}/api/v1/admin/media/upload`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error?.message || 'Upload failed');
+      }
+
+      const json = await res.json();
+      const url = json.data?.url || json.url;
+      if (url) {
+        onChange(url);
+      }
+    } catch (err: any) {
+      alert(err.message || 'Failed to upload image');
+    } finally {
+      setUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  return (
+    <div className="space-y-2">
+      {value && (
+        <div className="relative w-full max-w-sm h-36 rounded-lg overflow-hidden border border-slate-700 bg-slate-950 group">
+          <img src={value} alt="Preview" className="w-full h-full object-cover" />
+          <button
+            type="button"
+            onClick={() => onChange('')}
+            className="absolute top-2 right-2 p-1.5 rounded-full bg-rose-600/90 text-white hover:bg-rose-600 transition-opacity"
+            title="Remove image"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
+      <div className="flex gap-2">
+        <input
+          className={inputCls}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="Paste image URL (https://...) or click Upload"
+        />
+        <label className="inline-flex items-center gap-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white px-3.5 py-2 text-xs font-semibold cursor-pointer shrink-0 shadow-sm transition-colors">
+          {uploading ? (
+            <>
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              <span>Uploading...</span>
+            </>
+          ) : (
+            <>
+              <UploadCloud className="h-3.5 w-3.5" />
+              <span>Upload</span>
+            </>
+          )}
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleUpload}
+            disabled={uploading}
+            className="hidden"
+          />
+        </label>
+      </div>
+    </div>
+  );
+}
+
 // ─── Hero Editor ─────────────────────────────────────────────────────────────
 
 function HeroEditor({ content, setContent }: { content: Record<string, unknown>; setContent: (c: Record<string, unknown>) => void }) {
@@ -181,7 +272,10 @@ function HeroEditor({ content, setContent }: { content: Record<string, unknown>;
             <textarea className={textareaCls} rows={2} value={slide.description} onChange={e => updateSlide(idx, 'description', e.target.value)} placeholder="Slide description text" />
           </FieldRow>
           <FieldRow label="Background Image">
-            <input className={inputCls} value={slide.imageUrl} onChange={e => updateSlide(idx, 'imageUrl', e.target.value)} placeholder="https://..." />
+            <ImageUploadField
+              value={slide.imageUrl}
+              onChange={(url) => updateSlide(idx, 'imageUrl', url)}
+            />
           </FieldRow>
           <div className="grid grid-cols-2 gap-3 mt-2">
             <div className="space-y-2">
@@ -263,7 +357,7 @@ function ListEditor({
 function SimpleEditor({ content, setContent, fields }: {
   content: Record<string, unknown>;
   setContent: (c: Record<string, unknown>) => void;
-  fields: { key: string; label: string; type: 'text' | 'textarea' }[];
+  fields: { key: string; label: string; type: 'text' | 'textarea' | 'image' }[];
 }) {
   return (
     <div className="space-y-3">
@@ -271,6 +365,8 @@ function SimpleEditor({ content, setContent, fields }: {
         <FieldRow key={field.key} label={field.label}>
           {field.type === 'textarea' ? (
             <textarea className={textareaCls} rows={3} value={String(content[field.key] || '')} onChange={e => setContent({ ...content, [field.key]: e.target.value })} />
+          ) : field.type === 'image' ? (
+            <ImageUploadField value={String(content[field.key] || '')} onChange={url => setContent({ ...content, [field.key]: url })} />
           ) : (
             <input className={inputCls} value={String(content[field.key] || '')} onChange={e => setContent({ ...content, [field.key]: e.target.value })} />
           )}
@@ -335,8 +431,24 @@ export default function HomepageCMSPage() {
   const renderEditor = (section: HomepageSection) => {
     switch (section.key) {
       case 'hero':
-        return (content: Record<string, unknown>, setContent: (c: Record<string, unknown>) => void, save: () => void) => (
+        return (content: Record<string, unknown>, setContent: (c: Record<string, unknown>) => void) => (
           <HeroEditor content={content} setContent={setContent} />
+        );
+      case 'featured_products':
+        return (content: Record<string, unknown>, setContent: (c: Record<string, unknown>) => void) => (
+          <SimpleEditor content={content} setContent={setContent} fields={[
+            { key: 'badge', label: 'Section Badge', type: 'text' },
+            { key: 'title', label: 'Section Title', type: 'text' },
+            { key: 'description', label: 'Description', type: 'textarea' },
+          ]} />
+        );
+      case 'featured_services':
+        return (content: Record<string, unknown>, setContent: (c: Record<string, unknown>) => void) => (
+          <SimpleEditor content={content} setContent={setContent} fields={[
+            { key: 'badge', label: 'Section Badge', type: 'text' },
+            { key: 'title', label: 'Section Title', type: 'text' },
+            { key: 'description', label: 'Description', type: 'textarea' },
+          ]} />
         );
       case 'why_choose_us':
         return (content: Record<string, unknown>, setContent: (c: Record<string, unknown>) => void) => (
@@ -353,7 +465,7 @@ export default function HomepageCMSPage() {
           <SimpleEditor content={content} setContent={setContent} fields={[
             { key: 'headline', label: 'Headline', type: 'text' },
             { key: 'description', label: 'Description', type: 'textarea' },
-            { key: 'imageUrl', label: 'Image URL', type: 'text' },
+            { key: 'imageUrl', label: 'Feature Image', type: 'image' },
             { key: 'ctaLabel', label: 'CTA Label', type: 'text' },
             { key: 'ctaHref', label: 'CTA Link', type: 'text' },
           ]} />
@@ -371,7 +483,7 @@ export default function HomepageCMSPage() {
         );
       default:
         return (content: Record<string, unknown>, setContent: (c: Record<string, unknown>) => void) => (
-          <div className="text-sm text-slate-500 italic">This section is auto-populated from database content (products/services). No manual content editing required.</div>
+          <div className="text-sm text-slate-500 italic">This section is auto-populated from database content. Toggle visibility above to show or hide it.</div>
         );
     }
   };

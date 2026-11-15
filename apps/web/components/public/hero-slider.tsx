@@ -88,7 +88,7 @@ export function HeroSlider({ slides }: HeroSliderProps) {
   };
 
   return (
-    <section className="relative w-full overflow-hidden bg-slate-950 text-white min-h-[580px] lg:min-h-[640px] flex items-center">
+    <section className="relative w-full overflow-hidden bg-slate-950 text-white min-h-[460px] sm:min-h-[500px] lg:min-h-[540px] flex items-center">
       {/* Background Image with Dark Vignette Overlay */}
       <div className="absolute inset-0 z-0">
         <img
@@ -100,8 +100,8 @@ export function HeroSlider({ slides }: HeroSliderProps) {
       </div>
 
       {/* Slide Content */}
-      <div className="container relative z-10 mx-auto px-4 sm:px-8 py-20">
-        <div className="max-w-2xl space-y-6">
+      <div className="container relative z-10 mx-auto px-4 sm:px-8 pt-6 pb-12 sm:pt-8 sm:pb-14 lg:pt-10 lg:pb-16">
+        <div className="max-w-2xl space-y-4 sm:space-y-5">
           <div className="inline-flex items-center gap-2 rounded-full border border-sky-400/30 bg-sky-500/10 px-3.5 py-1 text-xs font-semibold text-sky-300 backdrop-blur-md">
             <ShieldCheck className="h-4 w-4 text-sky-400" />
             <span>Certified Security Integrator · 100% Guaranteed Protection</span>

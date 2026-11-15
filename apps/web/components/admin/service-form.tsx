@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Trash2, ArrowLeft, Loader2, Save } from 'lucide-react';
+import { Plus, Trash2, ArrowLeft, Loader2, Save, UploadCloud } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -26,6 +26,7 @@ export function ServiceForm({ initialData, isEdit }: ServiceFormProps) {
     initialData?.featuredImage ||
       'https://images.unsplash.com/photo-1581092162384-8987c1d64718?auto=format&fit=crop&w=1200&q=80'
   );
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   const [pricingModel, setPricingModel] = useState(initialData?.pricingModel || 'CUSTOM_QUOTE');
   const [price, setPrice] = useState(initialData?.price ?? '');
@@ -40,7 +41,7 @@ export function ServiceForm({ initialData, isEdit }: ServiceFormProps) {
     initialData?.benefits || ['Direct CAD/CAM collaboration', 'Full material heat-lot traceability']
   );
 
-  const [process, setProcess] = useState<Array<{ title: string; description: string }>>(
+  const [serviceProcess, setServiceProcess] = useState<Array<{ title: string; description: string }>>(
     initialData?.process || [
       { title: 'Engineering CAD Analysis', description: 'Review design for manufacturability and alloy selection.' },
       { title: 'Multi-Axis Execution', description: 'Precision milling with continuous coolant control.' },
@@ -79,12 +80,46 @@ export function ServiceForm({ initialData, isEdit }: ServiceFormProps) {
     setBenefits(next);
   };
 
-  const addStep = () => setProcess([...process, { title: '', description: '' }]);
-  const removeStep = (idx: number) => setProcess(process.filter((_, i) => i !== idx));
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsUploadingImage(true);
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const API = process.env.NEXT_PUBLIC_API_URL || '';
+      const res = await fetch(`${API}/api/v1/admin/media/upload`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error?.message || 'Upload failed');
+      }
+
+      const json = await res.json();
+      const uploadedUrl = json.data?.url || json.url;
+      if (uploadedUrl) {
+        setFeaturedImage(uploadedUrl);
+      }
+    } catch (err: any) {
+      alert(err.message || 'Failed to upload image');
+    } finally {
+      setIsUploadingImage(false);
+      e.target.value = '';
+    }
+  };
+
+  const addStep = () => setServiceProcess([...serviceProcess, { title: '', description: '' }]);
+  const removeStep = (idx: number) => setServiceProcess(serviceProcess.filter((_, i) => i !== idx));
   const updateStep = (idx: number, field: string, val: string) => {
-    const next = [...process];
+    const next = [...serviceProcess];
     next[idx] = { ...next[idx], [field]: val };
-    setProcess(next);
+    setServiceProcess(next);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -105,7 +140,7 @@ export function ServiceForm({ initialData, isEdit }: ServiceFormProps) {
       status,
       features: features.filter((f) => f.trim().length > 0),
       benefits: benefits.filter((b) => b.trim().length > 0),
-      process: process.filter((p) => p.title.trim().length > 0),
+      process: serviceProcess.filter((p) => p.title.trim().length > 0),
     };
 
     try {
@@ -201,14 +236,54 @@ export function ServiceForm({ initialData, isEdit }: ServiceFormProps) {
           </div>
         </div>
 
-        <div>
-          <label className="text-xs font-semibold text-slate-300 block mb-1">Featured Image URL</label>
-          <Input
-            value={featuredImage}
-            onChange={(e) => setFeaturedImage(e.target.value)}
-            placeholder="https://..."
-            className="bg-slate-950 border-slate-800 text-white text-xs"
-          />
+        <div className="space-y-3">
+          <label className="text-xs font-semibold text-slate-300 block">Featured Image</label>
+          {featuredImage && (
+            <div className="relative w-full max-w-sm h-44 rounded-lg overflow-hidden border border-slate-800 bg-slate-950 group">
+              <img src={featuredImage} alt="Service Preview" className="w-full h-full object-cover" />
+              <button
+                type="button"
+                onClick={() => setFeaturedImage('')}
+                className="absolute top-2 right-2 p-1.5 rounded-full bg-rose-600/90 text-white hover:bg-rose-600 transition-opacity"
+                title="Remove image"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+          )}
+          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+            <div className="relative flex-1 w-full">
+              <Input
+                value={featuredImage}
+                onChange={(e) => setFeaturedImage(e.target.value)}
+                placeholder="Paste image URL (https://...) or upload an image file"
+                className="bg-slate-950 border-slate-800 text-white text-xs"
+              />
+            </div>
+            <div className="shrink-0">
+              <label className="inline-flex items-center gap-2 cursor-pointer rounded-lg bg-sky-600 hover:bg-sky-500 text-white px-3.5 py-2 text-xs font-semibold transition-colors shadow-sm">
+                {isUploadingImage ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Uploading...</span>
+                  </>
+                ) : (
+                  <>
+                    <UploadCloud className="h-4 w-4" />
+                    <span>Upload Image</span>
+                  </>
+                )}
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/avif,image/svg+xml"
+                  onChange={handleImageUpload}
+                  disabled={isUploadingImage}
+                  className="hidden"
+                />
+              </label>
+            </div>
+          </div>
+          <p className="text-[11px] text-slate-500">Supports PNG, JPEG, WebP, SVG (max 5MB). Uploaded file will automatically set the URL.</p>
         </div>
 
         <div>
@@ -299,7 +374,7 @@ export function ServiceForm({ initialData, isEdit }: ServiceFormProps) {
           </Button>
         </div>
         <div className="space-y-3">
-          {process.map((step, idx) => (
+          {serviceProcess.map((step, idx) => (
             <div key={idx} className="flex gap-3 items-start bg-slate-950 p-3 rounded-lg border border-slate-800">
               <span className="h-6 w-6 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold shrink-0 mt-1">
                 {idx + 1}

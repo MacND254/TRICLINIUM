@@ -101,17 +101,25 @@ export class AdminController {
 
       return res.json({
         success: true,
-        data: users.map((u) => ({
-          id: u.id,
-          email: u.email,
-          firstName: u.firstName,
-          lastName: u.lastName,
-          avatarUrl: u.avatarUrl,
-          isActive: u.isActive,
-          lastLoginAt: u.lastLoginAt,
-          createdAt: u.createdAt,
-          roles: u.userRoles.map((ur) => ur.role.name),
-        })),
+        data: users.map((u) => {
+          const mainRoleName = u.userRoles[0]?.role?.name || 'ADMIN';
+          const mainRoleId = u.userRoles[0]?.role?.id || 'admin';
+          return {
+            id: u.id,
+            name: `${u.firstName} ${u.lastName}`.trim(),
+            firstName: u.firstName,
+            lastName: u.lastName,
+            email: u.email,
+            avatarUrl: u.avatarUrl,
+            isActive: u.isActive,
+            failedLoginAttempts: u.failedAttempts,
+            lockedUntil: u.lockedUntil,
+            lastLoginAt: u.lastLoginAt,
+            createdAt: u.createdAt,
+            roles: u.userRoles.map((ur) => ur.role.name),
+            role: { id: mainRoleId, name: mainRoleName },
+          };
+        }),
       });
     } catch (err) {
       next(err);
@@ -121,7 +129,23 @@ export class AdminController {
   // POST /admin/users
   static async createUser(req: Request, res: Response, next: NextFunction) {
     try {
-      const data = createUserSchema.parse(req.body);
+      const body = { ...req.body };
+      if (body.name && !body.firstName) {
+        const parts = String(body.name).trim().split(/\s+/);
+        body.firstName = parts[0] || 'User';
+        body.lastName = parts.slice(1).join(' ') || 'Admin';
+      }
+      if (body.roleId && !body.roles) {
+        const r = await prisma.role.findUnique({ where: { id: body.roleId } });
+        if (r) {
+          body.roles = [r.name];
+        }
+      }
+      if (!body.roles || body.roles.length === 0) {
+        body.roles = ['ADMIN'];
+      }
+
+      const data = createUserSchema.parse(body);
       const email = data.email.toLowerCase().trim();
 
       const existing = await prisma.user.findUnique({ where: { email } });
@@ -182,7 +206,20 @@ export class AdminController {
   static async updateUser(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const data = updateUserSchema.parse(req.body);
+      const body = { ...req.body };
+      if (body.name && !body.firstName) {
+        const parts = String(body.name).trim().split(/\s+/);
+        body.firstName = parts[0] || 'User';
+        body.lastName = parts.slice(1).join(' ') || 'Admin';
+      }
+      if (body.roleId && !body.roles) {
+        const r = await prisma.role.findUnique({ where: { id: body.roleId } });
+        if (r) {
+          body.roles = [r.name];
+        }
+      }
+
+      const data = updateUserSchema.parse(body);
 
       const user = await prisma.$transaction(async (tx) => {
         const u = await tx.user.update({
@@ -214,6 +251,83 @@ export class AdminController {
       });
 
       return res.json({ success: true, data: user, message: 'User updated successfully' });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  // DELETE /admin/users/:id
+  static async deleteUser(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      if (req.user?.id === id) {
+        return res.status(400).json({ success: false, error: { message: 'You cannot delete your own account' } });
+      }
+      const user = await prisma.user.findUnique({ where: { id } });
+      if (!user) {
+        return res.status(404).json({ success: false, error: { message: 'User not found' } });
+      }
+      await prisma.user.delete({ where: { id } });
+      await logAudit({
+        req,
+        action: 'ADMIN_USER_DELETED',
+        entityType: 'User',
+        entityId: id,
+        details: { email: user.email },
+      });
+      return res.json({ success: true, message: 'User deleted successfully' });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  // POST /admin/users/:id/reset-password
+  static async resetUserPassword(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const { password } = req.body;
+      if (!password || typeof password !== 'string' || password.length < 8) {
+        return res.status(400).json({ success: false, error: { message: 'Password must be at least 8 characters long' } });
+      }
+      const passwordHash = await bcrypt.hash(password, 12);
+      await prisma.user.update({
+        where: { id },
+        data: {
+          passwordHash,
+          failedAttempts: 0,
+          lockedUntil: null,
+        },
+      });
+      await logAudit({
+        req,
+        action: 'ADMIN_PASSWORD_RESET',
+        entityType: 'User',
+        entityId: id,
+      });
+      return res.json({ success: true, message: 'Password reset successfully' });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  // POST /admin/users/:id/unlock
+  static async unlockUser(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      await prisma.user.update({
+        where: { id },
+        data: {
+          failedAttempts: 0,
+          lockedUntil: null,
+        },
+      });
+      await logAudit({
+        req,
+        action: 'ADMIN_USER_UNLOCKED',
+        entityType: 'User',
+        entityId: id,
+      });
+      return res.json({ success: true, message: 'User account unlocked successfully' });
     } catch (err) {
       next(err);
     }
@@ -254,14 +368,25 @@ export class AdminController {
   }
 
   // GET /admin/audit-logs
+  // GET /admin/audit-logs
   static async listAuditLogs(req: Request, res: Response, next: NextFunction) {
     try {
       const page = parseInt(req.query.page as string, 10) || 1;
       const limit = parseInt(req.query.limit as string, 10) || 30;
       const entityType = req.query.entityType as string;
+      const search = req.query.search as string;
 
       const where: any = {};
-      if (entityType) where.entityType = entityType;
+      if (entityType && entityType !== 'ALL') {
+        where.entityType = entityType;
+      }
+      if (search && search.trim()) {
+        where.OR = [
+          { action: { contains: search.trim(), mode: 'insensitive' } },
+          { entityType: { contains: search.trim(), mode: 'insensitive' } },
+          { userName: { contains: search.trim(), mode: 'insensitive' } },
+        ];
+      }
 
       const [total, logs] = await Promise.all([
         prisma.auditLog.count({ where }),
@@ -270,13 +395,36 @@ export class AdminController {
           skip: (page - 1) * limit,
           take: limit,
           orderBy: { createdAt: 'desc' },
+          include: {
+            user: {
+              select: { id: true, firstName: true, lastName: true, email: true },
+            },
+          },
         }),
       ]);
+
+      const formatted = logs.map((l) => ({
+        id: l.id,
+        action: l.action,
+        entityType: l.entityType,
+        entityId: l.entityId,
+        metadata: l.details as Record<string, unknown> | null,
+        ipAddress: l.ipAddress,
+        createdAt: l.createdAt,
+        userName: l.userName,
+        user: l.user
+          ? {
+              id: l.user.id,
+              name: `${l.user.firstName} ${l.user.lastName}`.trim(),
+              email: l.user.email,
+            }
+          : { id: 'system', name: l.userName || 'System', email: 'system@triclinium.com' },
+      }));
 
       return res.json({
         success: true,
         data: {
-          items: logs,
+          items: formatted,
           pagination: {
             total,
             page,
@@ -285,6 +433,39 @@ export class AdminController {
           },
         },
       });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  // GET /admin/audit-logs/export
+  static async exportAuditLogs(req: Request, res: Response, next: NextFunction) {
+    try {
+      const logs = await prisma.auditLog.findMany({
+        take: 2000,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          user: { select: { firstName: true, lastName: true, email: true } },
+        },
+      });
+
+      const rows = [
+        ['Timestamp', 'Action', 'Entity Type', 'Entity ID', 'User Name', 'User Email', 'IP Address'],
+        ...logs.map((l) => [
+          l.createdAt.toISOString(),
+          `"${l.action.replace(/"/g, '""')}"`,
+          `"${l.entityType.replace(/"/g, '""')}"`,
+          `"${(l.entityId || '').replace(/"/g, '""')}"`,
+          `"${(l.user ? `${l.user.firstName} ${l.user.lastName}`.trim() : l.userName || 'System').replace(/"/g, '""')}"`,
+          `"${(l.user?.email || '').replace(/"/g, '""')}"`,
+          `"${(l.ipAddress || '').replace(/"/g, '""')}"`,
+        ]),
+      ];
+
+      const csv = rows.map((r) => r.join(',')).join('\n');
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename="triclinium-audit-logs.csv"');
+      return res.send(csv);
     } catch (err) {
       next(err);
     }

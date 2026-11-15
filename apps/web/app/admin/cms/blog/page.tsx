@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Plus, Search, Edit2, Trash2, Eye, EyeOff, BookOpen, Loader2, X, Tag, Calendar, Star } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, Eye, EyeOff, BookOpen, Loader2, X, Tag, Calendar, Star, UploadCloud } from 'lucide-react';
 
 interface BlogPost {
   id: string;
@@ -9,7 +9,8 @@ interface BlogPost {
   slug: string;
   excerpt: string;
   content: string;
-  coverImageUrl: string;
+  coverImageUrl?: string;
+  featuredImage?: string;
   category: string;
   tags: string[];
   status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
@@ -68,22 +69,53 @@ function PostModal({ post, onClose, onSave }: {
     slug: post?.slug || '',
     excerpt: post?.excerpt || '',
     content: post?.content || '',
-    coverImageUrl: post?.coverImageUrl || '',
+    coverImageUrl: post?.coverImageUrl || post?.featuredImage || '',
     category: post?.category || '',
     tags: (post?.tags || []).join(', '),
     status: post?.status || 'DRAFT',
     isFeatured: post?.isFeatured || false,
   });
   const [saving, setSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const inputCls = "w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-sky-500 focus:outline-none";
   const textareaCls = `${inputCls} resize-y`;
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setIsUploading(true);
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch(`${API}/api/v1/admin/media/upload`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error?.message || 'Upload failed');
+      }
+      const json = await res.json();
+      const url = json.data?.url || json.url;
+      if (url) {
+        setForm(f => ({ ...f, coverImageUrl: url }));
+      }
+    } catch (err: any) {
+      alert(err.message || 'Failed to upload image');
+    } finally {
+      setIsUploading(false);
+      e.target.value = '';
+    }
+  };
 
   const handleSave = async () => {
     setSaving(true);
     await onSave({
       ...post,
       ...form,
+      featuredImage: form.coverImageUrl,
       tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
     });
     setSaving(false);
@@ -105,18 +137,18 @@ function PostModal({ post, onClose, onSave }: {
                 const title = e.target.value;
                 const slug = post?.id ? form.slug : title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
                 setForm(f => ({ ...f, title, slug }));
-              }} placeholder="Industry Insights 2024" />
+              }} placeholder="How to Choose the Best 4K CCTV..." />
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-400 mb-1.5">URL Slug *</label>
-              <input className={inputCls} value={form.slug} onChange={e => setForm(f => ({ ...f, slug: e.target.value }))} placeholder="industry-insights-2024" />
+              <input className={inputCls} value={form.slug} onChange={e => setForm(f => ({ ...f, slug: e.target.value }))} placeholder="choosing-the-best-cctv-system" />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-medium text-slate-400 mb-1.5">Category</label>
-              <input className={inputCls} value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} placeholder="Industry News" />
+              <input className={inputCls} value={form.category} onChange={e => setForm(f => ({ ...f, category: e.target.value }))} placeholder="CCTV & Surveillance" />
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-400 mb-1.5">Status</label>
@@ -130,12 +162,31 @@ function PostModal({ post, onClose, onSave }: {
 
           <div>
             <label className="block text-xs font-medium text-slate-400 mb-1.5">Tags (comma-separated)</label>
-            <input className={inputCls} value={form.tags} onChange={e => setForm(f => ({ ...f, tags: e.target.value }))} placeholder="engineering, precision, innovation" />
+            <input className={inputCls} value={form.tags} onChange={e => setForm(f => ({ ...f, tags: e.target.value }))} placeholder="cctv, alarms, security, wireless" />
           </div>
 
-          <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1.5">Cover Image URL</label>
-            <input className={inputCls} value={form.coverImageUrl} onChange={e => setForm(f => ({ ...f, coverImageUrl: e.target.value }))} placeholder="https://res.cloudinary.com/..." />
+          <div className="space-y-2">
+            <label className="block text-xs font-medium text-slate-400">Featured Image</label>
+            {form.coverImageUrl && (
+              <div className="relative w-full max-w-sm h-36 rounded-lg overflow-hidden border border-slate-700 bg-slate-950">
+                <img src={form.coverImageUrl} alt="Cover preview" className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => setForm(f => ({ ...f, coverImageUrl: '' }))}
+                  className="absolute top-2 right-2 p-1 rounded-full bg-rose-600/90 text-white hover:bg-rose-600"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
+            <div className="flex gap-2">
+              <input className={`${inputCls} flex-1`} value={form.coverImageUrl} onChange={e => setForm(f => ({ ...f, coverImageUrl: e.target.value }))} placeholder="Paste image URL (https://...) or upload" />
+              <label className="inline-flex items-center gap-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white px-3 py-2 text-xs font-medium cursor-pointer shrink-0">
+                {isUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <UploadCloud className="h-4 w-4" />}
+                <span>{isUploading ? 'Uploading...' : 'Upload'}</span>
+                <input type="file" accept="image/*" onChange={handleImageUpload} disabled={isUploading} className="hidden" />
+              </label>
+            </div>
           </div>
 
           <div>
@@ -145,7 +196,7 @@ function PostModal({ post, onClose, onSave }: {
 
           <div>
             <label className="block text-xs font-medium text-slate-400 mb-1.5">Content (Markdown) *</label>
-            <textarea className={`${textareaCls} font-mono text-xs`} rows={18} value={form.content} onChange={e => setForm(f => ({ ...f, content: e.target.value }))} placeholder="# Post Title&#10;&#10;Write your article content in Markdown…" />
+            <textarea className={`${textareaCls} font-mono text-xs`} rows={16} value={form.content} onChange={e => setForm(f => ({ ...f, content: e.target.value }))} placeholder="# Post Title&#10;&#10;Write your article content in Markdown…" />
           </div>
 
           <label className="flex items-center gap-3 cursor-pointer">
@@ -182,8 +233,13 @@ export default function CMSBlogPage() {
   const fetchPosts = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await apiFetch('/admin/cms/posts');
-      setPosts(Array.isArray(data.data) ? data.data : Array.isArray(data) ? data : []);
+      const data = await apiFetch('/admin/blog');
+      const list = Array.isArray(data.data) ? data.data : Array.isArray(data) ? data : [];
+      setPosts(list.map((p: any) => ({
+        ...p,
+        category: p.category?.name || (typeof p.category === 'string' ? p.category : 'General'),
+        coverImageUrl: p.featuredImage || p.coverImageUrl || '',
+      })));
     } catch {
       setPosts([]);
     } finally {
@@ -195,11 +251,15 @@ export default function CMSBlogPage() {
 
   const handleSave = async (data: Partial<BlogPost>) => {
     try {
+      const payload = {
+        ...data,
+        featuredImage: data.coverImageUrl || data.featuredImage,
+      };
       if (data.id) {
-        await apiFetch(`/admin/cms/posts/${data.id}`, { method: 'PUT', body: JSON.stringify(data) });
+        await apiFetch(`/admin/blog/${data.id}`, { method: 'PATCH', body: JSON.stringify(payload) });
         showToast('Post updated');
       } else {
-        await apiFetch('/admin/cms/posts', { method: 'POST', body: JSON.stringify(data) });
+        await apiFetch('/admin/blog', { method: 'POST', body: JSON.stringify(payload) });
         showToast('Post created');
       }
       setEditing(undefined);
@@ -210,7 +270,7 @@ export default function CMSBlogPage() {
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this post permanently?')) return;
     try {
-      await apiFetch(`/admin/cms/posts/${id}`, { method: 'DELETE' });
+      await apiFetch(`/admin/blog/${id}`, { method: 'DELETE' });
       showToast('Post deleted');
       setPosts(prev => prev.filter(p => p.id !== id));
     } catch (e: unknown) { showToast((e as Error).message, 'error'); }
@@ -219,7 +279,7 @@ export default function CMSBlogPage() {
   const handleToggleStatus = async (post: BlogPost) => {
     const newStatus = post.status === 'PUBLISHED' ? 'DRAFT' : 'PUBLISHED';
     try {
-      await apiFetch(`/admin/cms/posts/${post.id}`, { method: 'PUT', body: JSON.stringify({ status: newStatus }) });
+      await apiFetch(`/admin/blog/${post.id}`, { method: 'PATCH', body: JSON.stringify({ status: newStatus }) });
       setPosts(prev => prev.map(p => p.id === post.id ? { ...p, status: newStatus } : p));
       showToast(newStatus === 'PUBLISHED' ? 'Post published' : 'Post moved to drafts');
     } catch (e: unknown) { showToast((e as Error).message, 'error'); }

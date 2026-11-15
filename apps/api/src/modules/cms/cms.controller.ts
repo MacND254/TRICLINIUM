@@ -338,9 +338,15 @@ export class CmsController {
     try {
       const posts = await prisma.blogPost.findMany({
         orderBy: { createdAt: 'desc' },
-        include: { category: true },
+        include: { category: true, tags: { include: { tag: true } } },
       });
-      return res.json({ success: true, data: posts });
+      const formatted = posts.map((p) => ({
+        ...p,
+        category: p.category?.name || 'General',
+        coverImageUrl: p.featuredImage || '',
+        tags: p.tags.map((t) => t.tag.name),
+      }));
+      return res.json({ success: true, data: formatted });
     } catch (err) {
       next(err);
     }
@@ -349,7 +355,21 @@ export class CmsController {
   // POST /admin/blog
   static async createBlogPost(req: Request, res: Response, next: NextFunction) {
     try {
-      const data = blogPostSchema.parse(req.body);
+      const body = { ...req.body };
+      if (body.coverImageUrl && !body.featuredImage) {
+        body.featuredImage = body.coverImageUrl;
+      }
+      if (body.category && !body.categoryId) {
+        const catName = String(body.category).trim();
+        const catSlug = slugify(catName);
+        let cat = await prisma.blogCategory.findFirst({ where: { slug: catSlug } });
+        if (!cat) {
+          cat = await prisma.blogCategory.create({ data: { name: catName, slug: catSlug } });
+        }
+        body.categoryId = cat.id;
+      }
+
+      const data = blogPostSchema.parse(body);
       const slug = slugify(data.slug);
 
       const post = await prisma.blogPost.create({
@@ -380,7 +400,21 @@ export class CmsController {
   static async updateBlogPost(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const data = blogPostSchema.partial().parse(req.body);
+      const body = { ...req.body };
+      if (body.coverImageUrl !== undefined && !body.featuredImage) {
+        body.featuredImage = body.coverImageUrl;
+      }
+      if (body.category && !body.categoryId) {
+        const catName = String(body.category).trim();
+        const catSlug = slugify(catName);
+        let cat = await prisma.blogCategory.findFirst({ where: { slug: catSlug } });
+        if (!cat) {
+          cat = await prisma.blogCategory.create({ data: { name: catName, slug: catSlug } });
+        }
+        body.categoryId = cat.id;
+      }
+
+      const data = blogPostSchema.partial().parse(body);
       const slug = data.slug ? slugify(data.slug) : undefined;
 
       const post = await prisma.blogPost.update({
@@ -418,6 +452,7 @@ export class CmsController {
       if (post) {
         await prisma.blogPost.delete({ where: { id } });
         await invalidateCmsCaches(undefined, post.slug);
+        await logAudit({ req, action: 'BLOG_POST_DELETED', entityType: 'BlogPost', entityId: id });
       }
       return res.json({ success: true, message: 'Article deleted successfully' });
     } catch (err) {
@@ -426,11 +461,32 @@ export class CmsController {
   }
 
   // FAQs CRUD
+  static async getAdminFaqs(req: Request, res: Response, next: NextFunction) {
+    try {
+      const faqs = await prisma.faq.findMany({
+        orderBy: [{ displayOrder: 'asc' }, { createdAt: 'desc' }],
+      });
+      const formatted = faqs.map((f) => ({
+        ...f,
+        sortOrder: f.displayOrder,
+      }));
+      return res.json({ success: true, data: formatted });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   static async createFaq(req: Request, res: Response, next: NextFunction) {
     try {
-      const data = faqSchema.parse(req.body);
+      const body = { ...req.body };
+      if (body.sortOrder !== undefined && body.displayOrder === undefined) {
+        body.displayOrder = body.sortOrder;
+      }
+      delete body.sortOrder;
+      const data = faqSchema.parse(body);
       const faq = await prisma.faq.create({ data });
       await cache.del(CACHE_KEYS.FAQS);
+      await logAudit({ req, action: 'FAQ_CREATED', entityType: 'Faq', entityId: faq.id });
       return res.status(201).json({ success: true, data: faq });
     } catch (err) {
       next(err);
@@ -440,9 +496,15 @@ export class CmsController {
   static async updateFaq(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const data = faqSchema.partial().parse(req.body);
+      const body = { ...req.body };
+      if (body.sortOrder !== undefined && body.displayOrder === undefined) {
+        body.displayOrder = body.sortOrder;
+      }
+      delete body.sortOrder;
+      const data = faqSchema.partial().parse(body);
       const faq = await prisma.faq.update({ where: { id }, data });
       await cache.del(CACHE_KEYS.FAQS);
+      await logAudit({ req, action: 'FAQ_UPDATED', entityType: 'Faq', entityId: id });
       return res.json({ success: true, data: faq });
     } catch (err) {
       next(err);
@@ -454,6 +516,7 @@ export class CmsController {
       const { id } = req.params;
       await prisma.faq.delete({ where: { id } });
       await cache.del(CACHE_KEYS.FAQS);
+      await logAudit({ req, action: 'FAQ_DELETED', entityType: 'Faq', entityId: id });
       return res.json({ success: true, message: 'FAQ deleted' });
     } catch (err) {
       next(err);
@@ -496,6 +559,138 @@ export class CmsController {
   }
 
   // Homepage Sections & Hero Slides Management
+  static async getAdminHomepageSections(req: Request, res: Response, next: NextFunction) {
+    try {
+      const [heroSlides, dbSections] = await Promise.all([
+        prisma.pageSection.findMany({
+          where: { key: 'hero_slide' },
+          orderBy: { displayOrder: 'asc' },
+        }),
+        prisma.pageSection.findMany({
+          where: { key: { not: 'hero_slide' } },
+          orderBy: { displayOrder: 'asc' },
+        }),
+      ]);
+
+      const heroSection = {
+        id: 'hero-main',
+        key: 'hero',
+        title: 'Hero Section & Slides',
+        content: {
+          slides: heroSlides.map((s) => ({
+            id: s.id,
+            headline: (s.content as any)?.headline || '',
+            subheadline: (s.content as any)?.subheadline || '',
+            description: (s.content as any)?.description || '',
+            imageUrl: (s.content as any)?.imageUrl || '',
+            primaryCTA: {
+              label: (s.content as any)?.primaryCtaText || 'Explore Products',
+              href: (s.content as any)?.primaryCtaLink || '/products',
+            },
+            secondaryCTA: {
+              label: (s.content as any)?.secondaryCtaText || 'Request Quote',
+              href: (s.content as any)?.secondaryCtaLink || '/contact',
+            },
+            isActive: s.isEnabled,
+          })),
+        },
+        isEnabled: heroSlides.some((s) => s.isEnabled),
+        sortOrder: 0,
+      };
+
+      const sectionMap: Record<string, any> = {};
+      dbSections.forEach((s) => {
+        sectionMap[s.key] = s;
+      });
+
+      const sectionsList = [
+        heroSection,
+        {
+          id: sectionMap['why_us']?.id || 'why_us',
+          key: 'why_choose_us',
+          title: sectionMap['why_us']?.title || 'Why Choose Us / Value Proposition',
+          content: {
+            items: (sectionMap['why_us']?.content as any)?.pillars || [
+              { icon: 'ShieldCheck', title: 'Certified Security Experts', description: 'Experienced technicians with deep expertise in camera placement and secure networks.' },
+              { icon: 'Cpu', title: 'AI-Powered Motion Analytics', description: 'Advanced smart analytics distinguish humans and vehicles from pets.' },
+              { icon: 'FileText', title: 'Free Site Surveys & Quotes', description: 'Transparent itemized quotations with equipment guarantees.' },
+            ],
+          },
+          isEnabled: sectionMap['why_us']?.isEnabled ?? true,
+          sortOrder: 1,
+        },
+        {
+          id: 'featured_products',
+          key: 'featured_products',
+          title: 'Featured Products Grid',
+          content: {},
+          isEnabled: true,
+          sortOrder: 2,
+        },
+        {
+          id: 'featured_services',
+          key: 'featured_services',
+          title: 'Featured Services Grid',
+          content: {},
+          isEnabled: true,
+          sortOrder: 3,
+        },
+        {
+          id: sectionMap['stats']?.id || 'stats',
+          key: 'stats',
+          title: sectionMap['stats']?.title || 'Key Statistics / Metrics Counter',
+          content: {
+            items: (sectionMap['stats']?.content as any)?.stats?.map((st: any) => ({
+              value: st.value?.replace(/[^0-9.]/g, '') || '500',
+              label: st.label,
+              suffix: st.value?.includes('+') ? '+' : st.value?.includes('%') ? '%' : st.value?.includes('s') ? 's' : '',
+            })) || [
+              { value: '2500', label: 'Cameras & Sensors Installed', suffix: '+' },
+              { value: '99.98', label: 'System Uptime Reliability', suffix: '%' },
+              { value: '15', label: 'Emergency Alert Speed', suffix: 's' },
+              { value: '1', label: 'Certified Equipment Warranty', suffix: '-Year' },
+            ],
+          },
+          isEnabled: sectionMap['stats']?.isEnabled ?? true,
+          sortOrder: 4,
+        },
+        {
+          id: sectionMap['about_preview']?.id || 'about_preview',
+          key: 'about_preview',
+          title: 'About Preview & Teaser',
+          content: (sectionMap['about_preview']?.content as any) || {
+            headline: 'Protecting Homes, Businesses & Critical Infrastructure',
+            description: 'TRICLINIUM is a dedicated provider of advanced CCTV surveillance systems and smart intruder alarm solutions across Kenya.',
+            imageUrl: 'https://images.unsplash.com/photo-1557597774-9d273605dfa9?auto=format&fit=crop&w=1200&q=80',
+            ctaLabel: 'Read Our Full Story',
+            ctaHref: '/about',
+          },
+          isEnabled: sectionMap['about_preview']?.isEnabled ?? true,
+          sortOrder: 5,
+        },
+        {
+          id: sectionMap['cta']?.id || 'cta',
+          key: 'cta',
+          title: 'Call to Action',
+          content: (sectionMap['cta']?.content as any) || {
+            headline: 'Ready to Upgrade Your Property Security?',
+            description: 'Schedule a free on-site survey or speak with our certified security engineers in Nairobi today.',
+            primaryLabel: 'Get Free Security Quote',
+            primaryHref: '/contact',
+            secondaryLabel: 'Browse All Products',
+            secondaryHref: '/products',
+          },
+          isEnabled: sectionMap['cta']?.isEnabled ?? true,
+          sortOrder: 6,
+        },
+      ];
+
+      return res.json({ success: true, data: sectionsList });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   static async updateHomepageSection(req: Request, res: Response, next: NextFunction) {
     try {
       const { key } = req.params;
@@ -511,23 +706,76 @@ export class CmsController {
         },
       });
 
-      const section = await prisma.pageSection.upsert({
-        where: { id: req.body.id || 'non-existent' },
-        update: {
-          title,
-          content,
-          isEnabled: isEnabled !== undefined ? isEnabled : true,
-          displayOrder: displayOrder !== undefined ? displayOrder : 0,
-        },
-        create: {
-          pageId: page.id,
-          key,
-          title,
-          content,
-          isEnabled: isEnabled !== undefined ? isEnabled : true,
-          displayOrder: displayOrder !== undefined ? displayOrder : 0,
-        },
+      // Synchronize Hero Slides when 'hero' section is updated
+      if (key === 'hero' && content && Array.isArray(content.slides)) {
+        const slides = content.slides;
+        await prisma.pageSection.deleteMany({ where: { key: 'hero_slide' } });
+        for (let i = 0; i < slides.length; i++) {
+          const s = slides[i];
+          await prisma.pageSection.create({
+            data: {
+              pageId: page.id,
+              key: 'hero_slide',
+              title: s.headline ? `Hero: ${s.headline.slice(0, 30)}` : `Slide ${i + 1}`,
+              displayOrder: i + 1,
+              isEnabled: s.isActive !== false,
+              content: {
+                headline: s.headline || '',
+                subheadline: s.subheadline || '',
+                description: s.description || '',
+                imageUrl: s.imageUrl || '',
+                primaryCtaText: s.primaryCTA?.label || s.primaryCtaText || 'Explore Products',
+                primaryCtaLink: s.primaryCTA?.href || s.primaryCtaLink || '/products',
+                secondaryCtaText: s.secondaryCTA?.label || s.secondaryCtaText || 'Request Quote',
+                secondaryCtaLink: s.secondaryCTA?.href || s.secondaryCtaLink || '/contact',
+              },
+            },
+          });
+        }
+      }
+
+      // Synchronize stats section format
+      if (key === 'stats' && content && Array.isArray(content.items)) {
+        const formattedStats = content.items.map((it: any) => ({
+          label: it.label,
+          value: `${it.value || ''}${it.suffix || ''}`,
+        }));
+        content.stats = formattedStats;
+      }
+
+      // Synchronize why_choose_us section format
+      if ((key === 'why_choose_us' || key === 'why_us') && content && Array.isArray(content.items)) {
+        content.pillars = content.items;
+      }
+
+      const targetKey = key === 'why_choose_us' ? 'why_us' : key;
+      const existingSection = await prisma.pageSection.findFirst({
+        where: { pageId: page.id, key: targetKey },
       });
+
+      let section;
+      if (existingSection) {
+        section = await prisma.pageSection.update({
+          where: { id: existingSection.id },
+          data: {
+            ...(title !== undefined && { title }),
+            ...(content !== undefined && { content }),
+            ...(isEnabled !== undefined && { isEnabled }),
+            ...(displayOrder !== undefined && { displayOrder }),
+          },
+        });
+      } else {
+        section = await prisma.pageSection.create({
+          data: {
+            pageId: page.id,
+            key: targetKey,
+            title: title || key,
+            content: content || {},
+            isEnabled: isEnabled !== undefined ? isEnabled : true,
+            displayOrder: displayOrder !== undefined ? displayOrder : 0,
+          },
+        });
+      }
 
       await cache.del(CACHE_KEYS.HOMEPAGE);
       await logAudit({ req, action: 'HOMEPAGE_SECTION_UPDATED', entityType: 'PageSection', entityId: section.id });
