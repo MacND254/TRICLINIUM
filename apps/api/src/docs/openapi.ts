@@ -93,8 +93,8 @@ export const openApiSpec = {
               schema: {
                 type: 'object',
                 properties: {
-                  email: { type: 'string', example: 'admin@triclinium.com' },
-                  password: { type: 'string', example: 'Admin123!@#' },
+                  email: { type: 'string', example: 'archer.tritech@gmail.com' },
+                  password: { type: 'string', example: 'h34rtb347' },
                 },
               },
             },

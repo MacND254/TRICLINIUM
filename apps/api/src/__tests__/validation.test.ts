@@ -11,7 +11,7 @@ import {
 describe('Shared Zod Validation Schemas', () => {
   describe('Authentication Validation', () => {
     it('should validate correct login credentials', () => {
-      const valid = { email: 'admin@triclinium.com', password: 'Password123!@#' };
+      const valid = { email: 'archer.tritech@gmail.com', password: 'Password123!@#' };
       expect(() => loginSchema.parse(valid)).not.toThrow();
     });
 

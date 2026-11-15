@@ -43,7 +43,7 @@ export const config = {
     apiKey: process.env.RESEND_API_KEY,
     senderName: process.env.EMAIL_SENDER_NAME || 'TRICLINIUM Enterprise',
     senderAddress: process.env.EMAIL_SENDER_ADDRESS || 'notifications@triclinium.com',
-    adminNotificationEmail: process.env.ADMIN_NOTIFICATION_EMAIL || 'admin@triclinium.com',
+    adminNotificationEmail: process.env.ADMIN_NOTIFICATION_EMAIL || 'archer.tritech@gmail.com',
   },
 
   revalidation: {

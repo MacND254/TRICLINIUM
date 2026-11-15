@@ -72,7 +72,7 @@ export async function sendMailGateway(payload: MailPayload): Promise<{ success: 
 export async function getNotifyEmail(): Promise<string> {
   const setting = await prisma.websiteSetting.findFirst({ where: { key: 'notifyEmail' } });
   const val = setting ? String(setting.value ?? '') : '';
-  return val || process.env.ADMIN_NOTIFICATION_EMAIL || 'admin@triclinium.com';
+  return val || process.env.ADMIN_NOTIFICATION_EMAIL || 'archer.tritech@gmail.com';
 }
 
 // ================= EMAIL TEMPLATES FOR CLIENTS =================

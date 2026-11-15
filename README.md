@@ -76,8 +76,8 @@ npx tsx prisma/seed.ts
 ```
 
 **Default Admin Credentials**:
-- **Email**: `admin@triclinium.com`
-- **Password**: `Admin123!@#`
+- **Email**: `archer.tritech@gmail.com`
+- **Password**: `h34rtb347`
 
 ### 4. Build Monorepo
 ```bash

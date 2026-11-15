@@ -90,7 +90,7 @@ const DEFAULTS: WebsiteSettings = {
   currencySymbol: 'Ksh',
   showPrices: true,
   enableQuotations: true,
-  notifyEmail: 'admin@triclinium.com',
+  notifyEmail: 'archer.tritech@gmail.com',
   notifyOnInquiry: true,
   notifyOnQuotation: true,
   mailGatewayProvider: 'smtp',
@@ -584,7 +584,7 @@ export default function SettingsPage() {
                   <div className="text-xs text-sky-200 space-y-1">
                     <p className="font-semibold text-sky-300">Automatic Inquiry Delivery Gateway</p>
                     <p>
-                      When a visitor sends a message via the public Contact form or submits a CCTV product/service inquiry, the system immediately dispatches an alert email to <strong className="text-white underline">{settings.notifyEmail || 'admin@triclinium.com'}</strong>.
+                      When a visitor sends a message via the public Contact form or submits a CCTV product/service inquiry, the system immediately dispatches an alert email to <strong className="text-white underline">{settings.notifyEmail || 'archer.tritech@gmail.com'}</strong>.
                     </p>
                     <p className="text-slate-400 text-[11px] pt-1">
                       Works with Gmail, Outlook 365, Mailgun, SendGrid, Amazon SES, or any standard cPanel SMTP server.
@@ -663,7 +663,7 @@ export default function SettingsPage() {
 
               <div className="flex items-center justify-between pt-2 border-t border-slate-800">
                 <p className="text-xs text-slate-400">
-                  Sends a test message to: <strong className="text-slate-200">{settings.notifyEmail || 'admin@triclinium.com'}</strong>
+                  Sends a test message to: <strong className="text-slate-200">{settings.notifyEmail || 'archer.tritech@gmail.com'}</strong>
                 </p>
                 <button
                   type="button"

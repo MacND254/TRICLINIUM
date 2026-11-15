@@ -95,7 +95,7 @@ export const DEFAULT_WEBSITE_SETTINGS: WebsiteSettingsDTO = {
   email: {
     senderName: 'TRICLINIUM Security Enterprise',
     senderEmail: 'notifications@triclinium.com',
-    notificationRecipients: ['admin@triclinium.com', 'sales@triclinium.com'],
+    notificationRecipients: ['archer.tritech@gmail.com', 'sales@triclinium.com'],
   },
 };
 

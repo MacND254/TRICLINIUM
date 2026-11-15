@@ -96,20 +96,22 @@ async function main() {
 
   // ================= 2. INITIAL SUPER ADMIN =================
   console.log('Seeding Initial Super Administrator...');
+  const adminEmail = process.env.INITIAL_SUPER_ADMIN_EMAIL || 'archer.tritech@gmail.com';
+  const adminPassword = process.env.INITIAL_SUPER_ADMIN_PASSWORD || 'h34rtb347';
   const salt = await bcrypt.genSalt(12);
-  const passwordHash = await bcrypt.hash('Admin123!@#', salt);
+  const passwordHash = await bcrypt.hash(adminPassword, salt);
 
   const superAdminUser = await prisma.user.upsert({
-    where: { email: 'admin@triclinium.com' },
+    where: { email: adminEmail },
     update: {
       passwordHash,
       isActive: true,
     },
     create: {
-      email: 'admin@triclinium.com',
+      email: adminEmail,
       passwordHash,
-      firstName: 'Chief',
-      lastName: 'Administrator',
+      firstName: process.env.INITIAL_SUPER_ADMIN_FIRST_NAME || 'Archer',
+      lastName: process.env.INITIAL_SUPER_ADMIN_LAST_NAME || 'TriTech',
       isActive: true,
     },
   });
@@ -136,7 +138,7 @@ async function main() {
     { key: 'description', value: 'Premier supplier and certified integrator of high-definition 4K AI CCTV cameras, smart doorbells, wireless home alarms, nanny cams, intercoms, and whole-home networking in Kenya.' },
     { key: 'contactEmail', value: 'inquiries@triclinium.com' },
     { key: 'supportEmail', value: 'support@triclinium.com' },
-    { key: 'notifyEmail', value: 'admin@triclinium.com' },
+    { key: 'notifyEmail', value: process.env.ADMIN_NOTIFICATION_EMAIL || 'archer.tritech@gmail.com' },
     { key: 'phone', value: '+254 700 555 199' },
     { key: 'phoneAlt', value: '+254 711 555 198' },
     { key: 'address', value: 'Westlands Commercial Center, Ring Road, Nairobi, Kenya' },
