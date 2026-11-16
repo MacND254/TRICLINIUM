@@ -18,6 +18,7 @@ import {
   X,
   Trash2,
   FileText,
+  Pencil,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -54,8 +55,11 @@ export default function AdminInquiriesPage() {
   const [activeActionId, setActiveActionId] = useState<string | null>(null);
   const [actionType, setActionType] = useState<'preview' | 'download' | null>(null);
 
-  // Custom Quote Modal State
+  // Custom Quote Modal & Edit State
   const [showQuoteModal, setShowQuoteModal] = useState(false);
+  const [editingQuoteId, setEditingQuoteId] = useState<string | null>(null);
+  const [editingQuoteRef, setEditingQuoteRef] = useState<string | null>(null);
+  const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
   const [isSubmittingQuote, setIsSubmittingQuote] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
   const [quoteCustomerName, setQuoteCustomerName] = useState('');
@@ -98,29 +102,197 @@ export default function AdminInquiriesPage() {
     window.open(`${process.env.NEXT_PUBLIC_API_URL || '/api/v1'}/admin/inquiries/export`, '_blank');
   };
 
+  const handleOpenCreateModal = () => {
+    setEditingQuoteId(null);
+    setEditingQuoteRef(null);
+    setModalError(null);
+    setQuoteCustomerName('');
+    setQuoteEmail('');
+    setQuotePhone('');
+    setQuoteCompany('');
+    setQuoteSubject('4K CCTV & Security System Quotation');
+    setQuoteNotes('Includes 1-year on-site equipment warranty, conduit cabling, and mobile app setup.');
+    setQuotePaymentTerms('50% commitment upon project confirmation, 50% upon completed commissioning.');
+    setQuoteValidUntil('30 Days');
+    setQuoteItems([
+      { description: 'TRICLINIUM ApexGuard 4K AI Turret Camera (PoE)', qty: 4, unitPrice: 14500 },
+      { description: '8-Channel 4K NVR with 2TB Surveillance Hard Drive', qty: 1, unitPrice: 28500 },
+      { description: 'Pure Copper Cat6 Cabling & Conduit Routing (per run)', qty: 4, unitPrice: 2500 },
+      { description: 'Certified Installation, Commissioning & Mobile App Handover', qty: 1, unitPrice: 10000 },
+    ]);
+    setShowQuoteModal(true);
+  };
+
+  const handleOpenEditModal = (inq: any) => {
+    setEditingQuoteId(inq.id);
+    setEditingQuoteRef(inq.referenceNumber);
+    setModalError(null);
+    setQuoteCustomerName(inq.customerName || '');
+    setQuoteEmail(inq.email || '');
+    setQuotePhone(inq.phone || '');
+    setQuoteCompany(inq.company || '');
+    setQuoteSubject(inq.subject || 'Custom Security Quotation');
+
+    let notesVal = '';
+    let termsVal = '';
+    if (inq.message && inq.message.includes('Notes:')) {
+      const matchNotes = inq.message.match(/Notes:\s*([^\n]+)/);
+      if (matchNotes && matchNotes[1] && matchNotes[1] !== 'None') {
+        notesVal = matchNotes[1].trim();
+      }
+    }
+    if (inq.message && inq.message.includes('Terms:')) {
+      const matchTerms = inq.message.match(/Terms:\s*([^\n]+)/);
+      if (matchTerms && matchTerms[1] && matchTerms[1] !== 'Standard') {
+        termsVal = matchTerms[1].trim();
+      }
+    }
+    setQuoteNotes(notesVal || 'Includes 1-year on-site equipment warranty, conduit cabling, and mobile app setup.');
+    setQuotePaymentTerms(termsVal || '50% commitment upon project confirmation, 50% upon completed commissioning.');
+    setQuoteValidUntil('30 Days');
+
+    const extractPrice = (itm: any): number => {
+      if (itm.unitPrice !== undefined && itm.unitPrice !== null && !isNaN(Number(itm.unitPrice))) {
+        return Number(itm.unitPrice);
+      }
+      if (itm.notes) {
+        try {
+          const parsed = JSON.parse(itm.notes);
+          if (parsed.unitPrice !== undefined && !isNaN(Number(parsed.unitPrice))) {
+            return Number(parsed.unitPrice);
+          }
+        } catch {}
+      }
+      return 0;
+    };
+
+    let parsedItems: CustomQuoteItem[] = [];
+    if (inq.items && inq.items.length > 0) {
+      parsedItems = inq.items.map((itm: any) => ({
+        description: itm.productName || itm.description || 'Equipment / Service Item',
+        qty: itm.quantity || itm.qty || 1,
+        unitPrice: extractPrice(itm),
+      }));
+    } else if (inq.message && inq.message.includes('Custom Quote Items:')) {
+      const itemPart = inq.message.slice(
+        inq.message.indexOf('Custom Quote Items:') + 'Custom Quote Items:'.length,
+        inq.message.indexOf('\n\n') > -1 ? inq.message.indexOf('\n\n') : undefined
+      );
+      const regex = /(?:^|\n|,\s*)(.+?)\s*\(x(\d+)\s*@\s*Ksh\s*([\d,]+)\)(?=,\s*|$)/g;
+      let m;
+      while ((m = regex.exec(itemPart.trim())) !== null) {
+        parsedItems.push({
+          description: m[1].trim(),
+          qty: parseInt(m[2], 10),
+          unitPrice: parseFloat(m[3].replace(/,/g, '')),
+        });
+      }
+    }
+
+    if (parsedItems.length === 0) {
+      parsedItems = [
+        { description: inq.subject || '4K CCTV & Security System Quotation', qty: 1, unitPrice: 28500 },
+      ];
+    }
+
+    setQuoteItems(parsedItems);
+    setShowQuoteModal(true);
+  };
+
+  const handleDeleteInquiry = async (inq: any) => {
+    const isQuotation = inq.type === 'QUOTATION' || inq.status === 'QUOTED';
+    const label = isQuotation ? `quotation ${inq.referenceNumber}` : `inquiry ${inq.referenceNumber}`;
+    if (!window.confirm(`Are you sure you want to delete ${label} for "${inq.customerName}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    setIsDeletingId(inq.id);
+    try {
+      await fetchApi(`/admin/inquiries/${inq.id}`, { method: 'DELETE' });
+      await loadInquiries();
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete record');
+    } finally {
+      setIsDeletingId(null);
+    }
+  };
+
   const buildInquiryDocData = (inq: any) => {
     const isInvoice = inq.status === 'CONVERTED' || inq.status === 'CLOSED';
-    const initialItems =
-      inq.items && inq.items.length > 0
-        ? inq.items.map((item: any) => ({
-            description: item.productName || item.product?.name || 'Security Equipment / Installation',
-            qty: item.quantity || 1,
-            unitPrice: 12500,
-          }))
-        : [
-            {
-              description:
-                inq.subject || inq.product?.name || inq.service?.name || 'CCTV Surveillance & Security System',
-              qty: 1,
-              unitPrice: 28500,
-            },
-          ];
+
+    const extractItemUnitPrice = (item: any): number => {
+      if (item.unitPrice !== undefined && item.unitPrice !== null && !isNaN(Number(item.unitPrice))) {
+        return Number(item.unitPrice);
+      }
+      if (item.notes) {
+        try {
+          const parsed = JSON.parse(item.notes);
+          if (parsed.unitPrice !== undefined && !isNaN(Number(parsed.unitPrice))) {
+            return Number(parsed.unitPrice);
+          }
+        } catch {}
+      }
+      return 0;
+    };
+
+    let initialItems: CustomQuoteItem[] = [];
+    if (inq.items && inq.items.length > 0) {
+      initialItems = inq.items.map((item: any) => ({
+        description: item.productName || item.product?.name || item.description || 'Security Equipment / Installation',
+        qty: item.quantity || item.qty || 1,
+        unitPrice: extractItemUnitPrice(item),
+      }));
+    } else if (inq.message && inq.message.includes('Custom Quote Items:')) {
+      const itemPart = inq.message.slice(
+        inq.message.indexOf('Custom Quote Items:') + 'Custom Quote Items:'.length,
+        inq.message.indexOf('\n\n') > -1 ? inq.message.indexOf('\n\n') : undefined
+      );
+      const regex = /(?:^|\n|,\s*)(.+?)\s*\(x(\d+)\s*@\s*Ksh\s*([\d,]+)\)(?=,\s*|$)/g;
+      let m;
+      while ((m = regex.exec(itemPart.trim())) !== null) {
+        initialItems.push({
+          description: m[1].trim(),
+          qty: parseInt(m[2], 10),
+          unitPrice: parseFloat(m[3].replace(/,/g, '')),
+        });
+      }
+    }
+
+    if (initialItems.length === 0) {
+      initialItems = [
+        {
+          description:
+            inq.subject || inq.product?.name || inq.service?.name || 'CCTV Surveillance & Security System',
+          qty: 1,
+          unitPrice: 28500,
+        },
+      ];
+    }
+
+    const cleanRef = (inq.referenceNumber || '2026-001').replace(/^(QT-|INV-)/, '');
+
+    let extractedNotes = typeof inq.notes === 'string' ? inq.notes : '';
+    let extractedTerms = '';
+    if (inq.message && inq.message.includes('Notes:')) {
+      const matchNotes = inq.message.match(/Notes:\s*([^\n]+)/);
+      if (matchNotes && matchNotes[1] && matchNotes[1] !== 'None') {
+        extractedNotes = matchNotes[1].trim();
+      }
+    }
+    if (inq.message && inq.message.includes('Terms:')) {
+      const matchTerms = inq.message.match(/Terms:\s*([^\n]+)/);
+      if (matchTerms && matchTerms[1] && matchTerms[1] !== 'Standard') {
+        extractedTerms = matchTerms[1].trim();
+      }
+    }
 
     if (isInvoice) {
       return {
         docType: 'INVOICE' as const,
+        cleanRef,
         data: {
-          invoiceNumber: `INV-${inq.referenceNumber || '2026-001'}`,
+          invoiceNumber: `INV-${cleanRef}`,
+          subject: inq.subject || 'CCTV & Security System Invoice',
           date: inq.createdAt ? new Date(inq.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
           dueDate: 'Upon Receipt',
           clientName: inq.customerName || 'Valued Client',
@@ -130,7 +302,7 @@ export default function AdminInquiriesPage() {
           clientPin: '',
           items: initialItems,
           taxRate: 16,
-          notes: 'Goods remain the property of TRICLINIUM SYSTEMS until settled in full.',
+          notes: extractedNotes || 'Goods remain the property of TRICLINIUM SYSTEMS until settled in full.',
           paymentInstructions: 'M-Pesa Paybill: 247247 | Acc: [Invoice Number] or Equity Bank Westlands',
           preparedBy: 'Finance & Accounts',
           status: inq.status === 'CONVERTED' ? 'PAID' : 'ISSUED',
@@ -139,8 +311,10 @@ export default function AdminInquiriesPage() {
     } else {
       return {
         docType: 'QUOTATION' as const,
+        cleanRef,
         data: {
-          quoteRef: `QT-${inq.referenceNumber || '2026-001'}`,
+          quoteRef: `QT-${cleanRef}`,
+          subject: inq.subject || 'Custom Security Quotation',
           date: inq.createdAt ? new Date(inq.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
           validUntil: '30 Days',
           clientName: inq.customerName || 'Valued Client',
@@ -149,8 +323,8 @@ export default function AdminInquiriesPage() {
           clientPhone: inq.phone || '',
           items: initialItems,
           taxRate: 16,
-          notes: 'Includes 1-year on-site equipment warranty and mobile app configuration.',
-          paymentTerms: 'Payment terms: 50% commitment upon project confirmation, 50% upon completed commissioning.',
+          notes: extractedNotes || 'Includes 1-year on-site equipment warranty and mobile app configuration.',
+          paymentTerms: extractedTerms || 'Payment terms: 50% commitment upon project confirmation, 50% upon completed commissioning.',
           preparedBy: 'Chief Technical Engineer',
         },
       };
@@ -162,13 +336,13 @@ export default function AdminInquiriesPage() {
     setActionType('preview');
     setIsPreviewLoading(true);
 
-    const { docType, data } = buildInquiryDocData(inq);
+    const { docType, data, cleanRef } = buildInquiryDocData(inq);
     setPreviewDocType(docType);
     const title =
       docType === 'QUOTATION'
-        ? `Quotation: QT-${inq.referenceNumber}`
-        : `Tax Invoice: INV-${inq.referenceNumber}`;
-    const filename = `${docType === 'QUOTATION' ? 'QT' : 'INV'}-${inq.referenceNumber}.pdf`;
+        ? `Quotation: QT-${cleanRef}`
+        : `Tax Invoice: INV-${cleanRef}`;
+    const filename = `${docType === 'QUOTATION' ? 'QT' : 'INV'}-${cleanRef}.pdf`;
     setPreviewPdfTitle(title);
     setPreviewPdfFilename(filename);
     setPreviewModalOpen(true);
@@ -199,7 +373,7 @@ export default function AdminInquiriesPage() {
     setActiveActionId(inq.id);
     setActionType('download');
     try {
-      const { docType, data } = buildInquiryDocData(inq);
+      const { docType, data, cleanRef } = buildInquiryDocData(inq);
       const { pdf } = await import('@react-pdf/renderer');
       const doc =
         docType === 'QUOTATION' ? (
@@ -209,7 +383,7 @@ export default function AdminInquiriesPage() {
         );
       const blob = await pdf(doc).toBlob();
       const url = URL.createObjectURL(blob);
-      const filename = `${docType === 'QUOTATION' ? 'QT' : 'INV'}-${inq.referenceNumber}.pdf`;
+      const filename = `${docType === 'QUOTATION' ? 'QT' : 'INV'}-${cleanRef}.pdf`;
       const a = document.createElement('a');
       a.href = url;
       a.download = filename;
@@ -290,33 +464,46 @@ export default function AdminInquiriesPage() {
 
     setIsSubmittingQuote(true);
     try {
-      const res = await fetchApi('/admin/inquiries/custom-quote', {
-        method: 'POST',
-        body: JSON.stringify({
-          customerName: cleanName,
-          email: cleanEmail,
-          phone: quotePhone ? formatKenyanPhone(quotePhone) : undefined,
-          company: quoteCompany.trim() || undefined,
-          subject: quoteSubject.trim(),
-          notes: quoteNotes.trim(),
-          paymentTerms: quotePaymentTerms.trim(),
-          validUntil: quoteValidUntil.trim(),
-          items: quoteItems.map((itm) => ({
-            description: itm.description.trim(),
-            qty: Math.max(1, Math.round(Number(itm.qty))),
-            unitPrice: Math.max(0, Number(itm.unitPrice)),
-          })),
-        }),
-      });
+      const payload = {
+        customerName: cleanName,
+        email: cleanEmail,
+        phone: quotePhone ? formatKenyanPhone(quotePhone) : undefined,
+        company: quoteCompany.trim() || undefined,
+        subject: quoteSubject.trim(),
+        notes: quoteNotes.trim(),
+        paymentTerms: quotePaymentTerms.trim(),
+        validUntil: quoteValidUntil.trim(),
+        items: quoteItems.map((itm) => ({
+          description: itm.description.trim(),
+          qty: Math.max(1, Math.round(Number(itm.qty))),
+          unitPrice: Math.max(0, Number(itm.unitPrice)),
+        })),
+      };
 
-      setShowQuoteModal(false);
-      if (res?.data?.id) {
-        router.push(`/admin/inquiries/${res.data.id}`);
-      } else {
+      if (editingQuoteId) {
+        await fetchApi(`/admin/inquiries/custom-quote/${editingQuoteId}`, {
+          method: 'PUT',
+          body: JSON.stringify(payload),
+        });
+        setShowQuoteModal(false);
+        setEditingQuoteId(null);
+        setEditingQuoteRef(null);
         await loadInquiries();
+      } else {
+        const res = await fetchApi('/admin/inquiries/custom-quote', {
+          method: 'POST',
+          body: JSON.stringify(payload),
+        });
+
+        setShowQuoteModal(false);
+        if (res?.data?.id) {
+          router.push(`/admin/inquiries/${res.data.id}`);
+        } else {
+          await loadInquiries();
+        }
       }
     } catch (err: any) {
-      setModalError(err.message || 'Failed to create quotation');
+      setModalError(err.message || 'Failed to save quotation');
     } finally {
       setIsSubmittingQuote(false);
     }
@@ -336,7 +523,7 @@ export default function AdminInquiriesPage() {
         <div className="flex items-center gap-3">
           <Button
             size="sm"
-            onClick={() => setShowQuoteModal(true)}
+            onClick={handleOpenCreateModal}
             className="bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs flex items-center gap-1.5 shadow-md shadow-sky-600/30"
           >
             <Plus className="h-4 w-4" />
@@ -511,6 +698,35 @@ export default function AdminInquiriesPage() {
                             </>
                           )}
 
+                          {/* Edit Quotation / Details */}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleOpenEditModal(inq)}
+                            title="Edit Quotation / Scope"
+                            aria-label="Edit Quotation / Scope"
+                            className="h-7 w-7 p-0 border-slate-700 bg-slate-950 text-slate-300 hover:text-amber-300 hover:border-amber-500 shrink-0 shadow-sm flex items-center justify-center"
+                          >
+                            <Pencil className="h-3 w-3 text-amber-400" />
+                          </Button>
+
+                          {/* Delete Quotation / Inquiry */}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDeleteInquiry(inq)}
+                            disabled={isDeletingId === inq.id}
+                            title="Delete Quotation"
+                            aria-label="Delete Quotation"
+                            className="h-7 w-7 p-0 border-slate-700 bg-slate-950 text-slate-300 hover:text-rose-300 hover:border-rose-500 shrink-0 shadow-sm flex items-center justify-center"
+                          >
+                            {isDeletingId === inq.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin text-rose-400" />
+                            ) : (
+                              <Trash2 className="h-3 w-3 text-rose-400" />
+                            )}
+                          </Button>
+
                           <Link href={`/admin/inquiries/${inq.id}`}>
                             <Button
                               size="sm"
@@ -532,7 +748,7 @@ export default function AdminInquiriesPage() {
       </div>
 
       {/* ───────────────────────────────────────────────────────── */}
-      {/* Create Custom Quote Modal */}
+      {/* Create / Edit Custom Quote Modal */}
       {/* ───────────────────────────────────────────────────────── */}
       {showQuoteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-slate-950/80 backdrop-blur-sm">
@@ -541,11 +757,17 @@ export default function AdminInquiriesPage() {
             <div className="shrink-0 flex items-center justify-between border-b border-slate-800 px-5 py-3.5 sm:px-6 sm:py-4 bg-slate-900 z-10">
               <div className="flex items-center gap-3">
                 <div className="h-9 w-9 rounded-lg bg-sky-600 flex items-center justify-center text-white font-bold shrink-0 shadow-sm">
-                  <FileText className="h-5 w-5" />
+                  {editingQuoteId ? <Pencil className="h-5 w-5" /> : <FileText className="h-5 w-5" />}
                 </div>
                 <div>
-                  <h3 className="text-base sm:text-lg font-extrabold text-white leading-tight">Create Custom Security Quotation</h3>
-                  <p className="text-[11px] sm:text-xs text-slate-400">Generate an official proposal in Kenyan Shillings (KES) with PDF &amp; Email options.</p>
+                  <h3 className="text-base sm:text-lg font-extrabold text-white leading-tight">
+                    {editingQuoteId ? `Edit Security Quotation (${editingQuoteRef || ''})` : 'Create Custom Security Quotation'}
+                  </h3>
+                  <p className="text-[11px] sm:text-xs text-slate-400">
+                    {editingQuoteId
+                      ? 'Modify client information, scope items, pricing and terms.'
+                      : 'Generate an official proposal in Kenyan Shillings (KES) with PDF & Email options.'}
+                  </p>
                 </div>
               </div>
               <button
@@ -748,12 +970,12 @@ export default function AdminInquiriesPage() {
                   {isSubmittingQuote ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Creating Quotation...</span>
+                      <span>{editingQuoteId ? 'Saving Changes...' : 'Creating Official Quotation...'}</span>
                     </>
                   ) : (
                     <>
-                      <Plus className="h-4 w-4" />
-                      <span>Create Official Quotation</span>
+                      {editingQuoteId ? <Pencil className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                      <span>{editingQuoteId ? 'Save Quotation Changes' : 'Create Official Quotation'}</span>
                     </>
                   )}
                 </Button>

@@ -626,6 +626,14 @@ export class InquiriesController {
           company: data.company || null,
           subject: data.subject || 'Custom Security Quotation',
           message: `Custom Quote Items:\n${itemsSummary}\n\nNotes: ${data.notes || 'None'}\nTerms: ${data.paymentTerms || 'Standard'}`,
+          items: {
+            create: data.items.map((i: { description: string; qty: number; unitPrice: number }) => ({
+              productName: i.description,
+              quantity: i.qty,
+              unitPrice: i.unitPrice,
+              notes: JSON.stringify({ unitPrice: i.unitPrice }),
+            })),
+          },
           notes: {
             create: [
               {
@@ -635,12 +643,131 @@ export class InquiriesController {
             ],
           },
         },
+        include: { items: true },
       });
 
       return res.status(201).json({
         success: true,
         data: inquiry,
         message: 'Custom quotation created successfully',
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  // PUT /admin/inquiries/custom-quote/:id (Update custom quotation details and line items)
+  static async updateCustomQuote(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const customQuoteSchema = z.object({
+        customerName: z.string().min(2, 'Customer name must be at least 2 characters'),
+        email: z.string().email('Valid customer email is required'),
+        phone: z.string().optional().nullable(),
+        company: z.string().optional().nullable(),
+        subject: z.string().optional().default('Custom Security Quotation'),
+        notes: z.string().optional().default(''),
+        paymentTerms: z.string().optional().default(''),
+        validUntil: z.string().optional().default('30 Days'),
+        items: z.array(
+          z.object({
+            description: z.string().min(1, 'Line item description is required'),
+            qty: z.coerce.number().int().positive().default(1),
+            unitPrice: z.coerce.number().nonnegative().default(0),
+          })
+        ).min(1, 'At least one line item is required'),
+      });
+
+      const data = customQuoteSchema.parse(req.body);
+
+      const existing = await prisma.inquiry.findUnique({ where: { id } });
+      if (!existing) {
+        return res.status(404).json({ success: false, error: { message: 'Quotation not found' } });
+      }
+
+      const itemsSummary = data.items
+        .map((i: { description: string; qty: number; unitPrice: number }) => `${i.description} (x${i.qty} @ Ksh ${i.unitPrice.toLocaleString()})`)
+        .join(', ');
+
+      const updated = await prisma.$transaction(async (tx) => {
+        // Clear old line items
+        await tx.inquiryItem.deleteMany({ where: { inquiryId: id } });
+
+        // Update inquiry & create replaced items
+        const inq = await tx.inquiry.update({
+          where: { id },
+          data: {
+            customerName: data.customerName,
+            email: data.email.toLowerCase().trim(),
+            phone: data.phone || null,
+            company: data.company || null,
+            subject: data.subject || 'Custom Security Quotation',
+            message: `Custom Quote Items:\n${itemsSummary}\n\nNotes: ${data.notes || 'None'}\nTerms: ${data.paymentTerms || 'Standard'}`,
+            items: {
+              create: data.items.map((i: { description: string; qty: number; unitPrice: number }) => ({
+                productName: i.description,
+                quantity: i.qty,
+                unitPrice: i.unitPrice,
+                notes: JSON.stringify({ unitPrice: i.unitPrice }),
+              })),
+            },
+          },
+          include: { items: true },
+        });
+
+        await tx.inquiryActivity.create({
+          data: {
+            inquiryId: id,
+            actorId: (req as any).user?.id,
+            actorName: (req as any).user?.name || 'Administrator',
+            action: 'QUOTATION_EDITED',
+            details: `Updated quotation items and details (${data.items.length} line items).`,
+          },
+        });
+
+        return inq;
+      });
+
+      await logAudit({
+        req,
+        action: 'UPDATE_INQUIRY',
+        entityType: 'Inquiry',
+        entityId: id,
+        details: { quoteRef: updated.referenceNumber, itemsCount: data.items.length },
+      });
+
+      return res.json({
+        success: true,
+        data: updated,
+        message: 'Quotation updated successfully',
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  // DELETE /admin/inquiries/:id (Delete inquiry or quotation)
+  static async deleteInquiry(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const existing = await prisma.inquiry.findUnique({ where: { id } });
+      if (!existing) {
+        return res.status(404).json({ success: false, error: { message: 'Inquiry record not found' } });
+      }
+
+      await prisma.inquiry.delete({ where: { id } });
+
+      await logAudit({
+        req,
+        action: 'DELETE_INQUIRY',
+        entityType: 'Inquiry',
+        entityId: id,
+        details: { referenceNumber: existing.referenceNumber, customerName: existing.customerName },
+      });
+
+      return res.json({
+        success: true,
+        message: `Inquiry / Quotation ${existing.referenceNumber} deleted successfully`,
       });
     } catch (err) {
       next(err);

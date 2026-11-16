@@ -10,6 +10,7 @@ export interface LineItem {
 
 export interface QuotationData {
   quoteRef: string;
+  subject?: string;
   date: string;
   validUntil: string;
   clientName: string;
@@ -89,6 +90,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: 36,
     paddingTop: 24,
     paddingBottom: 36,
+  },
+  // Subject Banner
+  subjectBanner: {
+    backgroundColor: '#f8fafc',
+    borderLeft: '4px solid #0ea5e9',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 4,
+    marginBottom: 20,
+    borderBottom: '1px solid #e2e8f0',
+    borderRight: '1px solid #e2e8f0',
+    borderTop: '1px solid #e2e8f0',
+  },
+  subjectLabel: {
+    fontSize: 7,
+    fontFamily: 'Helvetica-Bold',
+    color: '#0284c7',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 3,
+  },
+  subjectText: {
+    fontSize: 12,
+    fontFamily: 'Helvetica-Bold',
+    color: '#0f172a',
+    letterSpacing: 0.3,
   },
   // Two-column info row
   infoRow: {
@@ -300,7 +327,13 @@ export function QuotationPDF({ quoteData }: QuotationPDFProps) {
           </View>
           <View style={styles.headerRight}>
             <Text style={styles.quotationLabel}>OFFICIAL QUOTATION</Text>
-            <Text style={styles.quoteRef}>{quoteData.quoteRef}</Text>
+            <Text style={styles.quoteRef}>
+              {quoteData.quoteRef
+                ? quoteData.quoteRef.startsWith('QT-')
+                  ? quoteData.quoteRef
+                  : `QT-${quoteData.quoteRef.replace(/^QT-/, '')}`
+                : ''}
+            </Text>
             <Text style={styles.headerDate}>Date: {quoteData.date}</Text>
             <Text style={styles.headerDate}>Valid Until: {quoteData.validUntil}</Text>
           </View>
@@ -309,6 +342,14 @@ export function QuotationPDF({ quoteData }: QuotationPDFProps) {
 
         {/* Body */}
         <View style={styles.body}>
+          {/* Quotation Title / Scope of Work Banner at top */}
+          {quoteData.subject ? (
+            <View style={styles.subjectBanner}>
+              <Text style={styles.subjectLabel}>Quotation Title / Scope of Work</Text>
+              <Text style={styles.subjectText}>{quoteData.subject}</Text>
+            </View>
+          ) : null}
+
           {/* Client & Quote Info */}
           <View style={styles.infoRow}>
             <View style={styles.infoBox}>

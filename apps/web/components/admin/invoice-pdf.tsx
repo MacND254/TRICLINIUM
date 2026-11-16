@@ -10,6 +10,7 @@ export interface InvoiceLineItem {
 
 export interface InvoiceData {
   invoiceNumber: string;
+  subject?: string;
   date: string;
   dueDate: string;
   clientName: string;
@@ -91,6 +92,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: 36,
     paddingTop: 20,
     paddingBottom: 30,
+  },
+  // Subject Banner
+  subjectBanner: {
+    backgroundColor: '#f8fafc',
+    borderLeft: '4px solid #0284c7',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 4,
+    marginBottom: 20,
+    borderBottom: '1px solid #e2e8f0',
+    borderRight: '1px solid #e2e8f0',
+    borderTop: '1px solid #e2e8f0',
+  },
+  subjectLabel: {
+    fontSize: 7,
+    fontFamily: 'Helvetica-Bold',
+    color: '#0284c7',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 3,
+  },
+  subjectText: {
+    fontSize: 12,
+    fontFamily: 'Helvetica-Bold',
+    color: '#0f172a',
+    letterSpacing: 0.3,
   },
   // Info section
   infoRow: {
@@ -320,7 +347,13 @@ export function InvoicePDF({ invoiceData }: InvoicePDFProps) {
           </View>
           <View style={styles.headerRight}>
             <Text style={styles.invoiceBadge}>TAX INVOICE</Text>
-            <Text style={styles.invoiceNumber}>{invoiceData.invoiceNumber}</Text>
+            <Text style={styles.invoiceNumber}>
+              {invoiceData.invoiceNumber
+                ? invoiceData.invoiceNumber.startsWith('INV-')
+                  ? invoiceData.invoiceNumber
+                  : `INV-${invoiceData.invoiceNumber.replace(/^INV-/, '')}`
+                : ''}
+            </Text>
             <Text style={styles.headerDate}>Invoice Date: {invoiceData.date}</Text>
             <Text style={styles.headerDate}>Payment Due: {invoiceData.dueDate}</Text>
           </View>
@@ -329,6 +362,14 @@ export function InvoicePDF({ invoiceData }: InvoicePDFProps) {
 
         {/* Body */}
         <View style={styles.body}>
+          {/* Invoice Subject Banner at top */}
+          {invoiceData.subject ? (
+            <View style={styles.subjectBanner}>
+              <Text style={styles.subjectLabel}>Invoice Subject / Scope of Work</Text>
+              <Text style={styles.subjectText}>{invoiceData.subject}</Text>
+            </View>
+          ) : null}
+
           {/* Bill To & Invoice Info */}
           <View style={styles.infoRow}>
             <View style={styles.infoBox}>

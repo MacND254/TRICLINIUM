@@ -22,6 +22,7 @@ import {
   Receipt,
   FileText,
   Eye,
+  Pencil,
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
@@ -128,6 +129,7 @@ export default function AdminInquiryDetailPage() {
   const [previewDocType, setPreviewDocType] = useState<'QUOTATION' | 'INVOICE'>('QUOTATION');
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const loadInquiry = async () => {
     try {
@@ -136,34 +138,88 @@ export default function AdminInquiryDetailPage() {
       setStatus(data.status);
       setUrgency(data.urgency);
 
-      const initialItems: LineItem[] =
-        data.items && data.items.length > 0
-          ? data.items.map((item: any) => ({
-              description: item.productName || item.product?.name || 'Security Equipment / Installation',
-              qty: item.quantity || 1,
-              unitPrice: 12500,
-            }))
-          : [
-              { description: `${data.subject || 'CCTV Surveillance & Security System'}`, qty: 1, unitPrice: 28500 },
-            ];
+      const extractUnitPrice = (item: any): number => {
+        if (item.unitPrice !== undefined && item.unitPrice !== null && !isNaN(Number(item.unitPrice))) {
+          return Number(item.unitPrice);
+        }
+        if (item.notes) {
+          try {
+            const parsed = JSON.parse(item.notes);
+            if (parsed.unitPrice !== undefined && !isNaN(Number(parsed.unitPrice))) {
+              return Number(parsed.unitPrice);
+            }
+          } catch {}
+        }
+        return 0;
+      };
+
+      let initialItems: LineItem[] = [];
+      if (data.items && data.items.length > 0) {
+        initialItems = data.items.map((item: any) => ({
+          description: item.productName || item.product?.name || item.description || 'Security Equipment / Installation',
+          qty: item.quantity || item.qty || 1,
+          unitPrice: extractUnitPrice(item),
+        }));
+      } else if (data.message && data.message.includes('Custom Quote Items:')) {
+        const itemPart = data.message.slice(
+          data.message.indexOf('Custom Quote Items:') + 'Custom Quote Items:'.length,
+          data.message.indexOf('\n\n') > -1 ? data.message.indexOf('\n\n') : undefined
+        );
+        const regex = /(?:^|\n|,\s*)(.+?)\s*\(x(\d+)\s*@\s*Ksh\s*([\d,]+)\)(?=,\s*|$)/g;
+        let m;
+        while ((m = regex.exec(itemPart.trim())) !== null) {
+          initialItems.push({
+            description: m[1].trim(),
+            qty: parseInt(m[2], 10),
+            unitPrice: parseFloat(m[3].replace(/,/g, '')),
+          });
+        }
+      }
+
+      if (initialItems.length === 0) {
+        initialItems = [
+          { description: data.subject || 'CCTV Surveillance & Security System', qty: 1, unitPrice: 28500 },
+        ];
+      }
 
       setItems(initialItems);
+
+      const cleanRef = (data.referenceNumber || '2026-001').replace(/^(QT-|INV-)/, '');
+
+      let extractedNotes = typeof data.notes === 'string' ? data.notes : '';
+      let extractedTerms = '';
+      if (data.message && data.message.includes('Notes:')) {
+        const matchNotes = data.message.match(/Notes:\s*([^\n]+)/);
+        if (matchNotes && matchNotes[1] && matchNotes[1] !== 'None') {
+          extractedNotes = matchNotes[1].trim();
+        }
+      }
+      if (data.message && data.message.includes('Terms:')) {
+        const matchTerms = data.message.match(/Terms:\s*([^\n]+)/);
+        if (matchTerms && matchTerms[1] && matchTerms[1] !== 'Standard') {
+          extractedTerms = matchTerms[1].trim();
+        }
+      }
 
       // Pre-populate quotation fields from inquiry
       setQuoteData((prev) => ({
         ...prev,
-        quoteRef: `QT-${data.referenceNumber || '2026-001'}`,
+        quoteRef: `QT-${cleanRef}`,
+        subject: data.subject || 'Custom Security Quotation',
         clientName: data.customerName || '',
         clientCompany: data.company || '',
         clientEmail: data.email || '',
         clientPhone: data.phone || '',
         items: initialItems,
+        notes: extractedNotes || prev.notes,
+        paymentTerms: extractedTerms || prev.paymentTerms,
       }));
 
       // Pre-populate invoice fields from inquiry
       setInvoiceData((prev) => ({
         ...prev,
-        invoiceNumber: `INV-${data.referenceNumber || '2026-001'}`,
+        invoiceNumber: `INV-${cleanRef}`,
+        subject: data.subject || 'Custom Security Quotation',
         clientName: data.customerName || '',
         clientCompany: data.company || '',
         clientEmail: data.email || '',
@@ -193,6 +249,23 @@ export default function AdminInquiryDetailPage() {
       alert(err.message || 'Failed to update inquiry');
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const handleDeleteInquiry = async () => {
+    const isQuotation = inquiry?.type === 'QUOTATION' || inquiry?.status === 'QUOTED';
+    const label = isQuotation ? `quotation ${inquiry?.referenceNumber}` : `inquiry ${inquiry?.referenceNumber}`;
+    if (!window.confirm(`Are you sure you want to permanently delete ${label} for "${inquiry?.customerName}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      await fetchApi(`/admin/inquiries/${id}`, { method: 'DELETE' });
+      router.push('/admin/inquiries');
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete record');
+      setIsDeleting(false);
     }
   };
 
@@ -226,10 +299,30 @@ export default function AdminInquiryDetailPage() {
   const handleSaveQuoted = async () => {
     setIsSavingDoc(true);
     try {
+      // Persist quotation line items and details to backend
+      await fetchApi(`/admin/inquiries/custom-quote/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          customerName: quoteData.clientName || inquiry?.customerName,
+          email: quoteData.clientEmail || inquiry?.email,
+          phone: quoteData.clientPhone || inquiry?.phone,
+          company: quoteData.clientCompany || inquiry?.company,
+          subject: quoteData.subject || inquiry?.subject || 'Custom Security Quotation',
+          notes: quoteData.notes || '',
+          paymentTerms: quoteData.paymentTerms || '',
+          validUntil: quoteData.validUntil || '30 Days',
+          items: items.map((itm) => ({
+            description: itm.description,
+            qty: itm.qty,
+            unitPrice: itm.unitPrice,
+          })),
+        }),
+      });
+
       await fetchApi(`/admin/inquiries/${id}/notes`, {
         method: 'POST',
         body: JSON.stringify({
-          content: `Quotation ${quoteData.quoteRef} generated for ${fmtKES(grandTotal)} (${items.length} line items). Valid until ${quoteData.validUntil}.`,
+          content: `Quotation ${quoteData.quoteRef} saved with ${items.length} line items (Total: ${fmtKES(grandTotal)}). Valid until ${quoteData.validUntil}.`,
         }),
       });
       await fetchApi(`/admin/inquiries/${id}`, {
@@ -238,9 +331,9 @@ export default function AdminInquiryDetailPage() {
       });
       setStatus('QUOTED');
       await loadInquiry();
-      alert('Quotation generated and recorded in inquiry timeline.');
+      alert('Quotation updated and saved successfully.');
     } catch (err: any) {
-      alert(err.message || 'Failed to update status');
+      alert(err.message || 'Failed to update quotation');
     } finally {
       setIsSavingDoc(false);
     }
@@ -489,14 +582,23 @@ export default function AdminInquiryDetailPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
-          {/* Create Quotation Button */}
+          {/* Create or Edit Quotation Button */}
           <Button
             size="sm"
             onClick={() => openGenerator('QUOTATION')}
             className="bg-sky-700 hover:bg-sky-600 text-white text-xs flex items-center gap-1.5 font-semibold shadow-sm"
           >
-            <FileText className="h-3.5 w-3.5" />
-            <span>Create Quotation</span>
+            {status === 'QUOTED' || inquiry.type === 'QUOTATION' ? (
+              <>
+                <Pencil className="h-3.5 w-3.5 text-amber-300" />
+                <span>Edit Quotation</span>
+              </>
+            ) : (
+              <>
+                <FileText className="h-3.5 w-3.5" />
+                <span>Create Quotation</span>
+              </>
+            )}
           </Button>
 
           {/* Create Invoice Button */}
@@ -507,6 +609,24 @@ export default function AdminInquiryDetailPage() {
           >
             <Receipt className="h-3.5 w-3.5" />
             <span>Create Invoice</span>
+          </Button>
+
+          {/* Delete Quotation / Inquiry Button */}
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={handleDeleteInquiry}
+            disabled={isDeleting}
+            title="Delete Record"
+            className="border-rose-900/60 bg-rose-950/30 text-rose-300 hover:bg-rose-900/60 hover:text-white text-xs flex items-center gap-1.5 font-semibold"
+          >
+            {isDeleting ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Trash2 className="h-3.5 w-3.5 text-rose-400" />
+            )}
+            <span>Delete</span>
           </Button>
 
           {/* Quick PDF Preview & Download across QUOTED, CONVERTED, CLOSED */}
@@ -861,11 +981,23 @@ export default function AdminInquiryDetailPage() {
                 <h4 className="text-xs font-bold uppercase tracking-wider text-sky-400 mb-3">
                   Quotation Details
                 </h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
+                  <div className="sm:col-span-2 md:col-span-1">
+                    <label className="text-[10px] text-slate-400 uppercase font-semibold block mb-1">
+                      Quotation Subject / Title
+                    </label>
+                    <input
+                      type="text"
+                      value={quoteData.subject || ''}
+                      onChange={(e) => setQuoteData((p) => ({ ...p, subject: e.target.value }))}
+                      placeholder="e.g. 4K CCTV Security Quotation"
+                      className="w-full h-8 rounded-md border border-slate-700 bg-slate-950 px-3 text-xs text-white focus:border-sky-600 focus:outline-none"
+                    />
+                  </div>
                   {[
                     { label: 'Quote Reference', key: 'quoteRef', type: 'text' },
                     { label: 'Issued Date', key: 'date', type: 'date' },
-                    { label: 'Valid Until', key: 'validUntil', type: 'date' },
+                    { label: 'Valid Until', key: 'validUntil', type: 'text' },
                     { label: 'Prepared By', key: 'preparedBy', type: 'text' },
                   ].map(({ label, key, type }) => (
                     <div key={key}>
@@ -887,11 +1019,23 @@ export default function AdminInquiryDetailPage() {
                 <h4 className="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-3">
                   Tax Invoice Details
                 </h4>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
+                  <div className="sm:col-span-2 md:col-span-1">
+                    <label className="text-[10px] text-slate-400 uppercase font-semibold block mb-1">
+                      Invoice Subject / Title
+                    </label>
+                    <input
+                      type="text"
+                      value={invoiceData.subject || ''}
+                      onChange={(e) => setInvoiceData((p) => ({ ...p, subject: e.target.value }))}
+                      placeholder="e.g. 4K CCTV Security Tax Invoice"
+                      className="w-full h-8 rounded-md border border-slate-700 bg-slate-950 px-3 text-xs text-white focus:border-emerald-600 focus:outline-none"
+                    />
+                  </div>
                   {[
                     { label: 'Invoice Number', key: 'invoiceNumber', type: 'text' },
                     { label: 'Invoice Date', key: 'date', type: 'date' },
-                    { label: 'Payment Due Date', key: 'dueDate', type: 'date' },
+                    { label: 'Payment Due Date', key: 'dueDate', type: 'text' },
                     { label: 'Prepared By', key: 'preparedBy', type: 'text' },
                   ].map(({ label, key, type }) => (
                     <div key={key}>
@@ -1225,7 +1369,7 @@ export default function AdminInquiryDetailPage() {
                     ) : (
                       <FileCheck className="h-3.5 w-3.5" />
                     )}
-                    <span>Save &amp; Mark as QUOTED</span>
+                    <span>{status === 'QUOTED' ? 'Save Quotation Changes' : 'Save & Mark as QUOTED'}</span>
                   </Button>
 
                   <Button

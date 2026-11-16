@@ -427,6 +427,7 @@ model InquiryItem {
   productId   String?
   productName String?
   quantity    Int      @default(1)
+  unitPrice   Float?
   notes       String?
 
   inquiry     Inquiry  @relation(fields: [inquiryId], references: [id], onDelete: Cascade)

@@ -55,6 +55,20 @@ inquiriesRouter.post(
   InquiriesController.createCustomQuote
 );
 
+inquiriesRouter.put(
+  '/admin/inquiries/custom-quote/:id',
+  authenticate,
+  requirePermission(PERMISSIONS.INQUIRIES_EDIT),
+  InquiriesController.updateCustomQuote
+);
+
+inquiriesRouter.delete(
+  '/admin/inquiries/:id',
+  authenticate,
+  requirePermission(PERMISSIONS.INQUIRIES_DELETE),
+  InquiriesController.deleteInquiry
+);
+
 inquiriesRouter.post(
   '/admin/inquiries/:id/send-quote',
   authenticate,
