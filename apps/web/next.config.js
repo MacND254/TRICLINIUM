@@ -10,7 +10,18 @@ const nextConfig = {
     ],
   },
   async rewrites() {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (!apiUrl) {
+      if (process.env.NODE_ENV === 'production') {
+        return [];
+      }
+      return [
+        {
+          source: '/api/v1/:path*',
+          destination: 'http://localhost:4000/api/v1/:path*',
+        },
+      ];
+    }
     return [
       {
         source: '/api/v1/:path*',
