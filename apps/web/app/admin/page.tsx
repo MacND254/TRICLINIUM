@@ -32,22 +32,7 @@ export default function AdminDashboardPage() {
         const data = await fetchApi('/admin/dashboard');
         setMetrics(data);
       } catch (err) {
-        // Fallback placeholder during testing if not authenticated
-        setMetrics({
-          totalProducts: 3,
-          publishedProducts: 3,
-          draftProducts: 0,
-          totalServices: 2,
-          productCategories: 3,
-          serviceCategories: 2,
-          newInquiries: 0,
-          pendingQuotations: 0,
-          processedInquiries: 0,
-          publishedArticles: 1,
-          recentInquiries: [],
-          recentProducts: [],
-          recentActivities: [],
-        });
+        setMetrics(null);
       } finally {
         setIsLoading(false);
       }

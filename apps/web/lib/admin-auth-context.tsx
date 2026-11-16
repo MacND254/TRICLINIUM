@@ -52,6 +52,10 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   }, [pathname]);
 
   const login = (token: string, userData: AdminUser) => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('triclinium_admin_token', token);
+      document.cookie = `triclinium_session=${token}; path=/; max-age=604800; SameSite=Lax`;
+    }
     setUser(userData);
     router.push('/admin');
   };
@@ -62,6 +66,10 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     } catch (e) {
       // Ignore
     } finally {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('triclinium_admin_token');
+        document.cookie = `triclinium_session=; path=/; max-age=0; SameSite=Lax`;
+      }
       setUser(null);
       router.push('/admin/login');
     }

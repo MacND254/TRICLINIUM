@@ -22,7 +22,9 @@ import {
   X,
   ShieldAlert,
   Palette,
+  Loader2,
 } from 'lucide-react';
+import AdminLoginPage from './login/page';
 import { AdminAuthProvider, useAdminAuth } from '@/lib/admin-auth-context';
 import { usePublicSettings } from '@/lib/settings-context';
 import { Badge } from '@/components/ui/badge';
@@ -59,7 +61,7 @@ function AdminFooter() {
 
 function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { user, logout, hasRole } = useAdminAuth();
+  const { user, isLoading, logout, hasRole } = useAdminAuth();
   const { settings } = usePublicSettings();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
@@ -69,6 +71,28 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
       <div className="min-h-screen bg-slate-950 flex flex-col justify-between">
         <div className="flex-1 flex items-center justify-center p-4">
           {children}
+        </div>
+        <AdminFooter />
+      </div>
+    );
+  }
+
+  // When verifying authentication status on protected admin routes, show clean loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-400 gap-3">
+        <Loader2 className="h-8 w-8 animate-spin text-sky-500" />
+        <span className="text-xs font-medium">Verifying administrator authorization...</span>
+      </div>
+    );
+  }
+
+  // If not authenticated, render login form directly without exposing the administrative dashboard
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col justify-between">
+        <div className="flex-1 flex items-center justify-center p-4">
+          <AdminLoginPage />
         </div>
         <AdminFooter />
       </div>

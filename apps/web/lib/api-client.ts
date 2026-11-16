@@ -99,6 +99,13 @@ export async function fetchApi<T = any>(
     ...(options.headers as Record<string, string>),
   };
 
+  if (typeof window !== 'undefined' && !headers['Authorization']) {
+    const token = localStorage.getItem('triclinium_admin_token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+  }
+
   try {
     const res = await fetch(url, {
       ...options,
