@@ -60,6 +60,16 @@ function fourteenDaysStr(): string {
   return d.toISOString().split('T')[0];
 }
 
+const statusColors: Record<string, string> = {
+  NEW: 'bg-blue-900/40 text-blue-400 border-blue-800',
+  IN_PROGRESS: 'bg-amber-900/40 text-amber-400 border-amber-800',
+  AWAITING_CUSTOMER: 'bg-purple-900/40 text-purple-400 border-purple-800',
+  QUOTED: 'bg-sky-900/40 text-sky-400 border-sky-800',
+  CONVERTED: 'bg-emerald-900/40 text-emerald-400 border-emerald-800',
+  CLOSED: 'bg-slate-800 text-slate-400 border-slate-700',
+  SPAM: 'bg-rose-900/40 text-rose-400 border-rose-800',
+};
+
 export default function AdminInquiryDetailPage() {
   const params = useParams();
   const id = params?.id as string;
@@ -557,153 +567,188 @@ export default function AdminInquiryDetailPage() {
   return (
     <div className="space-y-8 max-w-6xl mx-auto pb-16">
       {/* Top Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-6 border-b border-slate-800">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => router.push('/admin/inquiries')}
-            className="border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700 hover:text-white"
-          >
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            <span>Back to Inquiries</span>
-          </Button>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-white font-mono">{inquiry.referenceNumber}</h1>
-              <Badge variant="outline" className="text-xs uppercase font-bold border-slate-700 text-sky-400">
-                {inquiry.type}
-              </Badge>
+      <div className="space-y-3 pb-5 border-b border-slate-800">
+        {/* Row 1: Back Navigation, Reference & Primary Document Actions */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push('/admin/inquiries')}
+              className="h-8 px-2.5 border-slate-700 bg-slate-800/90 text-slate-200 hover:bg-slate-700 hover:text-white text-xs shrink-0"
+            >
+              <ArrowLeft className="h-3.5 w-3.5 mr-1" />
+              <span>Back to Inquiries</span>
+            </Button>
+            <div className="h-5 w-px bg-slate-800 hidden sm:block shrink-0" />
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-lg sm:text-xl font-bold text-white font-mono tracking-tight">
+                  {inquiry.referenceNumber}
+                </h1>
+                <Badge
+                  variant="outline"
+                  className="text-[10px] uppercase font-bold border-sky-800/80 bg-sky-950/40 text-sky-400 px-1.5 py-0.5"
+                >
+                  {inquiry.type}
+                </Badge>
+              </div>
+              <p className="text-[11px] text-slate-400 mt-0.5 truncate">
+                Received on {formatDate(inquiry.createdAt)} via website form
+              </p>
             </div>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Received on {formatDate(inquiry.createdAt)} via website form
-            </p>
+          </div>
+
+          {/* Right: Aligned Document Actions (All uniform h-8) */}
+          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap shrink-0">
+            {/* Create or Edit Quotation Button */}
+            <Button
+              size="sm"
+              onClick={() => openGenerator('QUOTATION')}
+              className="h-8 px-3 bg-sky-600 hover:bg-sky-500 text-white text-xs flex items-center gap-1.5 font-semibold shadow-sm"
+            >
+              {status === 'QUOTED' || inquiry.type === 'QUOTATION' ? (
+                <>
+                  <Pencil className="h-3.5 w-3.5 text-amber-300" />
+                  <span>Edit Quotation</span>
+                </>
+              ) : (
+                <>
+                  <FileText className="h-3.5 w-3.5" />
+                  <span>Create Quotation</span>
+                </>
+              )}
+            </Button>
+
+            {/* Create Invoice Button */}
+            <Button
+              size="sm"
+              onClick={() => openGenerator('INVOICE')}
+              className="h-8 px-3 bg-emerald-600 hover:bg-emerald-500 text-white text-xs flex items-center gap-1.5 font-semibold shadow-sm"
+            >
+              <Receipt className="h-3.5 w-3.5" />
+              <span>Create Invoice</span>
+            </Button>
+
+            {/* Delete Record Button */}
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={handleDeleteInquiry}
+              disabled={isDeleting}
+              title="Delete Quotation / Inquiry"
+              className="h-8 px-2.5 border-rose-900/60 bg-rose-950/30 text-rose-300 hover:bg-rose-900/60 hover:text-white text-xs flex items-center gap-1.5 font-semibold shrink-0"
+            >
+              {isDeleting ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Trash2 className="h-3.5 w-3.5 text-rose-400" />
+              )}
+              <span>Delete</span>
+            </Button>
+
+            {/* Quick PDF Preview & Download across QUOTED, CONVERTED, CLOSED */}
+            {['QUOTED', 'CONVERTED', 'CLOSED'].includes(status) && (
+              <div className="flex items-center gap-1 pl-1 border-l border-slate-800">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => handleOpenPdfPreview(status === 'QUOTED' ? 'QUOTATION' : 'INVOICE')}
+                  disabled={isPreviewLoading}
+                  title={`Preview ${status === 'QUOTED' ? 'Official Quotation' : 'Tax Invoice'} PDF`}
+                  aria-label={`Preview ${status === 'QUOTED' ? 'Official Quotation' : 'Tax Invoice'} PDF`}
+                  className="h-8 w-8 p-0 border-slate-700 bg-slate-900 hover:bg-slate-800 text-sky-400 hover:text-white flex items-center justify-center shrink-0 shadow-sm"
+                >
+                  {isPreviewLoading && previewDocType === (status === 'QUOTED' ? 'QUOTATION' : 'INVOICE') ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Eye className="h-3.5 w-3.5" />
+                  )}
+                </Button>
+
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => handleDirectDownloadPdf(status === 'QUOTED' ? 'QUOTATION' : 'INVOICE')}
+                  disabled={isDownloadingPdf}
+                  title={`Download ${status === 'QUOTED' ? 'Official Quotation' : 'Tax Invoice'} PDF`}
+                  aria-label={`Download ${status === 'QUOTED' ? 'Official Quotation' : 'Tax Invoice'} PDF`}
+                  className="h-8 w-8 p-0 border-slate-700 bg-sky-600 hover:bg-sky-500 text-white flex items-center justify-center shrink-0 shadow-sm"
+                >
+                  {isDownloadingPdf ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Download className="h-3.5 w-3.5" />
+                  )}
+                </Button>
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
-          {/* Create or Edit Quotation Button */}
-          <Button
-            size="sm"
-            onClick={() => openGenerator('QUOTATION')}
-            className="bg-sky-700 hover:bg-sky-600 text-white text-xs flex items-center gap-1.5 font-semibold shadow-sm"
-          >
-            {status === 'QUOTED' || inquiry.type === 'QUOTATION' ? (
-              <>
-                <Pencil className="h-3.5 w-3.5 text-amber-300" />
-                <span>Edit Quotation</span>
-              </>
-            ) : (
-              <>
-                <FileText className="h-3.5 w-3.5" />
-                <span>Create Quotation</span>
-              </>
-            )}
-          </Button>
+        {/* Row 2: Status & Priority Workflow Control Strip */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-2.5 sm:px-3.5 sm:py-2 rounded-xl border border-slate-800/90 bg-slate-900/60">
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-slate-400 text-[11px] font-semibold uppercase tracking-wider">Current State:</span>
+            <Badge
+              variant="outline"
+              className={`text-[10px] uppercase font-bold border px-2 py-0.5 ${
+                statusColors[status] || 'bg-slate-800 text-slate-400 border-slate-700'
+              }`}
+            >
+              {status === 'CONVERTED' ? 'INVOICED / PAID' : status}
+            </Badge>
+            <Badge
+              variant="outline"
+              className="text-[10px] uppercase font-bold border-amber-900/60 bg-amber-950/40 text-amber-300 px-2 py-0.5"
+            >
+              {urgency} Priority
+            </Badge>
+          </div>
 
-          {/* Create Invoice Button */}
-          <Button
-            size="sm"
-            onClick={() => openGenerator('INVOICE')}
-            className="bg-emerald-700 hover:bg-emerald-600 text-white text-xs flex items-center gap-1.5 font-semibold shadow-sm"
-          >
-            <Receipt className="h-3.5 w-3.5" />
-            <span>Create Invoice</span>
-          </Button>
-
-          {/* Delete Quotation / Inquiry Button */}
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            onClick={handleDeleteInquiry}
-            disabled={isDeleting}
-            title="Delete Record"
-            className="border-rose-900/60 bg-rose-950/30 text-rose-300 hover:bg-rose-900/60 hover:text-white text-xs flex items-center gap-1.5 font-semibold"
-          >
-            {isDeleting ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Trash2 className="h-3.5 w-3.5 text-rose-400" />
-            )}
-            <span>Delete</span>
-          </Button>
-
-          {/* Quick PDF Preview & Download across QUOTED, CONVERTED, CLOSED */}
-          {['QUOTED', 'CONVERTED', 'CLOSED'].includes(status) && (
-            <>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={() => handleOpenPdfPreview(status === 'QUOTED' ? 'QUOTATION' : 'INVOICE')}
-                disabled={isPreviewLoading}
-                title={`Preview ${status === 'QUOTED' ? 'Official Quotation' : 'Tax Invoice'} PDF`}
-                aria-label={`Preview ${status === 'QUOTED' ? 'Official Quotation' : 'Tax Invoice'} PDF`}
-                className="h-9 w-9 p-0 border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-200 hover:text-white flex items-center justify-center shrink-0"
+          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+            <div className="flex items-center gap-1.5">
+              <span className="text-slate-400 text-[11px] font-medium hidden md:inline">Status:</span>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                className="h-8 rounded-md border border-slate-700 bg-slate-950 px-2.5 text-xs text-white focus:border-sky-500 focus:outline-none"
               >
-                {isPreviewLoading && previewDocType === (status === 'QUOTED' ? 'QUOTATION' : 'INVOICE') ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Eye className="h-4 w-4 text-sky-400" />
-                )}
-              </Button>
+                <option value="NEW">NEW</option>
+                <option value="IN_PROGRESS">IN PROGRESS</option>
+                <option value="AWAITING_CUSTOMER">AWAITING CUSTOMER</option>
+                <option value="QUOTED">QUOTED</option>
+                <option value="CONVERTED">CONVERTED</option>
+                <option value="CLOSED">CLOSED</option>
+                <option value="SPAM">SPAM</option>
+              </select>
+            </div>
 
-              <Button
-                type="button"
-                size="sm"
-                onClick={() => handleDirectDownloadPdf(status === 'QUOTED' ? 'QUOTATION' : 'INVOICE')}
-                disabled={isDownloadingPdf}
-                title={`Download ${status === 'QUOTED' ? 'Official Quotation' : 'Tax Invoice'} PDF`}
-                aria-label={`Download ${status === 'QUOTED' ? 'Official Quotation' : 'Tax Invoice'} PDF`}
-                className={`h-9 w-9 p-0 text-white flex items-center justify-center shrink-0 font-semibold shadow-sm ${
-                  status === 'QUOTED'
-                    ? 'bg-sky-600 hover:bg-sky-500 shadow-sky-900/30'
-                    : 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-900/30'
-                }`}
+            <div className="flex items-center gap-1.5">
+              <span className="text-slate-400 text-[11px] font-medium hidden md:inline">Priority:</span>
+              <select
+                value={urgency}
+                onChange={(e) => setUrgency(e.target.value)}
+                className="h-8 rounded-md border border-slate-700 bg-slate-950 px-2.5 text-xs text-white focus:border-sky-500 focus:outline-none"
               >
-                {isDownloadingPdf ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Download className="h-4 w-4" />
-                )}
-              </Button>
-            </>
-          )}
+                <option value="LOW">LOW</option>
+                <option value="MEDIUM">MEDIUM</option>
+                <option value="HIGH">HIGH</option>
+                <option value="URGENT">URGENT</option>
+              </select>
+            </div>
 
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            className="h-9 rounded-md border border-slate-700 bg-slate-950 px-3 text-xs text-white"
-          >
-            <option value="NEW">NEW</option>
-            <option value="IN_PROGRESS">IN PROGRESS</option>
-            <option value="AWAITING_CUSTOMER">AWAITING CUSTOMER</option>
-            <option value="QUOTED">QUOTED</option>
-            <option value="CONVERTED">CONVERTED</option>
-            <option value="CLOSED">CLOSED</option>
-            <option value="SPAM">SPAM</option>
-          </select>
-
-          <select
-            value={urgency}
-            onChange={(e) => setUrgency(e.target.value)}
-            className="h-9 rounded-md border border-slate-700 bg-slate-950 px-3 text-xs text-white"
-          >
-            <option value="LOW">LOW</option>
-            <option value="MEDIUM">MEDIUM</option>
-            <option value="HIGH">HIGH</option>
-            <option value="URGENT">URGENT</option>
-          </select>
-
-          <Button
-            size="sm"
-            onClick={handleUpdateStatus}
-            disabled={isUpdating}
-            className="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white text-xs font-semibold"
-          >
-            {isUpdating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Save Status'}
-          </Button>
+            <Button
+              size="sm"
+              onClick={handleUpdateStatus}
+              disabled={isUpdating}
+              className="h-8 px-3 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white text-xs font-semibold shrink-0 shadow-sm"
+            >
+              {isUpdating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Save Status'}
+            </Button>
+          </div>
         </div>
       </div>
 
