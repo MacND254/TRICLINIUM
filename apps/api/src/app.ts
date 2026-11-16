@@ -52,12 +52,38 @@ export function createApp(): Express {
       origin: (origin, callback) => {
         // Allow requests with no origin (mobile apps, curl, server-to-server)
         if (!origin) return callback(null, true);
-        if (config.cors.origins.includes(origin) || config.cors.origins.includes('*')) {
+
+        // Always allow localhost in any environment
+        if (/^https?:\/\/localhost(:\d+)?$/.test(origin) || /^https?:\/\/127\.0\.0\.1(:\d+)?$/.test(origin)) {
           return callback(null, true);
         }
-        if (!config.isProduction) {
-          return callback(null, true); // Dev convenience
+
+        // Allow any Vercel deployment domain (*.vercel.app)
+        try {
+          const parsed = new URL(origin);
+          if (parsed.hostname.endsWith('.vercel.app')) {
+            return callback(null, true);
+          }
+        } catch {}
+
+        // Check configured origins
+        const allowedOrigins = [
+          ...config.cors.origins,
+          config.urls.frontend,
+          config.urls.site,
+          process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '',
+          process.env.NEXT_PUBLIC_SITE_URL,
+        ].filter(Boolean);
+
+        if (allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+          return callback(null, true);
         }
+
+        // Dev convenience or Vercel deployment fallback
+        if (!config.isProduction || process.env.VERCEL) {
+          return callback(null, true);
+        }
+
         return callback(new Error('CORS origin blocked by security policy'));
       },
       credentials: true,
