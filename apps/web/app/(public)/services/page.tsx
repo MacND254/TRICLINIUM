@@ -217,41 +217,41 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
   return (
     <div className="container mx-auto px-4 sm:px-8 py-12 space-y-16">
       {/* Hero Banner */}
-      <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-sky-950 text-white p-8 sm:p-14 border border-slate-800 shadow-2xl">
+      <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-slate-50 via-sky-50/40 to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-sky-950 text-slate-900 dark:text-white p-8 sm:p-14 border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-2xl dark:shadow-black/50 transition-colors">
         {heroData.backgroundImage && (
           <div
             className="absolute inset-0 bg-cover bg-center transition-all duration-700"
             style={{ backgroundImage: `url(${heroData.backgroundImage})` }}
           >
-            {/* Elegant high-contrast dark overlay so text is crisp and readable */}
-            <div className="absolute inset-0 bg-slate-950/75 backdrop-blur-[1px] bg-gradient-to-r from-slate-950/95 via-slate-950/80 to-slate-950/60" />
+            {/* Elegant high-contrast theme-adaptive overlay so text is crisp and readable in both light and dark modes */}
+            <div className="absolute inset-0 bg-white/85 dark:bg-slate-950/75 backdrop-blur-[1.5px] bg-gradient-to-r from-white/95 via-white/85 to-white/70 dark:from-slate-950/95 dark:via-slate-950/80 dark:to-slate-950/60" />
           </div>
         )}
         <div className="relative z-10 max-w-3xl space-y-4">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/20 border border-sky-400/30 text-sky-300 text-xs font-bold tracking-wider uppercase">
-            <ShieldCheck className="h-4 w-4" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/10 dark:bg-sky-500/20 border border-sky-500/20 dark:border-sky-400/30 text-sky-700 dark:text-sky-300 text-xs font-bold tracking-wider uppercase backdrop-blur-sm">
+            <ShieldCheck className="h-4 w-4 text-sky-600 dark:text-sky-400" />
             <span>{heroData.badge}</span>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
+          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
             {heroData.title}
           </h1>
 
-          <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-2xl">
+          <p className="text-sm sm:text-base text-slate-700 dark:text-slate-300 leading-relaxed max-w-2xl">
             {heroData.subtitle}
           </p>
 
-          <div className="pt-2 flex flex-wrap gap-4 text-xs font-semibold text-slate-200">
+          <div className="pt-2 flex flex-wrap gap-4 text-xs font-semibold text-slate-800 dark:text-slate-200">
             {heroData.bullets.map((bullet, idx) => (
-              <span key={idx} className="flex items-center gap-1.5">
-                <CheckCircle2 className="h-4 w-4 text-emerald-400" /> {bullet}
+              <span key={idx} className="flex items-center gap-1.5 bg-white/60 dark:bg-slate-900/60 backdrop-blur-sm px-2.5 py-1 rounded-md border border-slate-200/60 dark:border-slate-800/60">
+                <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" /> {bullet}
               </span>
             ))}
           </div>
         </div>
 
         {/* Decorative Grid glow */}
-        <div className="absolute right-0 top-0 bottom-0 w-1/2 opacity-20 pointer-events-none bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-sky-400 via-transparent to-transparent" />
+        <div className="absolute right-0 top-0 bottom-0 w-1/2 opacity-25 dark:opacity-20 pointer-events-none bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-sky-400 via-transparent to-transparent" />
       </div>
 
       {/* Filter / Search Bar */}

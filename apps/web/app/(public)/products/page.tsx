@@ -256,34 +256,34 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     <div className="container mx-auto px-4 sm:px-8 py-12">
       {/* Page Header / Hero Banner */}
       {heroData.backgroundImage ? (
-        <div className="relative rounded-3xl overflow-hidden bg-slate-950 text-white p-8 sm:p-12 border border-slate-800 shadow-2xl mb-8">
+        <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-slate-50 via-sky-50/40 to-slate-100 dark:bg-slate-950 text-slate-900 dark:text-white p-8 sm:p-12 border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-2xl mb-8 transition-colors">
           <div
             className="absolute inset-0 bg-cover bg-center"
             style={{ backgroundImage: `url(${heroData.backgroundImage})` }}
           >
-            <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-[1px] bg-gradient-to-r from-slate-950/95 via-slate-950/85 to-slate-950/70" />
+            <div className="absolute inset-0 bg-white/85 dark:bg-slate-950/80 backdrop-blur-[1.5px] bg-gradient-to-r from-white/95 via-white/85 to-white/70 dark:from-slate-950/95 dark:via-slate-950/85 dark:to-slate-950/70" />
           </div>
           <div className="relative z-10 max-w-2xl space-y-3">
-            <div className="inline-block text-xs font-bold text-sky-400 uppercase tracking-widest bg-sky-500/20 px-3 py-1 rounded-full border border-sky-400/30">
+            <div className="inline-block text-xs font-bold text-sky-700 dark:text-sky-400 uppercase tracking-widest bg-sky-500/10 dark:bg-sky-500/20 px-3 py-1 rounded-full border border-sky-500/20 dark:border-sky-400/30 backdrop-blur-sm">
               {heroData.badge}
             </div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
               {heroData.title}
             </h1>
-            <p className="text-sm text-slate-300 leading-relaxed">
+            <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
               {heroData.subtitle}
             </p>
           </div>
         </div>
       ) : (
-        <div className="border-b pb-8 mb-8">
-          <div className="text-xs font-bold text-sky-600 uppercase tracking-widest mb-1.5">
+        <div className="border-b border-slate-200 dark:border-slate-800 pb-8 mb-8">
+          <div className="text-xs font-bold text-sky-600 dark:text-sky-400 uppercase tracking-widest mb-1.5">
             {heroData.badge}
           </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
             {heroData.title}
           </h1>
-          <p className="mt-2 text-sm text-muted-foreground max-w-2xl">
+          <p className="mt-2 text-sm text-slate-600 dark:text-muted-foreground max-w-2xl">
             {heroData.subtitle}
           </p>
         </div>

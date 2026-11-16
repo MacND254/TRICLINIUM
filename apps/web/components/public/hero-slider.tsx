@@ -88,30 +88,30 @@ export function HeroSlider({ slides }: HeroSliderProps) {
   };
 
   return (
-    <section className="relative w-full overflow-hidden bg-slate-950 text-white min-h-[460px] sm:min-h-[500px] lg:min-h-[540px] flex items-center">
-      {/* Background Image with Dark Vignette Overlay */}
+    <section className="relative w-full overflow-hidden bg-slate-100 dark:bg-slate-950 text-slate-900 dark:text-white min-h-[460px] sm:min-h-[500px] lg:min-h-[540px] flex items-center border-b border-slate-200 dark:border-slate-800 transition-colors">
+      {/* Background Image with Theme-Adaptive Vignette Overlay */}
       <div className="absolute inset-0 z-0">
         <img
           src={slide.imageUrl}
           alt={slide.headline}
-          className="h-full w-full object-cover object-center brightness-50 transition-all duration-700 scale-100"
+          className="h-full w-full object-cover object-center opacity-30 dark:opacity-50 dark:brightness-50 transition-all duration-700 scale-100"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/80 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-white via-white/90 to-white/30 dark:from-slate-950 dark:via-slate-950/80 dark:to-transparent" />
       </div>
 
       {/* Slide Content */}
       <div className="container relative z-10 mx-auto px-4 sm:px-8 pt-6 pb-12 sm:pt-8 sm:pb-14 lg:pt-10 lg:pb-16">
         <div className="max-w-2xl space-y-4 sm:space-y-5">
-          <div className="inline-flex items-center gap-2 rounded-full border border-sky-400/30 bg-sky-500/10 px-3.5 py-1 text-xs font-semibold text-sky-300 backdrop-blur-md">
-            <ShieldCheck className="h-4 w-4 text-sky-400" />
+          <div className="inline-flex items-center gap-2 rounded-full border border-sky-500/20 dark:border-sky-400/30 bg-sky-500/10 px-3.5 py-1 text-xs font-semibold text-sky-700 dark:text-sky-300 backdrop-blur-md">
+            <ShieldCheck className="h-4 w-4 text-sky-600 dark:text-sky-400" />
             <span>Certified Security Integrator · 100% Guaranteed Protection</span>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-tight">
+          <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
             {slide.headline}
           </h1>
 
-          <p className="text-base sm:text-lg text-slate-300 leading-relaxed max-w-xl">
+          <p className="text-base sm:text-lg text-slate-700 dark:text-slate-300 leading-relaxed max-w-xl">
             {slide.subheadline}
           </p>
 
@@ -125,7 +125,7 @@ export function HeroSlider({ slides }: HeroSliderProps) {
 
             {slide.secondaryCtaText && slide.secondaryCtaLink && (
               <Link href={slide.secondaryCtaLink}>
-                <Button size="lg" variant="outline" className="border-slate-700 bg-slate-900/60 backdrop-blur-sm text-slate-200 hover:bg-slate-800 hover:text-white">
+                <Button size="lg" variant="outline" className="border-slate-300 dark:border-slate-700 bg-white/80 dark:bg-slate-900/60 backdrop-blur-sm text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white">
                   <span>{slide.secondaryCtaText}</span>
                 </Button>
               </Link>
@@ -139,14 +139,14 @@ export function HeroSlider({ slides }: HeroSliderProps) {
         <>
           <button
             onClick={prevSlide}
-            className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2.5 rounded-full bg-black/40 hover:bg-black/70 text-white backdrop-blur-sm border border-white/10 transition-colors"
+            className="absolute left-4 top-1/2 -translate-y-1/2 z-20 p-2.5 rounded-full bg-white/80 dark:bg-black/50 hover:bg-white dark:hover:bg-black/80 text-slate-700 dark:text-white backdrop-blur-sm border border-slate-200 dark:border-white/10 shadow-md transition-colors"
             aria-label="Previous slide"
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
           <button
             onClick={nextSlide}
-            className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-2.5 rounded-full bg-black/40 hover:bg-black/70 text-white backdrop-blur-sm border border-white/10 transition-colors"
+            className="absolute right-4 top-1/2 -translate-y-1/2 z-20 p-2.5 rounded-full bg-white/80 dark:bg-black/50 hover:bg-white dark:hover:bg-black/80 text-slate-700 dark:text-white backdrop-blur-sm border border-slate-200 dark:border-white/10 shadow-md transition-colors"
             aria-label="Next slide"
           >
             <ChevronRight className="h-5 w-5" />
@@ -159,7 +159,7 @@ export function HeroSlider({ slides }: HeroSliderProps) {
                 key={idx}
                 onClick={() => setCurrentIdx(idx)}
                 className={`h-2 rounded-full transition-all duration-300 ${
-                  currentIdx === idx ? 'w-8 bg-sky-500' : 'w-2 bg-white/40 hover:bg-white/70'
+                  currentIdx === idx ? 'w-8 bg-sky-500' : 'w-2 bg-slate-300 hover:bg-slate-400 dark:bg-white/40 dark:hover:bg-white/70'
                 }`}
                 aria-label={`Go to slide ${idx + 1}`}
               />

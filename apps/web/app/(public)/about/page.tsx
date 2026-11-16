@@ -36,29 +36,29 @@ export default async function AboutPage() {
     <div className="container mx-auto px-4 sm:px-8 py-16 space-y-16">
       {/* Hero Banner */}
       {heroData.backgroundImage ? (
-        <div className="relative rounded-3xl overflow-hidden bg-slate-950 text-white p-8 sm:p-14 border border-slate-800 shadow-2xl">
+        <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-slate-50 via-sky-50/40 to-slate-100 dark:bg-slate-950 text-slate-900 dark:text-white p-8 sm:p-14 border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-2xl transition-colors">
           <div
             className="absolute inset-0 bg-cover bg-center"
             style={{ backgroundImage: `url(${heroData.backgroundImage})` }}
           >
-            <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-[1px] bg-gradient-to-r from-slate-950/95 via-slate-950/85 to-slate-950/70" />
+            <div className="absolute inset-0 bg-white/85 dark:bg-slate-950/80 backdrop-blur-[1.5px] bg-gradient-to-r from-white/95 via-white/85 to-white/70 dark:from-slate-950/95 dark:via-slate-950/85 dark:to-slate-950/70" />
           </div>
           <div className="relative z-10 max-w-3xl space-y-4">
-            <span className="text-xs font-bold text-sky-400 uppercase tracking-widest flex items-center gap-1.5">
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-sky-700 dark:text-sky-400 uppercase tracking-widest bg-sky-500/10 dark:bg-sky-500/20 px-3 py-1 rounded-full border border-sky-500/20 dark:border-sky-400/30 backdrop-blur-sm w-fit">
               <ShieldCheck className="h-4 w-4" />
               <span>{heroData.badge}</span>
             </span>
-            <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
+            <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
               {heroData.title}
             </h1>
-            <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-2xl">
+            <p className="text-sm sm:text-base text-slate-700 dark:text-slate-300 leading-relaxed max-w-2xl">
               {heroData.subtitle}
             </p>
           </div>
         </div>
       ) : (
         <div className="max-w-3xl space-y-4">
-          <span className="text-xs font-bold text-sky-600 uppercase tracking-widest flex items-center gap-1.5">
+          <span className="text-xs font-bold text-sky-600 dark:text-sky-400 uppercase tracking-widest flex items-center gap-1.5">
             <ShieldCheck className="h-4 w-4" />
             <span>{heroData.badge}</span>
           </span>

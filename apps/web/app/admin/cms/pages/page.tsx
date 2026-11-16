@@ -82,6 +82,7 @@ function PageModal({
   onSave: (data: any) => Promise<void>;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [previewTheme, setPreviewTheme] = useState<'dark' | 'light'>('dark');
   const [activeTab, setActiveTab] = useState<'general' | 'hero' | 'content'>('general');
   const [uploadingHero, setUploadingHero] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -322,8 +323,41 @@ function PageModal({
                   </label>
                 </div>
 
-                {/* Banner Preview */}
-                <div className="relative aspect-[21/8] w-full rounded-xl overflow-hidden border border-slate-700 bg-slate-900 flex items-center justify-center">
+                {/* Banner Preview Controls */}
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-400 font-medium">Hero Live Appearance Preview:</span>
+                  <div className="flex items-center gap-1 bg-slate-900 border border-slate-700 rounded-lg p-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setPreviewTheme('dark')}
+                      className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-colors ${
+                        previewTheme === 'dark'
+                          ? 'bg-slate-800 text-sky-400 shadow-sm'
+                          : 'text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      Dark Mode
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewTheme('light')}
+                      className={`px-2.5 py-1 rounded text-[11px] font-semibold transition-colors ${
+                        previewTheme === 'light'
+                          ? 'bg-white text-slate-900 shadow-sm'
+                          : 'text-slate-400 hover:text-slate-200'
+                      }`}
+                    >
+                      Light Mode
+                    </button>
+                  </div>
+                </div>
+
+                {/* Banner Preview Box */}
+                <div className={`relative aspect-[21/8] w-full rounded-xl overflow-hidden border transition-colors ${
+                  previewTheme === 'light'
+                    ? 'border-slate-200 bg-slate-100 text-slate-900'
+                    : 'border-slate-700 bg-slate-900 text-white'
+                } flex items-center justify-center`}>
                   {hero.backgroundImage ? (
                     <>
                       <img
@@ -331,26 +365,40 @@ function PageModal({
                         alt="Hero background preview"
                         className="h-full w-full object-cover"
                       />
-                      {/* Live overlay preview */}
-                      <div className="absolute inset-0 bg-slate-950/75 bg-gradient-to-r from-slate-950/95 via-slate-950/80 to-slate-950/60 p-6 flex flex-col justify-center">
+                      {/* Live overlay preview adhering to selected mode */}
+                      <div className={`absolute inset-0 p-6 flex flex-col justify-center backdrop-blur-[1.5px] ${
+                        previewTheme === 'light'
+                          ? 'bg-white/85 bg-gradient-to-r from-white/95 via-white/85 to-white/70 text-slate-900'
+                          : 'bg-slate-950/75 bg-gradient-to-r from-slate-950/95 via-slate-950/80 to-slate-950/60 text-white'
+                      }`}>
                         {hero.badge && (
-                          <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-sky-400 bg-sky-500/20 px-2.5 py-0.5 rounded-full w-fit mb-2">
+                          <span className={`inline-block text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full w-fit mb-2 ${
+                            previewTheme === 'light'
+                              ? 'bg-sky-500/10 border border-sky-500/20 text-sky-700'
+                              : 'bg-sky-500/20 border border-sky-400/30 text-sky-400'
+                          }`}>
                             {hero.badge}
                           </span>
                         )}
-                        <h4 className="text-lg font-bold text-white line-clamp-1">
+                        <h4 className={`text-lg font-bold line-clamp-1 ${
+                          previewTheme === 'light' ? 'text-slate-900' : 'text-white'
+                        }`}>
                           {hero.title || form.title || 'Page Headline'}
                         </h4>
-                        <p className="text-xs text-slate-300 line-clamp-2 max-w-xl mt-1">
+                        <p className={`text-xs line-clamp-2 max-w-xl mt-1 ${
+                          previewTheme === 'light' ? 'text-slate-700' : 'text-slate-300'
+                        }`}>
                           {hero.subtitle || 'Page subtitle and description text will render here over the background image.'}
                         </p>
                       </div>
                     </>
                   ) : (
                     <div className="flex flex-col items-center justify-center p-6 text-center text-slate-500 space-y-2">
-                      <ImageIcon className="h-10 w-10 text-slate-600" />
+                      <ImageIcon className="h-10 w-10 text-slate-500" />
                       <span className="text-xs font-medium">No custom hero background image assigned</span>
-                      <span className="text-[11px] text-slate-600">Default dark gradient styling is active</span>
+                      <span className="text-[11px] text-slate-500">
+                        Adaptive {previewTheme === 'light' ? 'light' : 'dark'} gradient styling is active
+                      </span>
                     </div>
                   )}
                 </div>
