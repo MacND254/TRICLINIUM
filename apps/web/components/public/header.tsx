@@ -21,10 +21,12 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { settings } = usePublicSettings();
 
-  const email = settings.contactEmail || settings.supportEmail || settings.notifyEmail || settings.smtpFromEmail || '';
-  const phone = settings.phone || settings.phoneAlt || '';
-  const hours = settings.businessHours || '';
-  const tagline = settings.tagline || '';
+  const email = (settings.contactEmail || settings.supportEmail || settings.notifyEmail || settings.smtpFromEmail || '').trim();
+  const phone = (settings.phone || '').trim();
+  const phoneAlt = (settings.phoneAlt || '').trim();
+  const hasPhoneAlt = Boolean(phoneAlt && phone && phoneAlt !== phone);
+  const hours = (settings.businessHours || '').trim();
+  const tagline = (settings.tagline || '').trim();
 
   const navLinks = [
     { label: 'Home', href: '/' },
@@ -52,13 +54,13 @@ export function Header() {
                 <span>{phone}</span>
               </a>
             )}
-            {settings.phoneAlt && settings.phoneAlt !== phone && (
+            {hasPhoneAlt && (
               <a
-                href={`tel:${settings.phoneAlt.replace(/\s+/g, '')}`}
+                href={`tel:${phoneAlt.replace(/\s+/g, '')}`}
                 className="hidden lg:flex items-center gap-1.5 hover:text-white transition-colors text-slate-400 hover:text-slate-200"
                 title="Secondary Hotline"
               >
-                <span>/ {settings.phoneAlt}</span>
+                <span>/ {phoneAlt}</span>
               </a>
             )}
             {email && (
@@ -195,6 +197,15 @@ export function Header() {
                   >
                     <Phone className="h-3.5 w-3.5 text-sky-500 shrink-0" />
                     <span>{phone}</span>
+                  </a>
+                )}
+                {hasPhoneAlt && (
+                  <a
+                    href={`tel:${phoneAlt.replace(/\s+/g, '')}`}
+                    className="flex items-center gap-2 hover:text-sky-600 dark:hover:text-sky-400 font-medium text-slate-500"
+                  >
+                    <Phone className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                    <span>{phoneAlt}</span>
                   </a>
                 )}
                 {email && (

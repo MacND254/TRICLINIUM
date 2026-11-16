@@ -74,7 +74,7 @@ const DEFAULTS: WebsiteSettings = {
   contactEmail: 'inquiries@triclinium.com',
   supportEmail: 'support@triclinium.com',
   phone: '+254 700 555 199',
-  phoneAlt: '+254 711 555 198',
+  phoneAlt: '',
   address: 'Westlands Commercial Center, Ring Road',
   city: 'Nairobi',
   country: 'Kenya',

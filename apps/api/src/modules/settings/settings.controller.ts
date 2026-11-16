@@ -59,7 +59,9 @@ export class SettingsController {
         notifyEmail: rowMap['notifyEmail'] || '',
         smtpFromEmail: rowMap['smtpFromEmail'] || '',
         phone: rowMap['phone'] || globalSetting?.contact?.phone || '+254 700 555 199',
-        phoneAlt: rowMap['phoneAlt'] || globalSetting?.contact?.phoneAlt || '+254 711 555 198',
+        phoneAlt: rowMap['phoneAlt'] !== undefined && rowMap['phoneAlt'] !== null
+          ? String(rowMap['phoneAlt']).trim()
+          : (globalSetting?.contact?.phoneAlt ? String(globalSetting.contact.phoneAlt).trim() : ''),
         address: rowMap['address'] || globalSetting?.contact?.address || 'Westlands Commercial Center, Ring Road',
         city: rowMap['city'] || 'Nairobi',
         country: rowMap['country'] || 'Kenya',
