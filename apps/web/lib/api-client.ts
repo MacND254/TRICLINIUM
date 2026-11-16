@@ -25,6 +25,38 @@ export function getApiBaseUrl(): string {
 
 const API_URL = getApiBaseUrl();
 
+let localPortChecked = false;
+let isLocalServerAvailable = true;
+
+async function checkLocalServer(): Promise<boolean> {
+  if (localPortChecked) return isLocalServerAvailable;
+  try {
+    // Dynamic eval to prevent client webpack bundler from attempting to bundle 'net'
+    const net = eval('require')('net');
+    return new Promise((resolve) => {
+      const socket = net.createConnection({ port: 4000, host: '127.0.0.1', timeout: 50 }, () => {
+        socket.destroy();
+        localPortChecked = true;
+        isLocalServerAvailable = true;
+        resolve(true);
+      });
+      socket.on('error', () => {
+        localPortChecked = true;
+        isLocalServerAvailable = false;
+        resolve(false);
+      });
+      socket.on('timeout', () => {
+        socket.destroy();
+        localPortChecked = true;
+        isLocalServerAvailable = false;
+        resolve(false);
+      });
+    });
+  } catch {
+    return true;
+  }
+}
+
 export async function isApiReachable(_urlStr: string): Promise<boolean> {
   return true;
 }
@@ -62,6 +94,13 @@ export async function fetchApi<T = any>(
     : `${baseUrl}/${cleanEndpoint}`;
 
   const isServer = typeof window === 'undefined';
+
+  if (isServer && url.includes('localhost:4000')) {
+    const available = await checkLocalServer();
+    if (!available) {
+      throw new ApiError('Local backend API server is not running on port 4000', 'API_OFFLINE', 503);
+    }
+  }
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
