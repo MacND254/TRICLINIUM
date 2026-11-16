@@ -160,6 +160,7 @@ const WORKFLOW_STEPS = [
 export default async function ServicesPage({ searchParams }: ServicesPageProps) {
   let services: any[] = [];
   let categories: any[] = [];
+  let phone = '+254 700 555 199';
 
   let heroData = {
     badge: 'Certified Security Engineering · East Africa',
@@ -180,13 +181,16 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
     if (searchParams.category) query.set('category', searchParams.category);
     if (searchParams.search) query.set('search', searchParams.search);
 
-    const [srvRes, catRes, pageRes] = await Promise.all([
+    const [srvRes, catRes, pageRes, settingsRes] = await Promise.all([
       fetchApi(`/services?${query.toString()}`),
       fetchApi('/service-categories'),
       fetchApi('/pages/services').catch(() => null),
+      fetchApi('/settings/public').catch(() => null),
     ]);
     services = srvRes.items && srvRes.items.length > 0 ? srvRes.items : FALLBACK_SERVICES;
     categories = catRes || [];
+    const publicSettings = settingsRes?.data || settingsRes;
+    phone = publicSettings?.phone || phone;
 
     if (pageRes) {
       if (pageRes.title) heroData.title = pageRes.title;
@@ -413,10 +417,10 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
               Book a Free Site Survey
             </Button>
           </Link>
-          <a href="tel:+254700555199" className="w-full sm:w-auto">
+          <a href={`tel:${phone.replace(/\s+/g, '')}`} className="w-full sm:w-auto">
             <Button size="lg" variant="outline" className="w-full sm:w-auto border-slate-700 bg-slate-900/80 text-white hover:bg-slate-800 text-xs flex items-center justify-center gap-2">
               <PhoneCall className="h-4 w-4 text-sky-400" />
-              <span>Call +254 700 555 199</span>
+              <span>Call {phone}</span>
             </Button>
           </a>
         </div>

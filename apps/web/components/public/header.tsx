@@ -10,6 +10,7 @@ import {
   ChevronRight,
   Phone,
   Mail,
+  Clock,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/public/theme-toggle';
@@ -19,6 +20,11 @@ export function Header() {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { settings } = usePublicSettings();
+
+  const email = settings.contactEmail || settings.supportEmail || settings.notifyEmail || settings.smtpFromEmail || '';
+  const phone = settings.phone || settings.phoneAlt || '';
+  const hours = settings.businessHours || '';
+  const tagline = settings.tagline || '';
 
   const navLinks = [
     { label: 'Home', href: '/' },
@@ -36,17 +42,46 @@ export function Header() {
       <div className="hidden border-b bg-slate-900 text-slate-300 text-xs py-1.5 px-4 sm:flex justify-between items-center">
         <div className="container mx-auto flex justify-between items-center">
           <div className="flex items-center space-x-6">
-            <a href={`tel:${settings.phone}`} className="flex items-center gap-1.5 hover:text-white transition-colors">
-              <Phone className="h-3 w-3 text-sky-400" />
-              <span>{settings.phone}</span>
-            </a>
-            <a href={`mailto:${settings.contactEmail}`} className="flex items-center gap-1.5 hover:text-white transition-colors">
-              <Mail className="h-3 w-3 text-sky-400" />
-              <span>{settings.contactEmail}</span>
-            </a>
+            {phone && (
+              <a
+                href={`tel:${phone.replace(/\s+/g, '')}`}
+                className="flex items-center gap-1.5 hover:text-white transition-colors"
+                title="Call Customer Service"
+              >
+                <Phone className="h-3 w-3 text-sky-400" />
+                <span>{phone}</span>
+              </a>
+            )}
+            {settings.phoneAlt && settings.phoneAlt !== phone && (
+              <a
+                href={`tel:${settings.phoneAlt.replace(/\s+/g, '')}`}
+                className="hidden lg:flex items-center gap-1.5 hover:text-white transition-colors text-slate-400 hover:text-slate-200"
+                title="Secondary Hotline"
+              >
+                <span>/ {settings.phoneAlt}</span>
+              </a>
+            )}
+            {email && (
+              <a
+                href={`mailto:${email}`}
+                className="flex items-center gap-1.5 hover:text-white transition-colors"
+                title="Email Support"
+              >
+                <Mail className="h-3 w-3 text-sky-400" />
+                <span>{email}</span>
+              </a>
+            )}
           </div>
           <div className="flex items-center space-x-4">
-            <span className="text-slate-400">{settings.tagline || 'CCTV · Door Cams · Alarms · Intercoms · Networking'}</span>
+            {hours && (
+              <span className="hidden xl:flex items-center gap-1.5 text-slate-400 text-[11px]">
+                <Clock className="h-3 w-3 text-sky-400" />
+                <span>{hours}</span>
+              </span>
+            )}
+            {tagline && (
+              <span className="text-slate-400">{tagline}</span>
+            )}
           </div>
         </div>
       </div>
@@ -149,6 +184,36 @@ export function Header() {
                 Get in Touch / Request Service
               </Button>
             </Link>
+
+            {/* Dynamic Contact Details from Settings & Mail Gateway */}
+            {(phone || email) && (
+              <div className="pt-3 pb-1 border-t border-slate-200 dark:border-slate-800 space-y-2 text-xs text-slate-600 dark:text-slate-400">
+                {phone && (
+                  <a
+                    href={`tel:${phone.replace(/\s+/g, '')}`}
+                    className="flex items-center gap-2 hover:text-sky-600 dark:hover:text-sky-400 font-medium"
+                  >
+                    <Phone className="h-3.5 w-3.5 text-sky-500 shrink-0" />
+                    <span>{phone}</span>
+                  </a>
+                )}
+                {email && (
+                  <a
+                    href={`mailto:${email}`}
+                    className="flex items-center gap-2 hover:text-sky-600 dark:hover:text-sky-400 font-medium"
+                  >
+                    <Mail className="h-3.5 w-3.5 text-sky-500 shrink-0" />
+                    <span>{email}</span>
+                  </a>
+                )}
+                {hours && (
+                  <div className="flex items-center gap-2 text-[11px] text-slate-500 dark:text-slate-500">
+                    <Clock className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                    <span>{hours}</span>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}

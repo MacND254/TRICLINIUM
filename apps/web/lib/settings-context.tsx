@@ -27,6 +27,8 @@ export interface PublicSettings {
   googleAnalyticsId?: string;
   googleTagManagerId?: string;
   maxUploadSizeMb?: number;
+  notifyEmail?: string;
+  smtpFromEmail?: string;
 }
 
 const DEFAULT_SETTINGS: PublicSettings = {
@@ -36,6 +38,8 @@ const DEFAULT_SETTINGS: PublicSettings = {
   faviconUrl: '/favicon.ico',
   contactEmail: 'inquiries@triclinium.com',
   supportEmail: 'support@triclinium.com',
+  notifyEmail: 'archer.tritech@gmail.com',
+  smtpFromEmail: 'notifications@triclinium.com',
   phone: '+254 700 555 199',
   phoneAlt: '+254 711 555 198',
   address: 'Westlands Commercial Center, Ring Road, Nairobi, Kenya',
