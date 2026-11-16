@@ -266,7 +266,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
                 <span>Session:</span>
               </span>
               <span className="font-mono text-sky-400 font-semibold group-hover:underline">
-                {sessionInfo?.timeRemainingText || 'Active (7d)'}
+                {sessionInfo?.timeRemainingText || 'Active (5m)'}
               </span>
             </div>
           </Link>

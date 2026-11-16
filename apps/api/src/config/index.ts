@@ -16,7 +16,7 @@ export const config = {
   
   auth: {
     secret: process.env.AUTH_SECRET || 'triclinium_default_dev_secret_key_change_in_production_32bytes!',
-    sessionMaxAge: parseInt(process.env.SESSION_MAX_AGE || '604800', 10), // 7 days in seconds
+    sessionMaxAge: parseInt(process.env.SESSION_MAX_AGE || '300', 10), // 5 minutes in seconds (default: 300s)
     cookieName: 'triclinium_session',
   },
 

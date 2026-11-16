@@ -243,7 +243,7 @@ export default function AdminProfilePage() {
                         dateStyle: 'medium',
                         timeStyle: 'medium',
                       })
-                    : 'Valid for 7 Days'}
+                    : 'Valid for 5 Minutes'}
                 </div>
               </div>
             </div>
@@ -267,14 +267,14 @@ export default function AdminProfilePage() {
               <div className="py-2.5 flex items-center justify-between">
                 <span className="text-slate-400">Authentication Cookie Name:</span>
                 <span className="font-mono text-sky-400 font-semibold">
-                  {sessionInfo?.cookieName || 'triclinium_admin_session'}
+                  {sessionInfo?.cookieName || 'triclinium_session'}
                 </span>
               </div>
 
               <div className="py-2.5 flex items-center justify-between">
                 <span className="text-slate-400">Cookie Lifetime (Max-Age):</span>
                 <span className="font-semibold text-white">
-                  7 Days ({sessionInfo?.cookieMaxAgeSeconds?.toLocaleString() || '604,800'} seconds)
+                  5 Minutes ({sessionInfo?.cookieMaxAgeSeconds?.toLocaleString() || '300'} seconds)
                 </span>
               </div>
 

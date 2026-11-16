@@ -127,7 +127,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     if (typeof window !== 'undefined') {
       localStorage.setItem('triclinium_admin_token', token);
       sessionStorage.setItem('triclinium_admin_user', JSON.stringify(userData));
-      document.cookie = `triclinium_session=${token}; path=/; max-age=604800; SameSite=Lax`;
+      document.cookie = `triclinium_session=${token}; path=/; max-age=300; SameSite=Lax`;
     }
     setUser(userData);
     setIsLoading(false);
@@ -154,8 +154,8 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   const [now, setNow] = useState<number>(Date.now());
 
   useEffect(() => {
-    // Tick every 30s to update remaining session countdown
-    const timer = setInterval(() => setNow(Date.now()), 30000);
+    // Tick every second to update remaining 5-minute session countdown in real-time
+    const timer = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -177,8 +177,8 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       if (iat) iatDate = new Date(iat * 1000);
     }
 
-    const cookieName = user?.cookieName || 'triclinium_admin_session';
-    const cookieMaxAgeSeconds = user?.cookieMaxAge || 604800; // 7 days
+    const cookieName = user?.cookieName || 'triclinium_session';
+    const cookieMaxAgeSeconds = user?.cookieMaxAge || 300; // 5 minutes
 
     if (!expDate) {
       return {
@@ -205,18 +205,11 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       };
     }
 
-    const days = Math.floor(remainingMs / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((remainingMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const mins = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
+    const totalSecs = Math.max(0, Math.floor(remainingMs / 1000));
+    const mins = Math.floor(totalSecs / 60);
+    const secs = totalSecs % 60;
 
-    let timeRemainingText = '';
-    if (days > 0) {
-      timeRemainingText = `${days}d ${hours}h`;
-    } else if (hours > 0) {
-      timeRemainingText = `${hours}h ${mins}m`;
-    } else {
-      timeRemainingText = `${Math.max(1, mins)}m`;
-    }
+    const timeRemainingText = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
 
     return {
       expiresAt: expDate,
