@@ -30,6 +30,17 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: 'TRICLINIUM SYSTEMS' }],
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'),
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icon.png', type: 'image/png', sizes: '64x64' },
+      { url: '/brand-logo-icon.png', type: 'image/png', sizes: '192x192' },
+    ],
+    shortcut: ['/favicon.ico'],
+    apple: [
+      { url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' },
+    ],
+  },
   openGraph: {
     title: 'TRICLINIUM SYSTEMS | CCTV, Home Alarms & Smart Security',
     description: 'Protect what matters most. Professional CCTV, smart doorbells, home alarms, intercoms, and structured networking with certified installation.',
@@ -59,6 +70,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="scroll-smooth" suppressHydrationWarning>
+      <head>
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" href="/icon.png" type="image/png" sizes="64x64" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
+      </head>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <SettingsProvider>

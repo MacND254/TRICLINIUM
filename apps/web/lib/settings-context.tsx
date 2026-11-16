@@ -32,7 +32,7 @@ export interface PublicSettings {
 const DEFAULT_SETTINGS: PublicSettings = {
   siteName: 'TRICLINIUM SYSTEMS',
   tagline: 'Next-Generation CCTV Surveillance, Smart Alarms & Home Network Infrastructure',
-  logoUrl: '/uploads/1794689746754-Futuristic_Purple_TRI.CLINIUM_Emblem.png',
+  logoUrl: '/uploads/1794825960335-Futuristic_Purple_TRI_CLINIUM_Emblem-61c39cbc4d0bcc5c.png',
   faviconUrl: '/favicon.ico',
   contactEmail: 'inquiries@triclinium.com',
   supportEmail: 'support@triclinium.com',
@@ -178,6 +178,29 @@ export function SettingsProvider({
     // Color grading classes on body
     document.body.dataset.colorGrading = settings.colorGrading || 'cyber-security';
   }, [settings.primaryColor, settings.accentColor, settings.colorGrading]);
+
+  // Dynamic Favicon / Browser Tab Icon synchronization
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const iconUrl = settings.faviconUrl?.trim() || settings.logoUrl?.trim() || '/favicon.ico';
+    if (!iconUrl) return;
+
+    let link: HTMLLinkElement | null = document.querySelector("link[rel~='icon']");
+    if (!link) {
+      link = document.createElement('link');
+      link.rel = 'icon';
+      document.head.appendChild(link);
+    }
+    link.href = iconUrl;
+
+    let appleLink: HTMLLinkElement | null = document.querySelector("link[rel='apple-touch-icon']");
+    if (!appleLink) {
+      appleLink = document.createElement('link');
+      appleLink.rel = 'apple-touch-icon';
+      document.head.appendChild(appleLink);
+    }
+    appleLink.href = settings.logoUrl?.trim() || '/apple-touch-icon.png';
+  }, [settings.faviconUrl, settings.logoUrl]);
 
   return (
     <SettingsContext.Provider value={{ settings, isLoading, refreshSettings }}>
