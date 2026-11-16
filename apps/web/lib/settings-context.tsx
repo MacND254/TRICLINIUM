@@ -67,7 +67,7 @@ const SettingsContext = createContext<{
 }>({
   settings: DEFAULT_SETTINGS,
   isLoading: false,
-  refreshSettings: async () => {},
+  refreshSettings: async () => { },
 });
 
 function hexToHsl(hex: string): string | null {
@@ -122,15 +122,16 @@ export function SettingsProvider({
   const refreshSettings = async () => {
     try {
       setIsLoading(true);
-      const API = process.env.NEXT_PUBLIC_API_URL || '';
-      const res = await fetch(`${API}/api/v1/settings/public`, { cache: 'no-store' });
+      const rawApi = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/api\/v1\/?$/, '').replace(/\/$/, '');
+      const endpoint = rawApi ? `${rawApi}/api/v1/settings/public` : '/api/v1/settings/public';
+      const res = await fetch(endpoint, { cache: 'no-store' });
       if (res.ok) {
         const json = await res.json();
         if (json.data) {
           setSettings((prev) => ({ ...prev, ...json.data }));
           try {
             localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(json.data));
-          } catch {}
+          } catch { }
         }
       }
     } catch (err) {
@@ -149,11 +150,11 @@ export function SettingsProvider({
           const parsed = JSON.parse(cached);
           setSettings((prev) => ({ ...prev, ...parsed }));
         }
-      } catch {}
+      } catch { }
     } else {
       try {
         localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(initialSettings));
-      } catch {}
+      } catch { }
     }
     refreshSettings();
   }, [initialSettings]);

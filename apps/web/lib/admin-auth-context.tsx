@@ -26,6 +26,8 @@ export interface SessionInfo {
   cookieMaxAgeSeconds: number;
   timeRemainingText: string;
   isExpired: boolean;
+  inactivityRemainingSecs: number;
+  lastActiveTime: number;
 }
 
 interface AdminAuthContextType {
@@ -33,7 +35,7 @@ interface AdminAuthContextType {
   isLoading: boolean;
   sessionInfo: SessionInfo;
   login: (token: string, userData: AdminUser) => void;
-  logout: () => Promise<void>;
+  logout: (reason?: string) => Promise<void>;
   hasRole: (role: RoleName) => boolean;
   hasPermission: (permission: string) => boolean;
 }
@@ -134,7 +136,12 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     router.push('/admin');
   };
 
-  const logout = async () => {
+  const INACTIVITY_TIMEOUT_MS = 5 * 60 * 1000; // 5 minutes of inactivity
+
+  const [lastActiveTime, setLastActiveTime] = useState<number>(() => Date.now());
+  const [now, setNow] = useState<number>(() => Date.now());
+
+  const logout = async (reason?: string) => {
     try {
       await fetchApi('/admin/auth/logout', { method: 'POST' });
     } catch (e) {
@@ -147,77 +154,69 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       }
       setUser(null);
       setIsLoading(false);
-      router.push('/admin/login');
+      if (reason === 'inactivity') {
+        router.push('/admin/login?timeout=inactivity');
+      } else {
+        router.push('/admin/login');
+      }
     }
   };
 
-  const [now, setNow] = useState<number>(Date.now());
-
+  // Activity Watchdog: listen for user interactions to reset the 5-minute inactivity timer
   useEffect(() => {
-    // Tick every second to update remaining 5-minute session countdown in real-time
-    const timer = setInterval(() => setNow(Date.now()), 1000);
+    if (!user) return;
+
+    let throttleTimer = 0;
+    const recordActivity = () => {
+      const current = Date.now();
+      if (current - throttleTimer > 1000) {
+        throttleTimer = current;
+        setLastActiveTime(current);
+      }
+    };
+
+    const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart', 'click'];
+    events.forEach((ev) => window.addEventListener(ev, recordActivity, { passive: true }));
+
+    return () => {
+      events.forEach((ev) => window.removeEventListener(ev, recordActivity));
+    };
+  }, [user]);
+
+  // Inactivity countdown ticker & auto-logout when 5 minutes of continuous inactivity elapsed
+  useEffect(() => {
+    if (!user) return;
+
+    const timer = setInterval(() => {
+      const current = Date.now();
+      setNow(current);
+
+      const idleDuration = current - lastActiveTime;
+      if (idleDuration >= INACTIVITY_TIMEOUT_MS) {
+        logout('inactivity');
+      }
+    }, 1000);
+
     return () => clearInterval(timer);
-  }, []);
+  }, [user, lastActiveTime]);
 
   const getSessionInfo = (): SessionInfo => {
-    let expDate: Date | null = null;
-    let iatDate: Date | null = null;
-
-    if (user?.sessionExpiresAt) {
-      expDate = new Date(user.sessionExpiresAt);
-    }
-    if (user?.sessionIssuedAt) {
-      iatDate = new Date(user.sessionIssuedAt);
-    }
-
-    if (!expDate && typeof window !== 'undefined') {
-      const token = localStorage.getItem('triclinium_admin_token');
-      const { exp, iat } = parseJwtExp(token);
-      if (exp) expDate = new Date(exp * 1000);
-      if (iat) iatDate = new Date(iat * 1000);
-    }
-
-    const cookieName = user?.cookieName || 'triclinium_session';
-    const cookieMaxAgeSeconds = user?.cookieMaxAge || 300; // 5 minutes
-
-    if (!expDate) {
-      return {
-        expiresAt: null,
-        issuedAt: null,
-        cookieName,
-        cookieMaxAgeSeconds,
-        timeRemainingText: 'Active',
-        isExpired: false,
-      };
-    }
-
-    const remainingMs = expDate.getTime() - now;
-    const isExpired = remainingMs <= 0;
-
-    if (isExpired) {
-      return {
-        expiresAt: expDate,
-        issuedAt: iatDate,
-        cookieName,
-        cookieMaxAgeSeconds,
-        timeRemainingText: 'Expired',
-        isExpired: true,
-      };
-    }
-
-    const totalSecs = Math.max(0, Math.floor(remainingMs / 1000));
-    const mins = Math.floor(totalSecs / 60);
-    const secs = totalSecs % 60;
-
-    const timeRemainingText = mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
+    const idleDuration = now - lastActiveTime;
+    const remainingIdleMs = Math.max(0, INACTIVITY_TIMEOUT_MS - idleDuration);
+    const totalIdleSecs = Math.floor(remainingIdleMs / 1000);
+    const idleMins = Math.floor(totalIdleSecs / 60);
+    const idleSecs = totalIdleSecs % 60;
+    const timeRemainingText = `${idleMins}m ${idleSecs.toString().padStart(2, '0')}s`;
 
     return {
-      expiresAt: expDate,
-      issuedAt: iatDate,
-      cookieName,
-      cookieMaxAgeSeconds,
+      expiresAt: new Date(lastActiveTime + INACTIVITY_TIMEOUT_MS),
+      issuedAt: new Date(lastActiveTime),
+      cookieName: user?.cookieName || 'triclinium_session',
+      cookieMaxAgeSeconds: 300,
       timeRemainingText,
-      isExpired: false,
+      isExpired: remainingIdleMs <= 0,
+      inactivityRemainingSecs: totalIdleSecs,
+      lastActiveTime,
     };
   };
 

@@ -17,6 +17,14 @@ export default function AdminLoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [cooldownSeconds, setCooldownSeconds] = useState(0);
+  const [isTimeout, setIsTimeout] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      setIsTimeout(params.get('timeout') === 'inactivity');
+    }
+  }, []);
 
   const { login } = useAdminAuth();
   const router = useRouter();
@@ -82,15 +90,24 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-md space-y-6">
         {/* Brand */}
         <div className="text-center space-y-2">
-          <div className="h-12 w-12 rounded-xl bg-sky-600 flex items-center justify-center text-white font-bold text-xl mx-auto shadow-lg shadow-sky-600/30">
-            TS
-          </div>
+          <img
+            src="/brand-logo-icon.png"
+            alt="TRICLINIUM SYSTEMS"
+            className="h-14 w-14 object-contain mx-auto rounded-xl shadow-lg shadow-sky-950/40"
+          />
           <h1 className="text-2xl font-extrabold tracking-tight text-white">TRICLINIUM Console</h1>
           <p className="text-xs text-slate-400">Enterprise Administration &amp; Security Console</p>
         </div>
 
         {/* Form Card */}
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-8 shadow-2xl space-y-6">
+          {isTimeout && (
+            <div className="p-3 rounded-lg bg-amber-950/60 border border-amber-800 text-amber-300 text-xs flex items-center gap-2.5">
+              <Clock className="h-4 w-4 shrink-0 text-amber-400" />
+              <span>Your session timed out after 5 minutes of inactivity. Please sign in again.</span>
+            </div>
+          )}
+
           {errorMsg && (
             <div className="p-3 rounded-lg bg-rose-950/60 border border-rose-800 text-rose-300 text-xs flex items-start gap-2.5">
               <AlertCircle className="h-4 w-4 shrink-0 text-rose-400 mt-0.5" />

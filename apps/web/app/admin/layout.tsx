@@ -31,6 +31,28 @@ import { usePublicSettings } from '@/lib/settings-context';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 
+function AdminBrandLogo({
+  logoUrl,
+  siteName,
+  className = 'h-9 w-9 object-contain rounded-lg shrink-0 shadow-sm',
+}: {
+  logoUrl?: string;
+  siteName?: string;
+  className?: string;
+}) {
+  const [imgError, setImgError] = useState(false);
+  const preferredSrc = !imgError && logoUrl ? logoUrl : '/brand-logo-icon.png';
+
+  return (
+    <img
+      src={preferredSrc}
+      alt={siteName || 'TRICLINIUM SYSTEMS'}
+      onError={() => setImgError(true)}
+      className={className}
+    />
+  );
+}
+
 function AdminFooter() {
   return (
     <footer className="mt-auto border-t border-slate-800 bg-slate-950/80 px-6 py-4 text-xs text-slate-500">
@@ -156,17 +178,11 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
       {/* Mobile Top Bar */}
       <div className="md:hidden flex items-center justify-between p-4 bg-slate-900 border-b border-slate-800 shrink-0">
         <Link href="/admin" className="flex items-center gap-2.5">
-          {settings.logoUrl ? (
-            <img
-              src={settings.logoUrl}
-              alt={settings.siteName || 'TRICLINIUM SYSTEMS'}
-              className="h-8 w-8 object-contain rounded shrink-0"
-            />
-          ) : (
-            <div className="h-8 w-8 rounded-lg bg-sky-600 flex items-center justify-center font-bold text-white text-base shrink-0">
-              TS
-            </div>
-          )}
+          <AdminBrandLogo
+            logoUrl={settings.logoUrl}
+            siteName={settings.siteName}
+            className="h-8 w-8 object-contain rounded-lg shrink-0 shadow-sm"
+          />
           <div>
             <span className="font-bold text-white tracking-tight block text-sm leading-tight">{settings.siteName || 'TRICLINIUM SYSTEMS'}</span>
             <span className="text-[10px] text-sky-400 font-semibold block leading-tight">Security &amp; Tech Console</span>
@@ -188,17 +204,11 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
         <div className="p-5 overflow-y-auto space-y-6 flex-1">
           {/* Logo Header */}
           <Link href="/admin" className="hidden md:flex items-center gap-3 pb-4 border-b border-slate-800">
-            {settings.logoUrl ? (
-              <img
-                src={settings.logoUrl}
-                alt={settings.siteName || 'TRICLINIUM SYSTEMS'}
-                className="h-9 w-9 object-contain rounded shrink-0"
-              />
-            ) : (
-              <div className="h-9 w-9 rounded-lg bg-sky-600 flex items-center justify-center font-bold text-white text-lg shadow-md shadow-sky-600/30 shrink-0">
-                TS
-              </div>
-            )}
+            <AdminBrandLogo
+              logoUrl={settings.logoUrl}
+              siteName={settings.siteName}
+              className="h-9 w-9 object-contain rounded-lg shrink-0 shadow-sm"
+            />
             <div>
               <div className="font-extrabold text-sm text-white tracking-tight">{settings.siteName || 'TRICLINIUM SYSTEMS'}</div>
               <div className="text-[10px] uppercase font-semibold text-sky-400 tracking-wider">
@@ -259,14 +269,14 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
               </Badge>
             </div>
 
-            {/* Cookie & Session Expiry indicator */}
+            {/* Inactivity Session Expiry indicator */}
             <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-800/80 text-[10px]">
               <span className="text-slate-400 flex items-center gap-1">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span>Session:</span>
+                <span>Idle Timeout:</span>
               </span>
               <span className="font-mono text-sky-400 font-semibold group-hover:underline">
-                {sessionInfo?.timeRemainingText || 'Active (5m)'}
+                {sessionInfo?.timeRemainingText || '5m 00s'}
               </span>
             </div>
           </Link>

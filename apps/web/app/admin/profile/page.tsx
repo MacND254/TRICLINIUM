@@ -193,13 +193,13 @@ export default function AdminProfilePage() {
                 </div>
                 <div>
                   <h3 className="text-base font-bold text-white flex items-center gap-2">
-                    <span>Active Session Lifetime &amp; Expiry</span>
+                    <span>5-Minute Inactivity Session Lifetime</span>
                     <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950 text-emerald-300 border border-emerald-700">
-                      LIVE
+                      WATCHDOG ACTIVE
                     </span>
                   </h3>
                   <p className="text-xs text-slate-400">
-                    Calculated from authenticated JWT bearer token and server session state.
+                    Session automatically resets upon user activity and times out after 5 minutes of continuous inactivity.
                   </p>
                 </div>
               </div>
@@ -207,11 +207,16 @@ export default function AdminProfilePage() {
 
             {/* Countdown Box */}
             <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
-              <div className="text-[11px] uppercase tracking-wider font-semibold text-slate-400">
-                Session Time Remaining
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] uppercase tracking-wider font-semibold text-slate-400">
+                  Idle Time Remaining Before Timeout
+                </span>
+                <span className="text-[10px] text-sky-400 font-medium">
+                  Auto-resets on mouse/key activity
+                </span>
               </div>
               <div className="text-xl sm:text-2xl font-mono font-extrabold text-sky-400">
-                {formatDetailedCountdown(secondsRemaining)}
+                {sessionInfo?.timeRemainingText || formatDetailedCountdown(secondsRemaining)}
               </div>
             </div>
 
@@ -220,22 +225,22 @@ export default function AdminProfilePage() {
               <div className="p-3.5 rounded-xl bg-slate-950/50 border border-slate-800/80 space-y-1">
                 <div className="text-slate-400 font-medium flex items-center gap-1.5">
                   <Calendar className="h-3.5 w-3.5 text-sky-400" />
-                  <span>Session Issued At</span>
+                  <span>Last User Activity Detected</span>
                 </div>
                 <div className="text-white font-semibold font-mono text-[11px]">
-                  {sessionInfo?.issuedAt
-                    ? sessionInfo.issuedAt.toLocaleString('en-KE', {
+                  {sessionInfo?.lastActiveTime
+                    ? new Date(sessionInfo.lastActiveTime).toLocaleString('en-KE', {
                         dateStyle: 'medium',
                         timeStyle: 'medium',
                       })
-                    : 'Current Authentication Session'}
+                    : 'Active Interaction'}
                 </div>
               </div>
 
               <div className="p-3.5 rounded-xl bg-slate-950/50 border border-slate-800/80 space-y-1">
                 <div className="text-slate-400 font-medium flex items-center gap-1.5">
                   <Clock className="h-3.5 w-3.5 text-amber-400" />
-                  <span>Session Expires At</span>
+                  <span>Timeout Deadline (If Idle)</span>
                 </div>
                 <div className="text-amber-300 font-semibold font-mono text-[11px]">
                   {sessionInfo?.expiresAt

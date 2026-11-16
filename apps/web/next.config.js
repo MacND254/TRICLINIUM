@@ -10,22 +10,17 @@ const nextConfig = {
     ],
   },
   async rewrites() {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-    if (!apiUrl) {
-      if (process.env.NODE_ENV === 'production') {
-        return [];
-      }
-      return [
-        {
-          source: '/api/v1/:path*',
-          destination: 'http://localhost:4000/api/v1/:path*',
-        },
-      ];
-    }
+    const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL || 'http://localhost:4000';
+    // Strip trailing /api/v1 or / so we don't duplicate
+    const baseHost = rawApiUrl.replace(/\/api\/v1\/?$/, '').replace(/\/$/, '');
     return [
       {
         source: '/api/v1/:path*',
-        destination: `${apiUrl}/api/v1/:path*`,
+        destination: `${baseHost}/api/v1/:path*`,
+      },
+      {
+        source: '/uploads/:path*',
+        destination: `${baseHost}/api/v1/media/file/:path*`,
       },
     ];
   },
