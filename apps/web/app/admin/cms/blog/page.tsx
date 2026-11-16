@@ -63,6 +63,7 @@ function PostModal({ post, onClose, onSave }: {
   });
   const [saving, setSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const inputCls = "w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-sky-500 focus:outline-none";
   const textareaCls = `${inputCls} resize-y`;
@@ -72,12 +73,14 @@ function PostModal({ post, onClose, onSave }: {
     if (!file) return;
     try {
       setIsUploading(true);
+      setUploadStatus(null);
       const uploaded = await uploadAdminMedia(file);
       if (uploaded.url) {
         setForm(f => ({ ...f, coverImageUrl: uploaded.url }));
+        setUploadStatus({ message: 'Cover image uploaded successfully!', type: 'success' });
       }
     } catch (err: any) {
-      alert(err.message || 'Failed to upload image');
+      setUploadStatus({ message: err.message || 'Failed to upload image', type: 'error' });
     } finally {
       setIsUploading(false);
       e.target.value = '';
@@ -141,6 +144,24 @@ function PostModal({ post, onClose, onSave }: {
 
           <div className="space-y-2">
             <label className="block text-xs font-medium text-slate-400">Featured Image</label>
+            {uploadStatus && (
+              <div
+                className={`text-xs px-3 py-1.5 rounded-lg flex items-center justify-between font-medium ${
+                  uploadStatus.type === 'success'
+                    ? 'bg-emerald-950/60 border border-emerald-800/80 text-emerald-300'
+                    : 'bg-rose-950/60 border border-rose-800/80 text-rose-300'
+                }`}
+              >
+                <span>{uploadStatus.message}</span>
+                <button
+                  type="button"
+                  onClick={() => setUploadStatus(null)}
+                  className="ml-2 hover:opacity-80"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            )}
             {form.coverImageUrl && (
               <div className="relative w-full max-w-sm h-36 rounded-lg overflow-hidden border border-slate-700 bg-slate-950">
                 <img src={form.coverImageUrl} alt="Cover preview" className="w-full h-full object-cover" />

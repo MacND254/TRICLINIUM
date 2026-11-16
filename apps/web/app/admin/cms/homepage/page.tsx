@@ -124,6 +124,7 @@ function ImageUploadField({
   onChange: (url: string) => void;
 }) {
   const [uploading, setUploading] = useState(false);
+  const [uploadStatus, setUploadStatus] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -131,12 +132,20 @@ function ImageUploadField({
 
     try {
       setUploading(true);
+      setUploadStatus(null);
       const uploaded = await uploadAdminMedia(file);
       if (uploaded.url) {
         onChange(uploaded.url);
+        setUploadStatus({
+          message: 'Image uploaded successfully. Click "Save Changes" below to publish.',
+          type: 'success',
+        });
       }
     } catch (err: any) {
-      alert(err.message || 'Failed to upload image');
+      setUploadStatus({
+        message: err.message || 'Failed to upload image',
+        type: 'error',
+      });
     } finally {
       setUploading(false);
       e.target.value = '';
@@ -145,12 +154,33 @@ function ImageUploadField({
 
   return (
     <div className="space-y-2">
+      {uploadStatus && (
+        <div
+          className={`text-xs px-3 py-1.5 rounded-lg flex items-center justify-between font-medium ${
+            uploadStatus.type === 'success'
+              ? 'bg-emerald-950/60 border border-emerald-800/80 text-emerald-300'
+              : 'bg-rose-950/60 border border-rose-800/80 text-rose-300'
+          }`}
+        >
+          <span>{uploadStatus.message}</span>
+          <button
+            type="button"
+            onClick={() => setUploadStatus(null)}
+            className="ml-2 hover:opacity-80"
+          >
+            <X className="h-3 w-3" />
+          </button>
+        </div>
+      )}
       {value && (
         <div className="relative w-full max-w-sm h-36 rounded-lg overflow-hidden border border-slate-700 bg-slate-950 group">
           <img src={value} alt="Preview" className="w-full h-full object-cover" />
           <button
             type="button"
-            onClick={() => onChange('')}
+            onClick={() => {
+              onChange('');
+              setUploadStatus(null);
+            }}
             className="absolute top-2 right-2 p-1.5 rounded-full bg-rose-600/90 text-white hover:bg-rose-600 transition-opacity"
             title="Remove image"
           >

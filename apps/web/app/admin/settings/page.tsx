@@ -20,6 +20,7 @@ interface WebsiteSettings {
   faviconUrl: string;
   primaryColor: string;
   accentColor: string;
+  maxUploadSizeMb: number;
   // Contact
   contactEmail: string;
   supportEmail: string;
@@ -69,6 +70,7 @@ const DEFAULTS: WebsiteSettings = {
   faviconUrl: '',
   primaryColor: '#0ea5e9',
   accentColor: '#0284c7',
+  maxUploadSizeMb: 2,
   contactEmail: 'inquiries@triclinium.com',
   supportEmail: 'support@triclinium.com',
   phone: '+254 700 555 199',
@@ -183,10 +185,10 @@ export default function SettingsPage() {
       const uploaded = await uploadAdminMedia(file);
       if (uploaded.url) {
         set('logoUrl', uploaded.url);
-        showToast('Logo image uploaded successfully. Click Save Settings to persist.');
+        showToast('Brand logo uploaded successfully. Click Save All Changes to make it live!');
       }
     } catch (err: any) {
-      alert('Logo upload failed: ' + (err.message || 'Unknown error'));
+      showToast('Logo upload failed: ' + (err.message || 'Unknown error'), 'error');
     } finally {
       setUploadingLogo(false);
       e.target.value = '';
@@ -208,7 +210,9 @@ export default function SettingsPage() {
       if (data && typeof data === 'object') {
         for (const [k, v] of Object.entries(data)) {
           if (k in merged) {
-            if (typeof (merged as any)[k] === 'boolean') {
+            if (k === 'maxUploadSizeMb') {
+              merged.maxUploadSizeMb = Number(v) || 2;
+            } else if (typeof (merged as any)[k] === 'boolean') {
               (merged as any)[k] = v === 'true' || v === true;
             } else {
               (merged as any)[k] = v ?? '';
@@ -381,6 +385,45 @@ export default function SettingsPage() {
                   <div className="flex gap-2">
                     <input type="color" value={settings.accentColor} onChange={e => set('accentColor', e.target.value)} className="h-10 w-14 rounded-lg border border-slate-700 bg-slate-800 cursor-pointer p-1" />
                     <input className={inputCls} value={settings.accentColor} onChange={e => set('accentColor', e.target.value)} placeholder="#f59e0b" />
+                  </div>
+                </Field>
+              </div>
+
+              <div className="pt-4 border-t border-slate-800">
+                <Field
+                  label="Maximum Image Upload Size Limit (MB)"
+                  hint="Strict file size limit enforced across all uploads (brand logos, homepage hero banners, product images, and service photos). Default is 2 MB."
+                >
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min="1"
+                        max="20"
+                        step="1"
+                        value={settings.maxUploadSizeMb || 2}
+                        onChange={e => set('maxUploadSizeMb', Math.max(1, parseInt(e.target.value, 10) || 2))}
+                        className="w-24 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500"
+                      />
+                      <span className="text-sm font-semibold text-slate-300">MB per file</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-slate-500">Quick Presets:</span>
+                      {[1, 2, 5, 10].map(size => (
+                        <button
+                          key={size}
+                          type="button"
+                          onClick={() => set('maxUploadSizeMb', size)}
+                          className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                            settings.maxUploadSizeMb === size
+                              ? 'bg-sky-600 text-white'
+                              : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200 border border-slate-700'
+                          }`}
+                        >
+                          {size} MB
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </Field>
               </div>

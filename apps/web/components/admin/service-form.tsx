@@ -50,6 +50,7 @@ export function ServiceForm({ initialData, isEdit }: ServiceFormProps) {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [uploadSuccessMsg, setUploadSuccessMsg] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadCats() {
@@ -86,12 +87,16 @@ export function ServiceForm({ initialData, isEdit }: ServiceFormProps) {
 
     try {
       setIsUploadingImage(true);
+      setErrorMsg(null);
+      setUploadSuccessMsg(null);
       const uploaded = await uploadAdminMedia(file);
       if (uploaded.url) {
         setFeaturedImage(uploaded.url);
+        setUploadSuccessMsg(`Service image "${file.name}" uploaded successfully!`);
+        setTimeout(() => setUploadSuccessMsg(null), 4000);
       }
     } catch (err: any) {
-      alert(err.message || 'Failed to upload image');
+      setErrorMsg(err.message || 'Failed to upload image');
     } finally {
       setIsUploadingImage(false);
       e.target.value = '';
@@ -185,6 +190,12 @@ export function ServiceForm({ initialData, isEdit }: ServiceFormProps) {
       {errorMsg && (
         <div className="p-3 rounded-lg bg-rose-950/60 border border-rose-800 text-rose-300 text-xs font-semibold">
           {errorMsg}
+        </div>
+      )}
+
+      {uploadSuccessMsg && (
+        <div className="p-3 rounded-lg bg-emerald-950/60 border border-emerald-800 text-emerald-300 text-xs font-semibold">
+          {uploadSuccessMsg}
         </div>
       )}
 

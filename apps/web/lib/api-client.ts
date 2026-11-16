@@ -25,57 +25,8 @@ export function getApiBaseUrl(): string {
 
 const API_URL = getApiBaseUrl();
 
-let reachabilityCache: { [origin: string]: { status: boolean; timestamp: number } } = {};
-
-/**
- * Fast, silent reachability probe for server-side environments to prevent Next.js fetch ECONNREFUSED build clutter.
- */
-export async function isApiReachable(urlStr: string): Promise<boolean> {
-  if (typeof window !== 'undefined') return true;
-
-  try {
-    const resolvedUrl = urlStr.startsWith('http') ? urlStr : `http://localhost:4000${urlStr}`;
-    const parsed = new URL(resolvedUrl);
-    const origin = parsed.origin;
-    const now = Date.now();
-    const cached = reachabilityCache[origin];
-    if (cached && now - cached.timestamp < 10000) {
-      return cached.status;
-    }
-
-    const isHttps = parsed.protocol === 'https:';
-    // Use dynamic evaluation to prevent client webpack bundler from trying to resolve Node modules
-    const reqModule = eval('require')(isHttps ? 'https' : 'http');
-    const port = parsed.port ? parseInt(parsed.port, 10) : (isHttps ? 443 : 80);
-
-    return new Promise((resolve) => {
-      const req = reqModule.request(
-        {
-          hostname: parsed.hostname,
-          port,
-          path: '/api/v1/health',
-          method: 'GET',
-          timeout: 150,
-        },
-        () => {
-          reachabilityCache[origin] = { status: true, timestamp: Date.now() };
-          resolve(true);
-        }
-      );
-      req.on('error', () => {
-        reachabilityCache[origin] = { status: false, timestamp: Date.now() };
-        resolve(false);
-      });
-      req.on('timeout', () => {
-        req.destroy();
-        reachabilityCache[origin] = { status: false, timestamp: Date.now() };
-        resolve(false);
-      });
-      req.end();
-    });
-  } catch {
-    return false;
-  }
+export async function isApiReachable(_urlStr: string): Promise<boolean> {
+  return true;
 }
 
 export class ApiError extends Error {
@@ -105,36 +56,50 @@ export async function fetchApi<T = any>(
   options: RequestInit = {}
 ): Promise<T> {
   const baseUrl = getApiBaseUrl();
+  const cleanEndpoint = endpoint.replace(/^\//, '');
   const url = endpoint.startsWith('http')
     ? endpoint
-    : `${baseUrl}/${endpoint.replace(/^\//, '')}`;
+    : `${baseUrl}/${cleanEndpoint}`;
 
-  // If executing in server environment (e.g. Next.js build or SSR), check if API server is reachable
-  if (typeof window === 'undefined') {
-    const reachable = await isApiReachable(url);
-    if (!reachable) {
-      throw new ApiError('API server is unreachable', 'API_UNREACHABLE', 503);
-    }
-  }
+  const isServer = typeof window === 'undefined';
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
   };
 
-  if (typeof window !== 'undefined' && !headers['Authorization']) {
+  if (!isServer && !headers['Authorization']) {
     const token = localStorage.getItem('triclinium_admin_token');
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
   }
 
+  // Fast fetch configuration optimized for speed and caching
+  const fetchConfig: RequestInit = {
+    ...options,
+    headers,
+  };
+
+  if (!isServer) {
+    // Client-side: attach credentials for session cookies
+    fetchConfig.credentials = options.credentials || 'include';
+  } else {
+    // Server-side (SSR / ISR): 3-second abort timeout prevents serverless lag
+    if (!fetchConfig.signal) {
+      fetchConfig.signal = AbortSignal.timeout(3000);
+    }
+    // Enable Next.js ISR data caching for public GET requests if not specified
+    if (!fetchConfig.next && !fetchConfig.cache) {
+      const method = (options.method || 'GET').toUpperCase();
+      if (method === 'GET') {
+        fetchConfig.next = { revalidate: 60 };
+      }
+    }
+  }
+
   try {
-    const res = await fetch(url, {
-      ...options,
-      headers,
-      credentials: options.credentials || 'include',
-    });
+    const res = await fetch(url, fetchConfig);
 
     const data = await res.json().catch(() => null);
 
@@ -149,7 +114,7 @@ export async function fetchApi<T = any>(
     return (data?.data ?? data) as T;
   } catch (err: any) {
     if (err instanceof ApiError) throw err;
-    throw new ApiError(err.message || 'Network error occurred', 'NETWORK_ERROR', 500);
+    throw new ApiError(err.message || 'API request failed or timed out', 'API_UNREACHABLE', 503);
   }
 }
 
@@ -158,6 +123,27 @@ export async function fetchApi<T = any>(
  * Works reliably across local development and Vercel serverless deployments.
  */
 export async function uploadAdminMedia(file: File): Promise<{ url: string; filename: string }> {
+  // Client-side file size pre-check against configured max upload limit
+  let maxMb = 2; // Default 2MB limit
+  try {
+    if (typeof window !== 'undefined') {
+      const cached = localStorage.getItem('triclinium_public_settings_cache_v2');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (parsed.maxUploadSizeMb && !isNaN(Number(parsed.maxUploadSizeMb))) {
+          maxMb = Number(parsed.maxUploadSizeMb);
+        }
+      }
+    }
+  } catch {}
+
+  const maxBytes = maxMb * 1024 * 1024;
+  if (file.size > maxBytes) {
+    throw new Error(
+      `File "${file.name}" (${(file.size / (1024 * 1024)).toFixed(2)} MB) exceeds the upload limit of ${maxMb} MB. Please select a file under ${maxMb} MB or adjust the limit in Admin Settings.`
+    );
+  }
+
   const formData = new FormData();
   formData.append('file', file);
 

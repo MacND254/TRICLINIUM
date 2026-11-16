@@ -64,7 +64,7 @@ export function createApp(): Express {
           if (parsed.hostname.endsWith('.vercel.app')) {
             return callback(null, true);
           }
-        } catch {}
+        } catch { }
 
         // Check configured origins
         const allowedOrigins = [
@@ -92,7 +92,7 @@ export function createApp(): Express {
     })
   );
 
-  // Payload body limits (up to 10mb for media/image data URIs and rich CMS content)
+  // Payload body limits (up to 10mb for rich CMS content, image uploads, and settings)
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
   app.use(cookieParser());

@@ -13,6 +13,11 @@ const upload = multer({
   limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
 });
 
+// Public high-performance static media serving endpoint
+mediaRouter.get('/media/file/:filename', MediaController.serveFile);
+mediaRouter.get('/uploads/:filename', MediaController.serveFile);
+mediaRouter.get('/media/:id/raw', MediaController.serveFile);
+
 mediaRouter.get(
   '/admin/media',
   authenticate,

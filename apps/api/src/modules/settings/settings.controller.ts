@@ -62,6 +62,7 @@ export class SettingsController {
         metaDescription: rowMap['metaDescription'] || globalSetting?.seo?.defaultDescription || 'Kenya premier supplier & installer of 4K CCTV surveillance cameras, smart video doorbells, wireless home alarms, and video intercoms.',
         googleAnalyticsId: rowMap['googleAnalyticsId'] || '',
         googleTagManagerId: rowMap['googleTagManagerId'] || '',
+        maxUploadSizeMb: rowMap['maxUploadSizeMb'] ? Number(rowMap['maxUploadSizeMb']) : 2,
         general: globalSetting?.general,
         contact: globalSetting?.contact,
         social: globalSetting?.social,
@@ -116,10 +117,36 @@ export class SettingsController {
       if (Array.isArray(req.body.settings)) {
         for (const item of req.body.settings) {
           if (item.key) {
+            let finalValue = item.value;
+            // Auto-convert Data URIs to persistent media assets to prevent JSON bloat
+            if (typeof finalValue === 'string' && finalValue.startsWith('data:')) {
+              try {
+                const matches = finalValue.match(/^data:([a-zA-Z0-9\/+.-]+);base64,(.+)$/);
+                if (matches) {
+                  const mimeType = matches[1];
+                  const ext = mimeType === 'image/png' ? '.png' : mimeType === 'image/svg+xml' ? '.svg' : '.jpg';
+                  const filename = `${Date.now()}-${item.key}-${Math.random().toString(36).substring(7)}${ext}`;
+                  await prisma.mediaAsset.create({
+                    data: {
+                      filename,
+                      originalName: `${item.key}${ext}`,
+                      url: finalValue,
+                      mimeType,
+                      size: Buffer.byteLength(matches[2], 'base64'),
+                      provider: 'local',
+                    },
+                  });
+                  finalValue = `/api/v1/media/file/${filename}`;
+                }
+              } catch (e) {
+                console.warn('[Auto-extract settings image data URI failed]:', e);
+              }
+            }
+
             await prisma.websiteSetting.upsert({
               where: { key: item.key },
-              update: { value: item.value },
-              create: { key: item.key, value: item.value },
+              update: { value: finalValue },
+              create: { key: item.key, value: finalValue },
             });
           }
         }

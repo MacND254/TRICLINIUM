@@ -11,8 +11,7 @@ export const prisma =
     log: config.env === 'development' ? ['query', 'error', 'warn'] : ['error'],
   });
 
-if (config.env !== 'production') {
-  globalForPrisma.prisma = prisma;
-}
+// Preserve PrismaClient instance across serverless lambda invocations to reuse connection pool
+globalForPrisma.prisma = prisma;
 
 export default prisma;

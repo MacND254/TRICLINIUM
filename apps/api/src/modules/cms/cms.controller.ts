@@ -709,6 +709,33 @@ export class CmsController {
       // Synchronize Hero Slides when 'hero' section is updated
       if (key === 'hero' && content && Array.isArray(content.slides)) {
         const slides = content.slides;
+        for (let i = 0; i < slides.length; i++) {
+          const s = slides[i];
+          if (s.imageUrl && typeof s.imageUrl === 'string' && s.imageUrl.startsWith('data:')) {
+            try {
+              const matches = s.imageUrl.match(/^data:([a-zA-Z0-9\/+.-]+);base64,(.+)$/);
+              if (matches) {
+                const mimeType = matches[1];
+                const ext = mimeType === 'image/png' ? '.png' : mimeType === 'image/webp' ? '.webp' : '.jpg';
+                const filename = `${Date.now()}-hero-slide-${i + 1}-${Math.random().toString(36).substring(7)}${ext}`;
+                await prisma.mediaAsset.create({
+                  data: {
+                    filename,
+                    originalName: `hero-slide-${i + 1}${ext}`,
+                    url: s.imageUrl,
+                    mimeType,
+                    size: Buffer.byteLength(matches[2], 'base64'),
+                    provider: 'local',
+                  },
+                });
+                s.imageUrl = `/api/v1/media/file/${filename}`;
+              }
+            } catch (e) {
+              console.warn('[Auto-extract hero slide base64 failed]:', e);
+            }
+          }
+        }
+
         await prisma.pageSection.deleteMany({ where: { key: 'hero_slide' } });
         for (let i = 0; i < slides.length; i++) {
           const s = slides[i];

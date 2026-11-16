@@ -23,8 +23,14 @@ export default function AdminMediaPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [search, setSearch] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 4000);
+  };
 
   const loadMedia = async () => {
     setIsLoading(true);
@@ -49,10 +55,11 @@ export default function AdminMediaPage() {
 
     setIsUploading(true);
     try {
-      await uploadAdminMedia(file);
+      const res = await uploadAdminMedia(file);
       await loadMedia();
+      showToast(`"${file.name}" uploaded successfully to media storage!`);
     } catch (err: any) {
-      alert(err.message || 'Upload failed');
+      showToast(err.message || 'Upload failed', 'error');
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -62,6 +69,7 @@ export default function AdminMediaPage() {
   const handleCopyUrl = (id: string, url: string) => {
     navigator.clipboard.writeText(url);
     setCopiedId(id);
+    showToast('Media URL copied to clipboard!');
     setTimeout(() => setCopiedId(null), 2000);
   };
 
@@ -70,13 +78,26 @@ export default function AdminMediaPage() {
     try {
       await fetchApi(`/admin/media/${id}`, { method: 'DELETE' });
       await loadMedia();
+      showToast(`Asset "${name}" deleted successfully.`);
     } catch (err: any) {
-      alert(err.message || 'Failed to delete asset');
+      showToast(err.message || 'Failed to delete asset', 'error');
     }
   };
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
+      {toast && (
+        <div
+          className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 rounded-lg px-4 py-3 shadow-xl text-white text-sm font-medium transition-all ${
+            toast.type === 'success' ? 'bg-emerald-600' : 'bg-rose-600'
+          }`}
+        >
+          {toast.message}
+          <button onClick={() => setToast(null)} className="opacity-70 hover:opacity-100 ml-2">
+            &times;
+          </button>
+        </div>
+      )}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>

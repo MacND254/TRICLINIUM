@@ -26,6 +26,7 @@ export interface PublicSettings {
   metaDescription: string;
   googleAnalyticsId?: string;
   googleTagManagerId?: string;
+  maxUploadSizeMb?: number;
 }
 
 const DEFAULT_SETTINGS: PublicSettings = {
@@ -43,6 +44,7 @@ const DEFAULT_SETTINGS: PublicSettings = {
   businessHours: 'Monday - Saturday: 8:00 AM - 6:00 PM EAT (24/7 Monitoring Station)',
   currency: 'KES',
   currencySymbol: 'Ksh',
+  maxUploadSizeMb: 2,
   primaryColor: '#0f172a',
   accentColor: '#0284c7',
   colorGrading: 'cyber-security',

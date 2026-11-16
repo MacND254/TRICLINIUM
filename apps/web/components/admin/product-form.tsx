@@ -49,20 +49,25 @@ export function ProductForm({ initialData, isEdit }: ProductFormProps) {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [uploadSuccessMsg, setUploadSuccessMsg] = useState<string | null>(null);
   const [uploadingIdx, setUploadingIdx] = useState<number | null>(null);
 
   const handleImageUpload = async (idx: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploadingIdx(idx);
+    setErrorMsg(null);
+    setUploadSuccessMsg(null);
     try {
       const uploaded = await uploadAdminMedia(file);
       updateImage(idx, 'url', uploaded.url);
       if (!images[idx]?.altText) {
         updateImage(idx, 'altText', file.name.replace(/\.[^/.]+$/, ''));
       }
+      setUploadSuccessMsg(`Product image "${file.name}" uploaded successfully!`);
+      setTimeout(() => setUploadSuccessMsg(null), 4000);
     } catch (err: any) {
-      alert('Image upload failed: ' + (err.message || 'Unknown error'));
+      setErrorMsg('Image upload failed: ' + (err.message || 'Unknown error'));
     } finally {
       setUploadingIdx(null);
       e.target.value = '';
@@ -75,6 +80,8 @@ export function ProductForm({ initialData, isEdit }: ProductFormProps) {
     const newIdx = images.length;
     setImages(prev => [...prev, { url: '', altText: file.name.replace(/\.[^/.]+$/, ''), isPrimary: prev.length === 0 }]);
     setUploadingIdx(newIdx);
+    setErrorMsg(null);
+    setUploadSuccessMsg(null);
     try {
       const uploaded = await uploadAdminMedia(file);
       setImages(prev => {
@@ -84,8 +91,10 @@ export function ProductForm({ initialData, isEdit }: ProductFormProps) {
         }
         return updated;
       });
+      setUploadSuccessMsg(`Product image "${file.name}" uploaded successfully!`);
+      setTimeout(() => setUploadSuccessMsg(null), 4000);
     } catch (err: any) {
-      alert('Image upload failed: ' + (err.message || 'Unknown error'));
+      setErrorMsg('Image upload failed: ' + (err.message || 'Unknown error'));
       setImages(prev => prev.filter((_, i) => i !== newIdx));
     } finally {
       setUploadingIdx(null);
@@ -214,6 +223,12 @@ export function ProductForm({ initialData, isEdit }: ProductFormProps) {
       {errorMsg && (
         <div className="p-3 rounded-lg bg-rose-950/60 border border-rose-800 text-rose-300 text-xs font-semibold">
           {errorMsg}
+        </div>
+      )}
+
+      {uploadSuccessMsg && (
+        <div className="p-3 rounded-lg bg-emerald-950/60 border border-emerald-800 text-emerald-300 text-xs font-semibold">
+          {uploadSuccessMsg}
         </div>
       )}
 

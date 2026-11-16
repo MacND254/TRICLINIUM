@@ -10,9 +10,20 @@ interface CacheStore {
   incr(key: string, ttlSeconds?: number): Promise<number>;
 }
 
+const globalForMemory = globalThis as unknown as {
+  tricliniumMemoryCache?: Map<string, { value: any; expiresAt?: number }>;
+};
+
 // In-Memory Fallback Cache when Upstash credentials are not supplied or connection is offline
 class MemoryCacheStore implements CacheStore {
-  private store = new Map<string, { value: any; expiresAt?: number }>();
+  private store: Map<string, { value: any; expiresAt?: number }>;
+
+  constructor() {
+    if (!globalForMemory.tricliniumMemoryCache) {
+      globalForMemory.tricliniumMemoryCache = new Map();
+    }
+    this.store = globalForMemory.tricliniumMemoryCache;
+  }
 
   async get<T>(key: string): Promise<T | null> {
     const item = this.store.get(key);
