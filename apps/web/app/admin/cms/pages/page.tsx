@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { Plus, Search, Edit2, Trash2, Eye, EyeOff, FileText, Loader2, AlertCircle, X } from 'lucide-react';
+import { apiFetch } from '@/lib/api-client';
 
 interface Page {
   id: string;
@@ -11,21 +12,6 @@ interface Page {
   isPublished: boolean;
   updatedAt: string;
   excerpt?: string;
-}
-
-const API = process.env.NEXT_PUBLIC_API_URL || '';
-
-async function apiFetch(path: string, options?: RequestInit) {
-  const res = await fetch(`${API}/api/v1${path}`, {
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...(options?.headers || {}) },
-    ...options,
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ message: res.statusText }));
-    throw new Error(err.message || 'API error');
-  }
-  return res.json();
 }
 
 function Toast({ message, type, onClose }: { message: string; type: 'success' | 'error'; onClose: () => void }) {

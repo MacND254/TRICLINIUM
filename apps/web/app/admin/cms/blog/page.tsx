@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Search, Edit2, Trash2, Eye, EyeOff, BookOpen, Loader2, X, Tag, Calendar, Star, UploadCloud } from 'lucide-react';
+import { uploadAdminMedia, apiFetch } from '@/lib/api-client';
 
 interface BlogPost {
   id: string;
@@ -19,21 +20,6 @@ interface BlogPost {
   createdAt: string;
   updatedAt: string;
   author?: { name: string };
-}
-
-const API = process.env.NEXT_PUBLIC_API_URL || '';
-
-async function apiFetch(path: string, options?: RequestInit) {
-  const res = await fetch(`${API}/api/v1${path}`, {
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...(options?.headers || {}) },
-    ...options,
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ message: res.statusText }));
-    throw new Error(err.message || 'API error');
-  }
-  return res.json();
 }
 
 function Toast({ message, type, onClose }: { message: string; type: 'success' | 'error'; onClose: () => void }) {
@@ -86,21 +72,9 @@ function PostModal({ post, onClose, onSave }: {
     if (!file) return;
     try {
       setIsUploading(true);
-      const formData = new FormData();
-      formData.append('file', file);
-      const res = await fetch(`${API}/api/v1/admin/media/upload`, {
-        method: 'POST',
-        credentials: 'include',
-        body: formData,
-      });
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson.error?.message || 'Upload failed');
-      }
-      const json = await res.json();
-      const url = json.data?.url || json.url;
-      if (url) {
-        setForm(f => ({ ...f, coverImageUrl: url }));
+      const uploaded = await uploadAdminMedia(file);
+      if (uploaded.url) {
+        setForm(f => ({ ...f, coverImageUrl: uploaded.url }));
       }
     } catch (err: any) {
       alert(err.message || 'Failed to upload image');

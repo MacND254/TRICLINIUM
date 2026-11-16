@@ -6,7 +6,7 @@ import { Plus, Trash2, ArrowLeft, Loader2, Save, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { fetchApi } from '@/lib/api-client';
+import { fetchApi, uploadAdminMedia } from '@/lib/api-client';
 
 interface ProductFormProps {
   initialData?: any;
@@ -56,21 +56,8 @@ export function ProductForm({ initialData, isEdit }: ProductFormProps) {
     if (!file) return;
     setUploadingIdx(idx);
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const API = process.env.NEXT_PUBLIC_API_URL || '';
-      const res = await fetch(`${API}/api/v1/admin/media/upload`, {
-        method: 'POST',
-        credentials: 'include',
-        body: formData,
-      });
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson.error?.message || errJson.message || 'Upload failed');
-      }
-      const json = await res.json();
-      const uploadedUrl = json.data?.url || json.url || '';
-      updateImage(idx, 'url', uploadedUrl);
+      const uploaded = await uploadAdminMedia(file);
+      updateImage(idx, 'url', uploaded.url);
       if (!images[idx]?.altText) {
         updateImage(idx, 'altText', file.name.replace(/\.[^/.]+$/, ''));
       }
@@ -89,24 +76,11 @@ export function ProductForm({ initialData, isEdit }: ProductFormProps) {
     setImages(prev => [...prev, { url: '', altText: file.name.replace(/\.[^/.]+$/, ''), isPrimary: prev.length === 0 }]);
     setUploadingIdx(newIdx);
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const API = process.env.NEXT_PUBLIC_API_URL || '';
-      const res = await fetch(`${API}/api/v1/admin/media/upload`, {
-        method: 'POST',
-        credentials: 'include',
-        body: formData,
-      });
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson.error?.message || errJson.message || 'Upload failed');
-      }
-      const json = await res.json();
-      const uploadedUrl = json.data?.url || json.url || '';
+      const uploaded = await uploadAdminMedia(file);
       setImages(prev => {
         const updated = [...prev];
         if (updated[newIdx]) {
-          updated[newIdx].url = uploadedUrl;
+          updated[newIdx].url = uploaded.url;
         }
         return updated;
       });

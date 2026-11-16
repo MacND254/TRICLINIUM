@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Search, Edit2, Trash2, Shield, UserCheck, UserX, Loader2, X, User, Mail, Lock, Eye, EyeOff, ShieldAlert } from 'lucide-react';
+import { apiFetch } from '@/lib/api-client';
 
 interface AdminUser {
   id: string;
@@ -19,21 +20,6 @@ interface Role {
   id: string;
   name: string;
   description: string;
-}
-
-const API = process.env.NEXT_PUBLIC_API_URL || '';
-
-async function apiFetch(path: string, options?: RequestInit) {
-  const res = await fetch(`${API}/api/v1${path}`, {
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...(options?.headers || {}) },
-    ...options,
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ message: res.statusText }));
-    throw new Error(err.message || 'API error');
-  }
-  return res.json();
 }
 
 function Toast({ message, type, onClose }: { message: string; type: 'success' | 'error'; onClose: () => void }) {

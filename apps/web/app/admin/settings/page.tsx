@@ -7,6 +7,8 @@ import {
   Upload, Trash2,
 } from 'lucide-react';
 import { handleKenyanPhoneChange, formatKenyanPhone } from '@/lib/phone';
+import { uploadAdminMedia, apiFetch } from '@/lib/api-client';
+import { usePublicSettings } from '@/lib/settings-context';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -103,23 +105,6 @@ const DEFAULTS: WebsiteSettings = {
   smtpFromName: 'TRICLINIUM SYSTEMS Alerts',
 };
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-const API = process.env.NEXT_PUBLIC_API_URL || '';
-
-async function apiFetch(path: string, options?: RequestInit) {
-  const res = await fetch(`${API}/api/v1${path}`, {
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...(options?.headers || {}) },
-    ...options,
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ message: res.statusText }));
-    throw new Error(err.message || 'API error');
-  }
-  return res.json();
-}
-
 // ─── UI helpers ───────────────────────────────────────────────────────────────
 
 const inputCls = "w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-sky-500 focus:outline-none focus:ring-1 focus:ring-sky-500 transition-colors";
@@ -181,6 +166,7 @@ const TABS: { id: TabId; label: string; icon: React.ComponentType<{ className?: 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
+  const { refreshSettings } = usePublicSettings();
   const [settings, setSettings] = useState<WebsiteSettings>(DEFAULTS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -194,22 +180,10 @@ export default function SettingsPage() {
     if (!file) return;
     setUploadingLogo(true);
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const res = await fetch(`${API}/api/v1/admin/media/upload`, {
-        method: 'POST',
-        credentials: 'include',
-        body: formData,
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || 'Logo upload failed');
-      }
-      const json = await res.json();
-      const uploadedUrl = json.data?.url || json.url || '';
-      if (uploadedUrl) {
-        set('logoUrl', uploadedUrl);
-        showToast('Logo image uploaded successfully. Click Save to persist.');
+      const uploaded = await uploadAdminMedia(file);
+      if (uploaded.url) {
+        set('logoUrl', uploaded.url);
+        showToast('Logo image uploaded successfully. Click Save Settings to persist.');
       }
     } catch (err: any) {
       alert('Logo upload failed: ' + (err.message || 'Unknown error'));
@@ -278,7 +252,8 @@ export default function SettingsPage() {
         value: String(value),
       }));
       await apiFetch('/admin/settings', { method: 'PUT', body: JSON.stringify({ settings: payload }) });
-      showToast('Settings saved successfully');
+      await refreshSettings();
+      showToast('Settings saved successfully. Changes are now live on the website!');
     } catch (e: unknown) {
       showToast((e as Error).message, 'error');
     } finally {

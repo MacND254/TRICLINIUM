@@ -152,3 +152,55 @@ export async function fetchApi<T = any>(
     throw new ApiError(err.message || 'Network error occurred', 'NETWORK_ERROR', 500);
   }
 }
+
+/**
+ * Universal authenticated file upload for admin forms (settings, products, services, CMS, media).
+ * Works reliably across local development and Vercel serverless deployments.
+ */
+export async function uploadAdminMedia(file: File): Promise<{ url: string; filename: string }> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const baseUrl = getApiBaseUrl();
+  const url = `${baseUrl}/admin/media/upload`;
+
+  const headers: Record<string, string> = {};
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('triclinium_admin_token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+  }
+
+  const res = await fetch(url, {
+    method: 'POST',
+    credentials: 'include',
+    headers,
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || err.message || `Upload failed with status ${res.status}`);
+  }
+
+  const json = await res.json();
+  const uploadedUrl = json.data?.url || json.url || '';
+  if (!uploadedUrl) {
+    throw new Error('Upload succeeded but no media URL was returned by server');
+  }
+
+  return {
+    url: uploadedUrl,
+    filename: json.data?.filename || json.filename || file.name,
+  };
+}
+
+/**
+ * Universal authenticated API fetch helper that guarantees Authorization headers
+ * are passed alongside credentials in all environments (local & Vercel).
+ */
+export async function apiFetch<T = any>(path: string, options?: RequestInit): Promise<T> {
+  const cleanPath = path.startsWith('/api/v1') ? path.replace('/api/v1', '') : path;
+  return fetchApi<T>(cleanPath, options);
+}

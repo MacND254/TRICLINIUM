@@ -56,12 +56,15 @@ export const metadata: Metadata = {
 
 async function getInitialPublicSettings() {
   try {
-    const apiUrl = process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-    if (typeof window === 'undefined') {
-      const reachable = await isApiReachable(apiUrl);
-      if (!reachable) return null;
-    }
-    const res = await fetch(`${apiUrl}/api/v1/settings/public`, {
+    const apiUrl =
+      process.env.INTERNAL_API_URL ||
+      (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '') ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      'http://localhost:4000';
+    if (!apiUrl) return null;
+    const reachable = await isApiReachable(apiUrl);
+    if (!reachable) return null;
+    const res = await fetch(`${apiUrl.replace(/\/$/, '')}/api/v1/settings/public`, {
       next: { revalidate: 30 },
     });
     if (res.ok) {

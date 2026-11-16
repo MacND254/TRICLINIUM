@@ -92,9 +92,9 @@ export function createApp(): Express {
     })
   );
 
-  // Payload body limits (restricted from 10mb to 2mb to prevent memory exhaustion DoS)
-  app.use(express.json({ limit: '2mb' }));
-  app.use(express.urlencoded({ extended: true, limit: '2mb' }));
+  // Payload body limits (up to 10mb for media/image data URIs and rich CMS content)
+  app.use(express.json({ limit: '10mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '10mb' }));
   app.use(cookieParser());
 
   // Input Sanitization: strip null bytes, XSS script injection, and prototype pollution attempts

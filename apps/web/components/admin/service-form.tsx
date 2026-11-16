@@ -6,7 +6,7 @@ import { Plus, Trash2, ArrowLeft, Loader2, Save, UploadCloud } from 'lucide-reac
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { fetchApi } from '@/lib/api-client';
+import { fetchApi, uploadAdminMedia } from '@/lib/api-client';
 
 interface ServiceFormProps {
   initialData?: any;
@@ -86,25 +86,9 @@ export function ServiceForm({ initialData, isEdit }: ServiceFormProps) {
 
     try {
       setIsUploadingImage(true);
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const API = process.env.NEXT_PUBLIC_API_URL || '';
-      const res = await fetch(`${API}/api/v1/admin/media/upload`, {
-        method: 'POST',
-        credentials: 'include',
-        body: formData,
-      });
-
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson.error?.message || 'Upload failed');
-      }
-
-      const json = await res.json();
-      const uploadedUrl = json.data?.url || json.url;
-      if (uploadedUrl) {
-        setFeaturedImage(uploadedUrl);
+      const uploaded = await uploadAdminMedia(file);
+      if (uploaded.url) {
+        setFeaturedImage(uploaded.url);
       }
     } catch (err: any) {
       alert(err.message || 'Failed to upload image');

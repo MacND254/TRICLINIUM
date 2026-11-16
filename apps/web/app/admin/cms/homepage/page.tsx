@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, GripVertical, Eye, EyeOff, Edit2, Save, X, ChevronDown, ChevronUp, Loader2, Image as ImageIcon, Trash2, AlertCircle, UploadCloud } from 'lucide-react';
+import { uploadAdminMedia, apiFetch } from '@/lib/api-client';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -23,23 +24,6 @@ interface HeroSlide {
   primaryCTA: { label: string; href: string };
   secondaryCTA: { label: string; href: string };
   isActive: boolean;
-}
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-const API = process.env.NEXT_PUBLIC_API_URL || '';
-
-async function apiFetch(path: string, options?: RequestInit) {
-  const res = await fetch(`${API}/api/v1${path}`, {
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...(options?.headers || {}) },
-    ...options,
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ message: res.statusText }));
-    throw new Error(err.message || 'API error');
-  }
-  return res.json();
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
@@ -147,24 +131,9 @@ function ImageUploadField({
 
     try {
       setUploading(true);
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const res = await fetch(`${API}/api/v1/admin/media/upload`, {
-        method: 'POST',
-        credentials: 'include',
-        body: formData,
-      });
-
-      if (!res.ok) {
-        const errJson = await res.json().catch(() => ({}));
-        throw new Error(errJson.error?.message || 'Upload failed');
-      }
-
-      const json = await res.json();
-      const url = json.data?.url || json.url;
-      if (url) {
-        onChange(url);
+      const uploaded = await uploadAdminMedia(file);
+      if (uploaded.url) {
+        onChange(uploaded.url);
       }
     } catch (err: any) {
       alert(err.message || 'Failed to upload image');

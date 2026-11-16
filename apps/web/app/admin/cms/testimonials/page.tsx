@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Edit2, Trash2, Star, StarOff, Eye, EyeOff, Loader2, X, Quote } from 'lucide-react';
+import { apiFetch } from '@/lib/api-client';
 
 interface Testimonial {
   id: string;
@@ -14,21 +15,6 @@ interface Testimonial {
   isApproved: boolean;
   isFeatured: boolean;
   createdAt: string;
-}
-
-const API = process.env.NEXT_PUBLIC_API_URL || '';
-
-async function apiFetch(path: string, options?: RequestInit) {
-  const res = await fetch(`${API}/api/v1${path}`, {
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...(options?.headers || {}) },
-    ...options,
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ message: res.statusText }));
-    throw new Error(err.message || 'API error');
-  }
-  return res.json();
 }
 
 function Toast({ message, type, onClose }: { message: string; type: 'success' | 'error'; onClose: () => void }) {

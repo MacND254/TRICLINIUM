@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Search, Filter, Shield, User, Package, Wrench, FileText, Settings, MessageSquare, Loader2, ChevronLeft, ChevronRight, Download } from 'lucide-react';
+import { apiFetch } from '@/lib/api-client';
 
 interface AuditLog {
   id: string;
@@ -13,18 +14,6 @@ interface AuditLog {
   userAgent: string | null;
   createdAt: string;
   user?: { id: string; name: string; email: string };
-}
-
-const API = process.env.NEXT_PUBLIC_API_URL || '';
-
-async function apiFetch(path: string, options?: RequestInit) {
-  const res = await fetch(`${API}/api/v1${path}`, {
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...(options?.headers || {}) },
-    ...options,
-  });
-  if (!res.ok) throw new Error(res.statusText);
-  return res.json();
 }
 
 const ENTITY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {

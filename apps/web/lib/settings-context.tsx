@@ -35,8 +35,8 @@ const DEFAULT_SETTINGS: PublicSettings = {
   faviconUrl: '/favicon.ico',
   contactEmail: 'inquiries@triclinium.com',
   supportEmail: 'support@triclinium.com',
-  phone: '+254 715399369',
-  phoneAlt: '+254 747399369',
+  phone: '+254 700 555 199',
+  phoneAlt: '+254 711 555 198',
   address: 'Westlands Commercial Center, Ring Road, Nairobi, Kenya',
   city: 'Nairobi',
   country: 'Kenya',
@@ -108,16 +108,7 @@ export function SettingsProvider({
     if (initialSettings && Object.keys(initialSettings).length > 0) {
       return { ...DEFAULT_SETTINGS, ...initialSettings };
     }
-    // 2. Client-side local storage cache fallback
-    if (typeof window !== 'undefined') {
-      try {
-        const cached = localStorage.getItem(SETTINGS_STORAGE_KEY);
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          return { ...DEFAULT_SETTINGS, ...parsed };
-        }
-      } catch {}
-    }
+    // Return DEFAULT_SETTINGS on initial render so client matches SSR exactly (no hydration mismatch)
     return DEFAULT_SETTINGS;
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -144,17 +135,22 @@ export function SettingsProvider({
   };
 
   useEffect(() => {
-    if (initialSettings && Object.keys(initialSettings).length > 0) {
-      setSettings((prev) => ({ ...prev, ...initialSettings }));
+    // On client mount, load cached settings if server didn't provide initialSettings
+    if (!initialSettings || Object.keys(initialSettings).length === 0) {
+      try {
+        const cached = localStorage.getItem(SETTINGS_STORAGE_KEY);
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          setSettings((prev) => ({ ...prev, ...parsed }));
+        }
+      } catch {}
+    } else {
       try {
         localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(initialSettings));
       } catch {}
     }
-  }, [initialSettings]);
-
-  useEffect(() => {
     refreshSettings();
-  }, []);
+  }, [initialSettings]);
 
   // Dynamic Theme & Color Grading CSS injection
   useEffect(() => {

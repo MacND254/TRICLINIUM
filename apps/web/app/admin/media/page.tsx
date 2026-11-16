@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { fetchApi } from '@/lib/api-client';
+import { fetchApi, uploadAdminMedia } from '@/lib/api-client';
 
 export default function AdminMediaPage() {
   const [assets, setAssets] = useState<any[]>([]);
@@ -49,21 +49,7 @@ export default function AdminMediaPage() {
 
     setIsUploading(true);
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
-      const res = await fetch(`${API_URL}/admin/media/upload`, {
-        method: 'POST',
-        body: formData,
-        credentials: 'include',
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error?.message || 'Upload failed');
-      }
-
+      await uploadAdminMedia(file);
       await loadMedia();
     } catch (err: any) {
       alert(err.message || 'Upload failed');
