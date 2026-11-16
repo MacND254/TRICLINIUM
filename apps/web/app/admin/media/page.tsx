@@ -52,7 +52,7 @@ export default function AdminMediaPage() {
       const formData = new FormData();
       formData.append('file', file);
 
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1';
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api/v1';
       const res = await fetch(`${API_URL}/admin/media/upload`, {
         method: 'POST',
         body: formData,

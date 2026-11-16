@@ -82,7 +82,7 @@ export default function AdminInquiriesPage() {
   }, [typeFilter, statusFilter]);
 
   const handleExportCsv = () => {
-    window.open(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000/api/v1'}/admin/inquiries/export`, '_blank');
+    window.open(`${process.env.NEXT_PUBLIC_API_URL || '/api/v1'}/admin/inquiries/export`, '_blank');
   };
 
   const addQuoteItem = () => {

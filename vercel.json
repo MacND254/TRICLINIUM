@@ -1,17 +1,21 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "nextjs",
-  "buildCommand": "npx prisma generate && npm run build:packages && npm run build:web",
+  "buildCommand": "npx prisma generate && npm run build:packages && npm run build:api && npm run build:web",
   "outputDirectory": "apps/web/.next",
   "cleanUrls": true,
   "rewrites": [
     {
       "source": "/api/v1/:path*",
       "destination": "/api"
+    },
+    {
+      "source": "/api/:path*",
+      "destination": "/api"
     }
   ],
   "functions": {
-    "api/index.ts": {
+    "api/index.js": {
       "maxDuration": 30
     }
   },

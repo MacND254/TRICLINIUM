@@ -1,8 +1,29 @@
-const API_URL =
-  process.env.INTERNAL_API_URL ||
-  process.env.API_URL ||
-  process.env.NEXT_PUBLIC_API_URL ||
-  'http://localhost:4000/api/v1';
+export function getApiBaseUrl(): string {
+  // If explicitly provided via environment, use it
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '');
+  }
+
+  // Client-side in browser: use relative path '/api/v1' so it hits the current domain
+  if (typeof window !== 'undefined') {
+    return '/api/v1';
+  }
+
+  // Server-side (SSR / build)
+  if (process.env.INTERNAL_API_URL) {
+    return process.env.INTERNAL_API_URL.replace(/\/$/, '');
+  }
+  if (process.env.API_URL) {
+    return process.env.API_URL.replace(/\/$/, '');
+  }
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}/api/v1`;
+  }
+
+  return 'http://localhost:4000/api/v1';
+}
+
+const API_URL = getApiBaseUrl();
 
 let reachabilityCache: { [origin: string]: { status: boolean; timestamp: number } } = {};
 
@@ -13,7 +34,8 @@ export async function isApiReachable(urlStr: string): Promise<boolean> {
   if (typeof window !== 'undefined') return true;
 
   try {
-    const parsed = new URL(urlStr);
+    const resolvedUrl = urlStr.startsWith('http') ? urlStr : `http://localhost:4000${urlStr}`;
+    const parsed = new URL(resolvedUrl);
     const origin = parsed.origin;
     const now = Date.now();
     const cached = reachabilityCache[origin];
@@ -82,9 +104,10 @@ export async function fetchApi<T = any>(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<T> {
+  const baseUrl = getApiBaseUrl();
   const url = endpoint.startsWith('http')
     ? endpoint
-    : `${API_URL.replace(/\/$/, '')}/${endpoint.replace(/^\//, '')}`;
+    : `${baseUrl}/${endpoint.replace(/^\//, '')}`;
 
   // If executing in server environment (e.g. Next.js build or SSR), check if API server is reachable
   if (typeof window === 'undefined') {

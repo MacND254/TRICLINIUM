@@ -1,0 +1,23 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "jsx": "preserve",
+    "paths": {
+      "@/*": ["apps/web/*"],
+      "@triclinium/types": ["packages/types/src/index.ts"],
+      "@triclinium/shared": ["packages/shared/src/index.ts"],
+      "@triclinium/validation": ["packages/validation/src/index.ts"]
+    }
+  },
+  "include": [
+    "apps/web/next-env.d.ts",
+    "apps/web/**/*.ts",
+    "apps/web/**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules",
+    "apps/web/.next",
+    "**/dist"
+  ]
+}
