@@ -161,17 +161,46 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
   let services: any[] = [];
   let categories: any[] = [];
 
+  let heroData = {
+    badge: 'Certified Security Engineering · East Africa',
+    title: 'Professional CCTV, Alarms & Smart Security Installations',
+    subtitle:
+      'From residential homes in Nairobi to commercial enterprises across Kenya, our licensed engineers deliver turnkey surveillance, smart video doorbells, wireless alarms, intercoms, electric fencing, and high-speed mesh Wi-Fi.',
+    backgroundImage: '',
+    bullets: [
+      'Free Nairobi Site Survey',
+      '1-Year On-Site Workmanship Warranty',
+      'Clean, Concealed Conduit Cabling',
+      'Transparent KES Pricing',
+    ],
+  };
+
   try {
     const query = new URLSearchParams();
     if (searchParams.category) query.set('category', searchParams.category);
     if (searchParams.search) query.set('search', searchParams.search);
 
-    const [srvRes, catRes] = await Promise.all([
+    const [srvRes, catRes, pageRes] = await Promise.all([
       fetchApi(`/services?${query.toString()}`),
       fetchApi('/service-categories'),
+      fetchApi('/pages/services').catch(() => null),
     ]);
     services = srvRes.items && srvRes.items.length > 0 ? srvRes.items : FALLBACK_SERVICES;
     categories = catRes || [];
+
+    if (pageRes) {
+      if (pageRes.title) heroData.title = pageRes.title;
+      const heroSec = pageRes.sections?.find((s: any) => s.key === 'hero');
+      if (heroSec?.content) {
+        if (heroSec.content.badge) heroData.badge = heroSec.content.badge;
+        if (heroSec.content.title) heroData.title = heroSec.content.title;
+        if (heroSec.content.subtitle) heroData.subtitle = heroSec.content.subtitle;
+        if (heroSec.content.backgroundImage) heroData.backgroundImage = heroSec.content.backgroundImage;
+        if (Array.isArray(heroSec.content.bullets) && heroSec.content.bullets.length > 0) {
+          heroData.bullets = heroSec.content.bullets;
+        }
+      }
+    }
   } catch (e) {
     services = FALLBACK_SERVICES;
   }
@@ -189,25 +218,35 @@ export default async function ServicesPage({ searchParams }: ServicesPageProps) 
     <div className="container mx-auto px-4 sm:px-8 py-12 space-y-16">
       {/* Hero Banner */}
       <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-sky-950 text-white p-8 sm:p-14 border border-slate-800 shadow-2xl">
+        {heroData.backgroundImage && (
+          <div
+            className="absolute inset-0 bg-cover bg-center transition-all duration-700"
+            style={{ backgroundImage: `url(${heroData.backgroundImage})` }}
+          >
+            {/* Elegant high-contrast dark overlay so text is crisp and readable */}
+            <div className="absolute inset-0 bg-slate-950/75 backdrop-blur-[1px] bg-gradient-to-r from-slate-950/95 via-slate-950/80 to-slate-950/60" />
+          </div>
+        )}
         <div className="relative z-10 max-w-3xl space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/20 border border-sky-400/30 text-sky-300 text-xs font-bold tracking-wider uppercase">
             <ShieldCheck className="h-4 w-4" />
-            <span>Certified Security Engineering · East Africa</span>
+            <span>{heroData.badge}</span>
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
-            Professional CCTV, Alarms &amp; Smart Security Installations
+            {heroData.title}
           </h1>
 
           <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-2xl">
-            From residential homes in Nairobi to commercial enterprises across Kenya, our licensed engineers deliver turnkey surveillance, smart video doorbells, wireless alarms, intercoms, electric fencing, and high-speed mesh Wi-Fi.
+            {heroData.subtitle}
           </p>
 
           <div className="pt-2 flex flex-wrap gap-4 text-xs font-semibold text-slate-200">
-            <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-400" /> Free Nairobi Site Survey</span>
-            <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-400" /> 1-Year On-Site Workmanship Warranty</span>
-            <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-400" /> Clean, Concealed Conduit Cabling</span>
-            <span className="flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-400" /> Transparent KES Pricing</span>
+            {heroData.bullets.map((bullet, idx) => (
+              <span key={idx} className="flex items-center gap-1.5">
+                <CheckCircle2 className="h-4 w-4 text-emerald-400" /> {bullet}
+              </span>
+            ))}
           </div>
         </div>
 

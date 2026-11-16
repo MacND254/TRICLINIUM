@@ -268,6 +268,11 @@ export class CmsController {
     try {
       const pages = await prisma.page.findMany({
         orderBy: { updatedAt: 'desc' },
+        include: {
+          sections: {
+            orderBy: { displayOrder: 'asc' },
+          },
+        },
       });
       return res.json({ success: true, data: pages });
     } catch (err) {
@@ -278,7 +283,14 @@ export class CmsController {
   // POST /admin/pages
   static async createPage(req: Request, res: Response, next: NextFunction) {
     try {
-      const data = pageSchema.parse(req.body);
+      const body = { ...req.body };
+      if (body.isPublished !== undefined && !body.status) {
+        body.status = body.isPublished ? 'PUBLISHED' : 'DRAFT';
+      }
+      if (!body.content && body.content !== '') {
+        body.content = body.description || body.excerpt || 'Page content';
+      }
+      const data = pageSchema.parse(body);
       const slug = slugify(data.slug);
 
       const page = await prisma.page.create({
@@ -293,20 +305,69 @@ export class CmsController {
         },
       });
 
+      // Handle Hero Section if provided
+      if (req.body.hero && typeof req.body.hero === 'object') {
+        const hero = { ...req.body.hero };
+        if (hero.backgroundImage && typeof hero.backgroundImage === 'string' && hero.backgroundImage.startsWith('data:')) {
+          try {
+            const matches = hero.backgroundImage.match(/^data:([a-zA-Z0-9\/+.-]+);base64,(.+)$/);
+            if (matches) {
+              const mimeType = matches[1];
+              const ext = mimeType === 'image/png' ? '.png' : mimeType === 'image/webp' ? '.webp' : '.jpg';
+              const filename = `${Date.now()}-page-hero-${Math.random().toString(36).substring(7)}${ext}`;
+              await prisma.mediaAsset.create({
+                data: {
+                  filename,
+                  originalName: `page-hero${ext}`,
+                  url: hero.backgroundImage,
+                  mimeType,
+                  size: Buffer.byteLength(matches[2], 'base64'),
+                  provider: 'local',
+                },
+              });
+              hero.backgroundImage = `/api/v1/media/file/${filename}`;
+            }
+          } catch (e) {
+            console.warn('[Auto-extract page hero base64 failed]:', e);
+          }
+        }
+
+        await prisma.pageSection.create({
+          data: {
+            pageId: page.id,
+            key: 'hero',
+            title: hero.title || page.title,
+            content: hero,
+            displayOrder: 0,
+            isEnabled: hero.isEnabled !== false,
+          },
+        });
+      }
+
+      const fullPage = await prisma.page.findUnique({
+        where: { id: page.id },
+        include: { sections: true },
+      });
+
       await invalidateCmsCaches(page.slug);
       await logAudit({ req, action: 'PAGE_CREATED', entityType: 'Page', entityId: page.id });
 
-      return res.status(201).json({ success: true, data: page });
+      return res.status(201).json({ success: true, data: fullPage || page });
     } catch (err) {
       next(err);
     }
   }
 
-  // PATCH /admin/pages/:id
+  // PATCH & PUT /admin/pages/:id
   static async updatePage(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const data = pageSchema.partial().parse(req.body);
+      const body = { ...req.body };
+      if (body.isPublished !== undefined && !body.status) {
+        body.status = body.isPublished ? 'PUBLISHED' : 'DRAFT';
+      }
+
+      const data = pageSchema.partial().parse(body);
       const slug = data.slug ? slugify(data.slug) : undefined;
 
       const page = await prisma.page.update({
@@ -314,7 +375,7 @@ export class CmsController {
         data: {
           ...(data.title && { title: data.title }),
           ...(slug && { slug }),
-          ...(data.content && { content: data.content }),
+          ...(data.content !== undefined && { content: data.content }),
           ...(data.status && {
             status: data.status,
             publishedAt: data.status === 'PUBLISHED' ? new Date() : null,
@@ -324,10 +385,97 @@ export class CmsController {
         },
       });
 
+      // Handle Hero Section if provided
+      if (req.body.hero && typeof req.body.hero === 'object') {
+        const hero = { ...req.body.hero };
+        if (hero.backgroundImage && typeof hero.backgroundImage === 'string' && hero.backgroundImage.startsWith('data:')) {
+          try {
+            const matches = hero.backgroundImage.match(/^data:([a-zA-Z0-9\/+.-]+);base64,(.+)$/);
+            if (matches) {
+              const mimeType = matches[1];
+              const ext = mimeType === 'image/png' ? '.png' : mimeType === 'image/webp' ? '.webp' : '.jpg';
+              const filename = `${Date.now()}-page-hero-${Math.random().toString(36).substring(7)}${ext}`;
+              await prisma.mediaAsset.create({
+                data: {
+                  filename,
+                  originalName: `page-hero${ext}`,
+                  url: hero.backgroundImage,
+                  mimeType,
+                  size: Buffer.byteLength(matches[2], 'base64'),
+                  provider: 'local',
+                },
+              });
+              hero.backgroundImage = `/api/v1/media/file/${filename}`;
+            }
+          } catch (e) {
+            console.warn('[Auto-extract page hero base64 failed]:', e);
+          }
+        }
+
+        const existingHero = await prisma.pageSection.findFirst({
+          where: { pageId: page.id, key: 'hero' },
+        });
+
+        if (existingHero) {
+          await prisma.pageSection.update({
+            where: { id: existingHero.id },
+            data: {
+              title: hero.title || page.title,
+              content: hero,
+              isEnabled: hero.isEnabled !== false,
+            },
+          });
+        } else {
+          await prisma.pageSection.create({
+            data: {
+              pageId: page.id,
+              key: 'hero',
+              title: hero.title || page.title,
+              content: hero,
+              displayOrder: 0,
+              isEnabled: hero.isEnabled !== false,
+            },
+          });
+        }
+      }
+
+      const fullPage = await prisma.page.findUnique({
+        where: { id: page.id },
+        include: { sections: true },
+      });
+
       await invalidateCmsCaches(page.slug);
       await logAudit({ req, action: 'PAGE_UPDATED', entityType: 'Page', entityId: id });
 
-      return res.json({ success: true, data: page });
+      return res.json({ success: true, data: fullPage || page });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  // DELETE /admin/pages/:id
+  static async deletePage(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const existing = await prisma.page.findUnique({ where: { id } });
+      if (!existing) {
+        return res.status(404).json({ success: false, error: { message: 'Page not found' } });
+      }
+
+      // Safeguard essential system pages
+      const protectedSlugs = ['home', 'services', 'products', 'about', 'contact'];
+      if (protectedSlugs.includes(existing.slug)) {
+        return res.status(400).json({
+          success: false,
+          error: { message: `System page "${existing.title}" cannot be deleted. You can unpublish or edit its content.` },
+        });
+      }
+
+      await prisma.page.delete({ where: { id } });
+      await invalidateCmsCaches(existing.slug);
+      await logAudit({ req, action: 'PAGE_DELETED', entityType: 'Page', entityId: id });
+
+      return res.json({ success: true, message: 'Page deleted successfully' });
     } catch (err) {
       next(err);
     }

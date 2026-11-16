@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -64,6 +64,11 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const { user, isLoading, logout, hasRole } = useAdminAuth();
   const { settings } = usePublicSettings();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // If on login/recovery pages, render clean standalone view with minimal admin footer
   if (['/admin/login', '/admin/forgot-password', '/admin/reset-password'].includes(pathname)) {
@@ -77,8 +82,8 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // When verifying authentication status on protected admin routes, show clean loading state
-  if (isLoading) {
+  // When verifying authentication status or before client mount, render identical server shell to eliminate hydration mismatch
+  if (!mounted || isLoading) {
     return (
       <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-slate-400 gap-3">
         <Loader2 className="h-8 w-8 animate-spin text-sky-500" />
@@ -123,7 +128,7 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
       items: [
         { label: 'Homepage Editor', href: '/admin/cms/homepage', icon: Home },
         { label: 'Theme & Color Grading', href: '/admin/cms/theme', icon: Palette },
-        { label: 'Custom Pages', href: '/admin/cms/pages', icon: FileText },
+        { label: 'Website Pages & CMS', href: '/admin/cms/pages', icon: FileText },
         { label: 'Security Insights / Blog', href: '/admin/cms/blog', icon: BookOpen },
         { label: 'FAQs', href: '/admin/cms/faqs', icon: HelpCircle },
       ],

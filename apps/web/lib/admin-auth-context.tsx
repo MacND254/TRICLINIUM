@@ -27,24 +27,9 @@ interface AdminAuthContextType {
 const AdminAuthContext = createContext<AdminAuthContextType | undefined>(undefined);
 
 export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<AdminUser | null>(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const cached = sessionStorage.getItem('triclinium_admin_user');
-        if (cached) return JSON.parse(cached);
-      } catch {}
-    }
-    return null;
-  });
-  const [isLoading, setIsLoading] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('triclinium_admin_token');
-      if (!token) return false;
-      const cached = sessionStorage.getItem('triclinium_admin_user');
-      if (cached) return false;
-    }
-    return true;
-  });
+  // Deterministic initial state to match SSR and avoid hydration errors
+  const [user, setUser] = useState<AdminUser | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
 
@@ -62,10 +47,13 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // If we don't have user in state, show loading spinner on initial load
-      if (!user) {
-        setIsLoading(true);
-      }
+      // Restore cached user from sessionStorage after client mount for immediate responsiveness
+      try {
+        const cached = sessionStorage.getItem('triclinium_admin_user');
+        if (cached && isMounted && !user) {
+          setUser(JSON.parse(cached));
+        }
+      } catch {}
 
       try {
         const data = await fetchApi('/admin/auth/me');
@@ -87,7 +75,6 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
 
     // Only run auth verification if on admin path
     if (pathname.startsWith('/admin') && !['/admin/login', '/admin/forgot-password', '/admin/reset-password'].includes(pathname)) {
-      // If user is already loaded in memory, don't re-trigger heavy auth verification on internal tab switches
       if (!user) {
         checkAuth();
       } else {

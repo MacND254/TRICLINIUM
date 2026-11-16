@@ -187,10 +187,19 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   let productsData: any = { items: [], pagination: { total: 0, page: 1, limit: 12, totalPages: 1 } };
   let categoriesData: any[] = [];
 
+  let heroData = {
+    badge: 'Surveillance & Intelligent Security Systems',
+    title: 'Security Products & Hardware Equipment',
+    subtitle:
+      'Explore our certified 4K AI CCTV cameras, smart video doorbells, door cams, wireless intruder alarm systems, nanny cameras, video intercoms, home mesh networking, and perimeter defense systems — priced in Kenyan Shillings (KES).',
+    backgroundImage: '',
+  };
+
   try {
-    const [prods, cats] = await Promise.all([
+    const [prods, cats, pageRes] = await Promise.all([
       fetchApi(`/products?${queryParams.toString()}`),
       fetchApi('/product-categories'),
+      fetchApi('/pages/products').catch(() => null),
     ]);
     if (prods?.items && prods.items.length > 0) {
       productsData = prods;
@@ -201,6 +210,17 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
       };
     }
     categoriesData = cats?.length > 0 ? cats : FALLBACK_SECURITY_CATEGORIES;
+
+    if (pageRes) {
+      if (pageRes.title) heroData.title = pageRes.title;
+      const heroSec = pageRes.sections?.find((s: any) => s.key === 'hero');
+      if (heroSec?.content) {
+        if (heroSec.content.badge) heroData.badge = heroSec.content.badge;
+        if (heroSec.content.title) heroData.title = heroSec.content.title;
+        if (heroSec.content.subtitle) heroData.subtitle = heroSec.content.subtitle;
+        if (heroSec.content.backgroundImage) heroData.backgroundImage = heroSec.content.backgroundImage;
+      }
+    }
   } catch (err) {
     productsData = {
       items: FALLBACK_SECURITY_PRODUCTS,
@@ -234,18 +254,40 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
 
   return (
     <div className="container mx-auto px-4 sm:px-8 py-12">
-      {/* Page Header */}
-      <div className="border-b pb-8 mb-8">
-        <div className="text-xs font-bold text-sky-600 uppercase tracking-widest mb-1.5">
-          Surveillance &amp; Intelligent Security Systems
+      {/* Page Header / Hero Banner */}
+      {heroData.backgroundImage ? (
+        <div className="relative rounded-3xl overflow-hidden bg-slate-950 text-white p-8 sm:p-12 border border-slate-800 shadow-2xl mb-8">
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: `url(${heroData.backgroundImage})` }}
+          >
+            <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-[1px] bg-gradient-to-r from-slate-950/95 via-slate-950/85 to-slate-950/70" />
+          </div>
+          <div className="relative z-10 max-w-2xl space-y-3">
+            <div className="inline-block text-xs font-bold text-sky-400 uppercase tracking-widest bg-sky-500/20 px-3 py-1 rounded-full border border-sky-400/30">
+              {heroData.badge}
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+              {heroData.title}
+            </h1>
+            <p className="text-sm text-slate-300 leading-relaxed">
+              {heroData.subtitle}
+            </p>
+          </div>
         </div>
-        <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-          Security Products &amp; Hardware Equipment
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground max-w-2xl">
-          Explore our certified 4K AI CCTV cameras, smart video doorbells, door cams, wireless intruder alarm systems, nanny cameras, video intercoms, home mesh networking, and perimeter defense systems — priced in Kenyan Shillings (KES).
-        </p>
-      </div>
+      ) : (
+        <div className="border-b pb-8 mb-8">
+          <div className="text-xs font-bold text-sky-600 uppercase tracking-widest mb-1.5">
+            {heroData.badge}
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+            {heroData.title}
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground max-w-2xl">
+            {heroData.subtitle}
+          </p>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Sidebar Filters */}

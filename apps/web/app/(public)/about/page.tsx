@@ -1,27 +1,75 @@
 import React from 'react';
 import { ShieldCheck, Award, Layers, Users, CheckCircle2, Video, Bell, Lock } from 'lucide-react';
+import { fetchApi } from '@/lib/api-client';
+
+export const revalidate = 60;
 
 export const metadata = {
   title: 'About Us | TRICLINIUM SYSTEMS · CCTV Surveillance & Security',
   description: 'Learn about TRICLINIUM SYSTEMS, our certified security technicians, 4K AI surveillance cameras, and smart wireless home alarm systems.',
 };
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  let heroData = {
+    badge: 'About TRICLINIUM SYSTEMS',
+    title: 'Dedicated to Total Situational Awareness & Proactive Security',
+    subtitle:
+      'Founded in 2014 by security engineers and network infrastructure specialists, TRICLINIUM delivers end-to-end CCTV surveillance, smart wireless intruder alarms, and integrated biometric access control solutions for residences, retail establishments, and corporate enterprises.',
+    backgroundImage: '',
+  };
+
+  try {
+    const pageData = await fetchApi('/pages/about');
+    if (pageData) {
+      if (pageData.title) heroData.title = pageData.title;
+      const heroSec = pageData.sections?.find((s: any) => s.key === 'hero');
+      if (heroSec?.content) {
+        if (heroSec.content.badge) heroData.badge = heroSec.content.badge;
+        if (heroSec.content.title) heroData.title = heroSec.content.title;
+        if (heroSec.content.subtitle) heroData.subtitle = heroSec.content.subtitle;
+        if (heroSec.content.backgroundImage) heroData.backgroundImage = heroSec.content.backgroundImage;
+      }
+    }
+  } catch {}
+
   return (
     <div className="container mx-auto px-4 sm:px-8 py-16 space-y-16">
-      {/* Hero */}
-      <div className="max-w-3xl space-y-4">
-        <span className="text-xs font-bold text-sky-600 uppercase tracking-widest flex items-center gap-1.5">
-          <ShieldCheck className="h-4 w-4" />
-          <span>About TRICLINIUM SYSTEMS</span>
-        </span>
-        <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-          Dedicated to Total Situational Awareness & Proactive Security
-        </h1>
-        <p className="text-base text-slate-600 dark:text-slate-300 leading-relaxed">
-          Founded in 2014 by security engineers and network infrastructure specialists, TRICLINIUM delivers end-to-end CCTV surveillance, smart wireless intruder alarms, and integrated biometric access control solutions for residences, retail establishments, and corporate enterprises.
-        </p>
-      </div>
+      {/* Hero Banner */}
+      {heroData.backgroundImage ? (
+        <div className="relative rounded-3xl overflow-hidden bg-slate-950 text-white p-8 sm:p-14 border border-slate-800 shadow-2xl">
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: `url(${heroData.backgroundImage})` }}
+          >
+            <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-[1px] bg-gradient-to-r from-slate-950/95 via-slate-950/85 to-slate-950/70" />
+          </div>
+          <div className="relative z-10 max-w-3xl space-y-4">
+            <span className="text-xs font-bold text-sky-400 uppercase tracking-widest flex items-center gap-1.5">
+              <ShieldCheck className="h-4 w-4" />
+              <span>{heroData.badge}</span>
+            </span>
+            <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
+              {heroData.title}
+            </h1>
+            <p className="text-sm sm:text-base text-slate-300 leading-relaxed max-w-2xl">
+              {heroData.subtitle}
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="max-w-3xl space-y-4">
+          <span className="text-xs font-bold text-sky-600 uppercase tracking-widest flex items-center gap-1.5">
+            <ShieldCheck className="h-4 w-4" />
+            <span>{heroData.badge}</span>
+          </span>
+          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+            {heroData.title}
+          </h1>
+          <p className="text-base text-slate-600 dark:text-slate-300 leading-relaxed">
+            {heroData.subtitle}
+          </p>
+        </div>
+      )}
 
       {/* Grid: Mission, Vision, Values */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

@@ -11,9 +11,31 @@ export const metadata = {
 
 export default async function TestimonialsPage() {
   let testimonials: any[] = [];
+  let heroData = {
+    badge: 'Verified Reviews & Case Studies',
+    title: 'Client Case Studies & Endorsements',
+    subtitle:
+      'Discover how enterprise clients and residential estates achieve zero-downtime operations and certified structural excellence with TRICLINIUM hardware and software.',
+    backgroundImage: '',
+  };
 
   try {
-    testimonials = await fetchApi('/testimonials');
+    const [testRes, pageRes] = await Promise.all([
+      fetchApi('/testimonials'),
+      fetchApi('/pages/testimonials').catch(() => null),
+    ]);
+    testimonials = testRes || [];
+
+    if (pageRes) {
+      if (pageRes.title) heroData.title = pageRes.title;
+      const heroSec = pageRes.sections?.find((s: any) => s.key === 'hero');
+      if (heroSec?.content) {
+        if (heroSec.content.badge) heroData.badge = heroSec.content.badge;
+        if (heroSec.content.title) heroData.title = heroSec.content.title;
+        if (heroSec.content.subtitle) heroData.subtitle = heroSec.content.subtitle;
+        if (heroSec.content.backgroundImage) heroData.backgroundImage = heroSec.content.backgroundImage;
+      }
+    }
   } catch (e) {
     testimonials = [
       {
@@ -39,14 +61,36 @@ export default async function TestimonialsPage() {
 
   return (
     <div className="container mx-auto px-4 sm:px-8 py-16 space-y-12">
-      <div className="text-center max-w-2xl mx-auto space-y-3">
-        <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-          Client Case Studies & Endorsements
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Discover how enterprise clients achieve zero-downtime operations and certified structural excellence with TRICLINIUM hardware and software.
-        </p>
-      </div>
+      {heroData.backgroundImage ? (
+        <div className="relative rounded-3xl overflow-hidden bg-slate-950 text-white p-8 sm:p-12 border border-slate-800 shadow-2xl text-center">
+          <div
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: `url(${heroData.backgroundImage})` }}
+          >
+            <div className="absolute inset-0 bg-slate-950/85 backdrop-blur-[1px] bg-gradient-to-t from-slate-950 via-slate-950/80 to-slate-950/70" />
+          </div>
+          <div className="relative z-10 max-w-2xl mx-auto space-y-3">
+            <div className="inline-block text-xs font-bold text-sky-400 uppercase tracking-widest bg-sky-500/20 px-3 py-1 rounded-full border border-sky-400/30">
+              {heroData.badge}
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white">
+              {heroData.title}
+            </h1>
+            <p className="text-sm text-slate-300 leading-relaxed">
+              {heroData.subtitle}
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="text-center max-w-2xl mx-auto space-y-3">
+          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+            {heroData.title}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            {heroData.subtitle}
+          </p>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
         {testimonials.map((t) => (

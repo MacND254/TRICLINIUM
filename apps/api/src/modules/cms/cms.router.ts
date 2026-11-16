@@ -15,11 +15,21 @@ cmsRouter.get('/faqs', CmsController.getPublicFaqs);
 cmsRouter.get('/testimonials', CmsController.getPublicTestimonials);
 
 // ================= ADMIN CMS ROUTES =================
-// Pages
+// Pages (Supports both /admin/pages and /admin/cms/pages)
 cmsRouter.get('/admin/pages', authenticate, requirePermission(PERMISSIONS.CMS_VIEW), CmsController.getAdminPages);
+cmsRouter.get('/admin/cms/pages', authenticate, requirePermission(PERMISSIONS.CMS_VIEW), CmsController.getAdminPages);
+
 cmsRouter.post('/admin/pages', authenticate, requirePermission(PERMISSIONS.CMS_EDIT), CmsController.createPage);
+cmsRouter.post('/admin/cms/pages', authenticate, requirePermission(PERMISSIONS.CMS_EDIT), CmsController.createPage);
+
 cmsRouter.patch('/admin/pages/:id', authenticate, requirePermission(PERMISSIONS.CMS_EDIT), CmsController.updatePage);
+cmsRouter.patch('/admin/cms/pages/:id', authenticate, requirePermission(PERMISSIONS.CMS_EDIT), CmsController.updatePage);
+
 cmsRouter.put('/admin/pages/:id', authenticate, requirePermission(PERMISSIONS.CMS_EDIT), CmsController.updatePage);
+cmsRouter.put('/admin/cms/pages/:id', authenticate, requirePermission(PERMISSIONS.CMS_EDIT), CmsController.updatePage);
+
+cmsRouter.delete('/admin/pages/:id', authenticate, requirePermission(PERMISSIONS.CMS_EDIT), CmsController.deletePage);
+cmsRouter.delete('/admin/cms/pages/:id', authenticate, requirePermission(PERMISSIONS.CMS_EDIT), CmsController.deletePage);
 
 // Blog & Posts (Supports both /admin/blog and /admin/cms/blog and /admin/cms/posts)
 cmsRouter.get('/admin/blog', authenticate, requirePermission(PERMISSIONS.CMS_VIEW), CmsController.getAdminBlog);
