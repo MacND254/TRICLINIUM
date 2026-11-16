@@ -215,6 +215,20 @@ export class AuthController {
         new Set(user.userRoles.flatMap((ur) => ur.role.rolePermissions.map((rp) => rp.permission.code)))
       );
 
+      let sessionExpiresAt: string | null = null;
+      let sessionIssuedAt: string | null = null;
+      if (req.sessionToken) {
+        try {
+          const decoded: any = jwt.decode(req.sessionToken);
+          if (decoded?.exp) {
+            sessionExpiresAt = new Date(decoded.exp * 1000).toISOString();
+          }
+          if (decoded?.iat) {
+            sessionIssuedAt = new Date(decoded.iat * 1000).toISOString();
+          }
+        } catch {}
+      }
+
       return res.json({
         success: true,
         data: {
@@ -225,6 +239,10 @@ export class AuthController {
           avatarUrl: user.avatarUrl,
           roles,
           permissions,
+          sessionExpiresAt,
+          sessionIssuedAt,
+          cookieName: config.auth.cookieName,
+          cookieMaxAge: config.auth.sessionMaxAge,
         },
       });
     } catch (err) {

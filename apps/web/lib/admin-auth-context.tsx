@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { fetchApi } from './api-client';
 import { RoleName } from '@triclinium/types';
 
-interface AdminUser {
+export interface AdminUser {
   id: string;
   email: string;
   firstName: string;
@@ -13,15 +13,49 @@ interface AdminUser {
   avatarUrl?: string | null;
   roles: RoleName[];
   permissions: string[];
+  sessionExpiresAt?: string | null;
+  sessionIssuedAt?: string | null;
+  cookieName?: string;
+  cookieMaxAge?: number;
+}
+
+export interface SessionInfo {
+  expiresAt: Date | null;
+  issuedAt: Date | null;
+  cookieName: string;
+  cookieMaxAgeSeconds: number;
+  timeRemainingText: string;
+  isExpired: boolean;
 }
 
 interface AdminAuthContextType {
   user: AdminUser | null;
   isLoading: boolean;
+  sessionInfo: SessionInfo;
   login: (token: string, userData: AdminUser) => void;
   logout: () => Promise<void>;
   hasRole: (role: RoleName) => boolean;
   hasPermission: (permission: string) => boolean;
+}
+
+function parseJwtExp(token: string | null): { exp: number | null; iat: number | null } {
+  if (!token) return { exp: null, iat: null };
+  try {
+    const parts = token.split('.');
+    if (parts.length < 2) return { exp: null, iat: null };
+    const base64Url = parts[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const json = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    const parsed = JSON.parse(json);
+    return { exp: parsed.exp || null, iat: parsed.iat || null };
+  } catch {
+    return { exp: null, iat: null };
+  }
 }
 
 const AdminAuthContext = createContext<AdminAuthContextType | undefined>(undefined);
@@ -117,6 +151,83 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const [now, setNow] = useState<number>(Date.now());
+
+  useEffect(() => {
+    // Tick every 30s to update remaining session countdown
+    const timer = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const getSessionInfo = (): SessionInfo => {
+    let expDate: Date | null = null;
+    let iatDate: Date | null = null;
+
+    if (user?.sessionExpiresAt) {
+      expDate = new Date(user.sessionExpiresAt);
+    }
+    if (user?.sessionIssuedAt) {
+      iatDate = new Date(user.sessionIssuedAt);
+    }
+
+    if (!expDate && typeof window !== 'undefined') {
+      const token = localStorage.getItem('triclinium_admin_token');
+      const { exp, iat } = parseJwtExp(token);
+      if (exp) expDate = new Date(exp * 1000);
+      if (iat) iatDate = new Date(iat * 1000);
+    }
+
+    const cookieName = user?.cookieName || 'triclinium_admin_session';
+    const cookieMaxAgeSeconds = user?.cookieMaxAge || 604800; // 7 days
+
+    if (!expDate) {
+      return {
+        expiresAt: null,
+        issuedAt: null,
+        cookieName,
+        cookieMaxAgeSeconds,
+        timeRemainingText: 'Active',
+        isExpired: false,
+      };
+    }
+
+    const remainingMs = expDate.getTime() - now;
+    const isExpired = remainingMs <= 0;
+
+    if (isExpired) {
+      return {
+        expiresAt: expDate,
+        issuedAt: iatDate,
+        cookieName,
+        cookieMaxAgeSeconds,
+        timeRemainingText: 'Expired',
+        isExpired: true,
+      };
+    }
+
+    const days = Math.floor(remainingMs / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((remainingMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const mins = Math.floor((remainingMs % (1000 * 60 * 60)) / (1000 * 60));
+
+    let timeRemainingText = '';
+    if (days > 0) {
+      timeRemainingText = `${days}d ${hours}h`;
+    } else if (hours > 0) {
+      timeRemainingText = `${hours}h ${mins}m`;
+    } else {
+      timeRemainingText = `${Math.max(1, mins)}m`;
+    }
+
+    return {
+      expiresAt: expDate,
+      issuedAt: iatDate,
+      cookieName,
+      cookieMaxAgeSeconds,
+      timeRemainingText,
+      isExpired: false,
+    };
+  };
+
   const hasRole = (role: RoleName) => {
     if (!user) return false;
     if (user.roles.includes('SUPER_ADMIN')) return true;
@@ -134,6 +245,7 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       value={{
         user,
         isLoading,
+        sessionInfo: getSessionInfo(),
         login,
         logout,
         hasRole,

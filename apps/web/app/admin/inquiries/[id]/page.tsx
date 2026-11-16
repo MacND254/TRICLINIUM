@@ -518,14 +518,15 @@ export default function AdminInquiryDetailPage() {
                 variant="outline"
                 onClick={() => handleOpenPdfPreview(status === 'QUOTED' ? 'QUOTATION' : 'INVOICE')}
                 disabled={isPreviewLoading}
-                className="border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-200 hover:text-white text-xs flex items-center gap-1.5 font-semibold"
+                title={`Preview ${status === 'QUOTED' ? 'Official Quotation' : 'Tax Invoice'} PDF`}
+                aria-label={`Preview ${status === 'QUOTED' ? 'Official Quotation' : 'Tax Invoice'} PDF`}
+                className="h-9 w-9 p-0 border-slate-700 bg-slate-900 hover:bg-slate-800 text-slate-200 hover:text-white flex items-center justify-center shrink-0"
               >
                 {isPreviewLoading && previewDocType === (status === 'QUOTED' ? 'QUOTATION' : 'INVOICE') ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <Eye className="h-3.5 w-3.5 text-sky-400" />
+                  <Eye className="h-4 w-4 text-sky-400" />
                 )}
-                <span>Preview {status === 'QUOTED' ? 'Quote PDF' : 'Invoice PDF'}</span>
               </Button>
 
               <Button
@@ -533,18 +534,19 @@ export default function AdminInquiryDetailPage() {
                 size="sm"
                 onClick={() => handleDirectDownloadPdf(status === 'QUOTED' ? 'QUOTATION' : 'INVOICE')}
                 disabled={isDownloadingPdf}
-                className={`text-white text-xs flex items-center gap-1.5 font-semibold shadow-sm ${
+                title={`Download ${status === 'QUOTED' ? 'Official Quotation' : 'Tax Invoice'} PDF`}
+                aria-label={`Download ${status === 'QUOTED' ? 'Official Quotation' : 'Tax Invoice'} PDF`}
+                className={`h-9 w-9 p-0 text-white flex items-center justify-center shrink-0 font-semibold shadow-sm ${
                   status === 'QUOTED'
                     ? 'bg-sky-600 hover:bg-sky-500 shadow-sky-900/30'
                     : 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-900/30'
                 }`}
               >
                 {isDownloadingPdf ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  <Download className="h-3.5 w-3.5" />
+                  <Download className="h-4 w-4" />
                 )}
-                <span>Download {status === 'QUOTED' ? 'Quote PDF' : 'Invoice PDF'}</span>
               </Button>
             </>
           )}

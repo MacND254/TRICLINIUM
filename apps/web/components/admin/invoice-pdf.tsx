@@ -315,7 +315,7 @@ export function InvoicePDF({ invoiceData }: InvoicePDFProps) {
             <Text style={styles.companyDetails}>
               Westlands Commercial Hub, Ring Road, Nairobi, Kenya{'\n'}
               PIN: P051982736Z | VAT Reg: 051982736-Z | Phone: +254 700 555 199{'\n'}
-              Email: accounts@triclinium.com | Web: www.triclinium.com
+              Email: accounts@triclinium.co.ke | Web: www.triclinium.co.ke
             </Text>
           </View>
           <View style={styles.headerRight}>

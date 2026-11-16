@@ -53,6 +53,12 @@ const styles = StyleSheet.create({
     marginTop: 3,
     letterSpacing: 1,
   },
+  companyDetails: {
+    fontSize: 7,
+    color: '#cbd5e1',
+    marginTop: 4,
+    lineHeight: 1.35,
+  },
   headerRight: {
     alignItems: 'flex-end',
   },
@@ -284,11 +290,16 @@ export function QuotationPDF({ quoteData }: QuotationPDFProps) {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <Text style={styles.companyName}>TRICLINIUM</Text>
-            <Text style={styles.companyTagline}>CCTV SURVEILLANCE &amp; SECURITY SYSTEMS</Text>
+            <Text style={styles.companyName}>TRICLINIUM SYSTEMS</Text>
+            <Text style={styles.companyTagline}>CCTV SURVEILLANCE &amp; SMART SECURITY INFRASTRUCTURE</Text>
+            <Text style={styles.companyDetails}>
+              Westlands Commercial Hub, Ring Road, Nairobi, Kenya{'\n'}
+              PIN: P051982736Z | VAT Reg: 051982736-Z | Phone: +254 700 555 199{'\n'}
+              Email: sales@triclinium.co.ke | Web: www.triclinium.co.ke
+            </Text>
           </View>
           <View style={styles.headerRight}>
-            <Text style={styles.quotationLabel}>QUOTATION</Text>
+            <Text style={styles.quotationLabel}>OFFICIAL QUOTATION</Text>
             <Text style={styles.quoteRef}>{quoteData.quoteRef}</Text>
             <Text style={styles.headerDate}>Date: {quoteData.date}</Text>
             <Text style={styles.headerDate}>Valid Until: {quoteData.validUntil}</Text>

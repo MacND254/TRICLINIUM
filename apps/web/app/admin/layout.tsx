@@ -21,6 +21,7 @@ import {
   Menu,
   X,
   ShieldAlert,
+  ShieldCheck,
   Palette,
   Loader2,
 } from 'lucide-react';
@@ -61,7 +62,7 @@ function AdminFooter() {
 
 function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { user, isLoading, logout, hasRole } = useAdminAuth();
+  const { user, isLoading, logout, hasRole, sessionInfo } = useAdminAuth();
   const { settings } = usePublicSettings();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -107,7 +108,10 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
   const navSections = [
     {
       title: 'Overview',
-      items: [{ label: 'Dashboard', href: '/admin', icon: LayoutDashboard }],
+      items: [
+        { label: 'Dashboard', href: '/admin', icon: LayoutDashboard },
+        { label: 'Admin Profile & Security', href: '/admin/profile', icon: ShieldCheck },
+      ],
     },
     {
       title: 'Catalog Management',
@@ -236,18 +240,38 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* User Card & Logout at bottom */}
-        <div className="p-4 border-t border-slate-800 bg-slate-950/60 space-y-3 shrink-0">
-          <div className="flex items-center justify-between">
-            <div className="flex flex-col min-w-0 pr-2">
-              <span className="text-xs font-bold text-white truncate">{user?.firstName} {user?.lastName}</span>
-              <span className="text-[10px] text-slate-400 truncate">{user?.email}</span>
+        <div className="p-4 border-t border-slate-800 bg-slate-950/60 space-y-2.5 shrink-0">
+          <Link
+            href="/admin/profile"
+            onClick={() => setMobileSidebarOpen(false)}
+            className="group block p-2 -mx-2 rounded-lg hover:bg-slate-800/60 transition-colors"
+            title="View Admin Profile & Session Expiry"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex flex-col min-w-0 pr-2">
+                <span className="text-xs font-bold text-white group-hover:text-sky-300 transition-colors truncate">
+                  {user?.firstName} {user?.lastName}
+                </span>
+                <span className="text-[10px] text-slate-400 truncate">{user?.email}</span>
+              </div>
+              <Badge variant="outline" className="border-sky-500/40 text-sky-400 text-[9px] uppercase font-bold shrink-0">
+                {user?.roles?.[0]?.replace('_', ' ') || 'Admin'}
+              </Badge>
             </div>
-            <Badge variant="outline" className="border-sky-500/40 text-sky-400 text-[9px] uppercase font-bold shrink-0">
-              {user?.roles?.[0]?.replace('_', ' ') || 'Admin'}
-            </Badge>
-          </div>
 
-          <div className="flex items-center gap-2 pt-1">
+            {/* Cookie & Session Expiry indicator */}
+            <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-800/80 text-[10px]">
+              <span className="text-slate-400 flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span>Session:</span>
+              </span>
+              <span className="font-mono text-sky-400 font-semibold group-hover:underline">
+                {sessionInfo?.timeRemainingText || 'Active (7d)'}
+              </span>
+            </div>
+          </Link>
+
+          <div className="flex items-center gap-2 pt-0.5">
             <Link href="/" target="_blank" className="flex-1">
               <Button
                 variant="outline"

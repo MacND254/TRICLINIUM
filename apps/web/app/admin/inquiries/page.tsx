@@ -424,15 +424,15 @@ export default function AdminInquiriesPage() {
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-950 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+              <thead className="bg-slate-950 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800 text-[11px]">
                 <tr>
-                  <th className="px-6 py-3.5">Reference</th>
-                  <th className="px-6 py-3.5">Type</th>
-                  <th className="px-6 py-3.5">Customer &amp; Phone</th>
-                  <th className="px-6 py-3.5">Subject / Scope</th>
-                  <th className="px-6 py-3.5">Status</th>
-                  <th className="px-6 py-3.5">Date</th>
-                  <th className="px-6 py-3.5 text-right">Action</th>
+                  <th className="px-3 py-2.5 whitespace-nowrap">Reference</th>
+                  <th className="px-2.5 py-2.5 whitespace-nowrap">Type</th>
+                  <th className="px-3 py-2.5">Customer &amp; Phone</th>
+                  <th className="px-3 py-2.5">Subject / Scope</th>
+                  <th className="px-2.5 py-2.5 whitespace-nowrap">Status</th>
+                  <th className="px-2.5 py-2.5 whitespace-nowrap">Date</th>
+                  <th className="px-3 py-2.5 text-right whitespace-nowrap">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800 text-slate-300">
@@ -447,34 +447,34 @@ export default function AdminInquiriesPage() {
 
                   return (
                     <tr key={inq.id} className="hover:bg-slate-800/40 transition-colors">
-                      <td className="px-6 py-4 font-mono font-bold text-sky-400">
+                      <td className="px-3 py-2.5 font-mono font-bold text-sky-400 whitespace-nowrap text-xs">
                         {inq.referenceNumber}
                       </td>
-                      <td className="px-6 py-4">
-                        <span className="font-semibold text-slate-300">{inq.type}</span>
+                      <td className="px-2.5 py-2.5 whitespace-nowrap">
+                        <span className="font-semibold text-slate-300 text-[11px]">{inq.type}</span>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="font-bold text-white">{inq.customerName}</div>
-                        <div className="text-[11px] text-slate-400">{inq.phone || inq.email}</div>
+                      <td className="px-3 py-2.5 min-w-0 max-w-[130px] lg:max-w-[160px]">
+                        <div className="font-bold text-white truncate text-xs">{inq.customerName}</div>
+                        <div className="text-[10px] text-slate-400 truncate">{inq.phone || inq.email}</div>
                       </td>
-                      <td className="px-6 py-4 max-w-xs truncate text-slate-300">
+                      <td className="px-3 py-2.5 min-w-0 max-w-[140px] lg:max-w-[200px] xl:max-w-[280px] truncate text-slate-300 text-xs">
                         {inq.subject || inq.product?.name || inq.service?.name || inq.message}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-2.5 py-2.5 whitespace-nowrap">
                         <Badge
                           variant="outline"
-                          className={`text-[10px] uppercase font-bold border px-2 py-0.5 ${
+                          className={`text-[9px] uppercase font-bold border px-1.5 py-0.5 ${
                             statusColors[inq.status] || 'bg-slate-800 text-slate-400'
                           }`}
                         >
                           {inq.status === 'CONVERTED' ? 'INVOICED / PAID' : inq.status}
                         </Badge>
                       </td>
-                      <td className="px-6 py-4 font-mono text-[11px] text-slate-400">
+                      <td className="px-2.5 py-2.5 whitespace-nowrap font-mono text-[10px] text-slate-400">
                         {formatDate(inq.createdAt)}
                       </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-1.5">
+                      <td className="px-3 py-2.5 text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-1">
                           {['QUOTED', 'CONVERTED', 'CLOSED'].includes(inq.status) && (
                             <>
                               <Button
@@ -483,14 +483,14 @@ export default function AdminInquiriesPage() {
                                 onClick={() => handlePreviewRowPdf(inq)}
                                 disabled={activeActionId === inq.id}
                                 title={`Preview ${inq.status === 'QUOTED' ? 'Quotation' : 'Tax Invoice'} PDF`}
-                                className="h-8 px-2 border-slate-700 bg-slate-950 text-slate-300 hover:text-white hover:border-sky-500 text-xs flex items-center gap-1.5 shadow-sm"
+                                aria-label={`Preview ${inq.status === 'QUOTED' ? 'Quotation' : 'Tax Invoice'} PDF`}
+                                className="h-7 w-7 p-0 border-slate-700 bg-slate-950 text-slate-300 hover:text-white hover:border-sky-500 shrink-0 shadow-sm flex items-center justify-center"
                               >
                                 {activeActionId === inq.id && actionType === 'preview' ? (
-                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  <Loader2 className="h-3 w-3 animate-spin" />
                                 ) : (
-                                  <Eye className="h-3.5 w-3.5 text-sky-400" />
+                                  <Eye className="h-3 w-3 text-sky-400" />
                                 )}
-                                <span className="hidden xl:inline text-[11px] font-medium">Preview</span>
                               </Button>
 
                               <Button
@@ -499,14 +499,14 @@ export default function AdminInquiriesPage() {
                                 onClick={() => handleDownloadRowPdf(inq)}
                                 disabled={activeActionId === inq.id}
                                 title={`Download ${inq.status === 'QUOTED' ? 'Quotation' : 'Tax Invoice'} PDF`}
-                                className="h-8 px-2 border-slate-700 bg-slate-950 text-slate-300 hover:text-white hover:border-emerald-500 text-xs flex items-center gap-1.5 shadow-sm"
+                                aria-label={`Download ${inq.status === 'QUOTED' ? 'Quotation' : 'Tax Invoice'} PDF`}
+                                className="h-7 w-7 p-0 border-slate-700 bg-slate-950 text-slate-300 hover:text-white hover:border-emerald-500 shrink-0 shadow-sm flex items-center justify-center"
                               >
                                 {activeActionId === inq.id && actionType === 'download' ? (
-                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                  <Loader2 className="h-3 w-3 animate-spin" />
                                 ) : (
-                                  <Download className="h-3.5 w-3.5 text-emerald-400" />
+                                  <Download className="h-3 w-3 text-emerald-400" />
                                 )}
-                                <span className="hidden xl:inline text-[11px] font-medium">Download</span>
                               </Button>
                             </>
                           )}
@@ -515,7 +515,7 @@ export default function AdminInquiriesPage() {
                             <Button
                               size="sm"
                               variant="outline"
-                              className="h-8 border-slate-700 bg-slate-950 text-slate-200 hover:border-sky-500 hover:text-white text-xs gap-1.5 font-semibold"
+                              className="h-7 px-2 border-slate-700 bg-slate-950 text-slate-200 hover:border-sky-500 hover:text-white text-[11px] font-semibold shrink-0"
                             >
                               <span>Manage</span>
                             </Button>
