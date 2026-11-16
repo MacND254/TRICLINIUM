@@ -894,59 +894,61 @@ export default function AdminInquiryDetailPage() {
                 </Button>
               </div>
 
-              <div className="rounded-lg border border-slate-800 overflow-hidden">
-                <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-slate-950 border-b border-slate-800 text-[10px] text-slate-400 uppercase font-semibold">
-                  <div className="col-span-6">Description</div>
-                  <div className="col-span-2 text-center">Qty</div>
-                  <div className="col-span-3 text-right">Unit Price (KES)</div>
-                  <div className="col-span-1"></div>
-                </div>
-
-                {items.map((item, idx) => (
-                  <div
-                    key={idx}
-                    className="grid grid-cols-12 gap-2 px-4 py-2 items-center border-b border-slate-800 last:border-0 hover:bg-slate-800/30"
-                  >
-                    <div className="col-span-6">
-                      <input
-                        type="text"
-                        value={item.description}
-                        onChange={(e) => updateItem(idx, 'description', e.target.value)}
-                        placeholder="Security equipment or service description..."
-                        className="w-full h-7 rounded border border-slate-700 bg-slate-950 px-2 text-xs text-white focus:border-sky-600 focus:outline-none"
-                      />
-                    </div>
-                    <div className="col-span-2">
-                      <input
-                        type="number"
-                        min={1}
-                        value={item.qty}
-                        onChange={(e) => updateItem(idx, 'qty', Number(e.target.value))}
-                        className="w-full h-7 rounded border border-slate-700 bg-slate-950 px-2 text-xs text-white text-center focus:border-sky-600 focus:outline-none"
-                      />
-                    </div>
-                    <div className="col-span-3">
-                      <input
-                        type="number"
-                        min={0}
-                        step={100}
-                        value={item.unitPrice}
-                        onChange={(e) => updateItem(idx, 'unitPrice', Number(e.target.value))}
-                        className="w-full h-7 rounded border border-slate-700 bg-slate-950 px-2 text-xs text-white text-right focus:border-sky-600 focus:outline-none"
-                      />
-                    </div>
-                    <div className="col-span-1 flex justify-center">
-                      <button
-                        type="button"
-                        onClick={() => removeItem(idx)}
-                        disabled={items.length === 1}
-                        className="p-1 rounded text-slate-500 hover:text-red-400 hover:bg-red-900/20 disabled:opacity-30 transition-colors"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
+              <div className="overflow-x-auto rounded-lg border border-slate-800 shadow-inner">
+                <div className="min-w-[540px]">
+                  <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-slate-950 border-b border-slate-800 text-[10px] text-slate-400 uppercase font-semibold">
+                    <div className="col-span-6">Description</div>
+                    <div className="col-span-2 text-center">Qty</div>
+                    <div className="col-span-3 text-right">Unit Price (KES)</div>
+                    <div className="col-span-1"></div>
                   </div>
-                ))}
+
+                  {items.map((item, idx) => (
+                    <div
+                      key={idx}
+                      className="grid grid-cols-12 gap-2 px-4 py-2 items-center border-b border-slate-800 last:border-0 hover:bg-slate-800/30"
+                    >
+                      <div className="col-span-6">
+                        <input
+                          type="text"
+                          value={item.description}
+                          onChange={(e) => updateItem(idx, 'description', e.target.value)}
+                          placeholder="Security equipment or service description..."
+                          className="w-full h-7 rounded border border-slate-700 bg-slate-950 px-2 text-xs text-white focus:border-sky-600 focus:outline-none"
+                        />
+                      </div>
+                      <div className="col-span-2">
+                        <input
+                          type="number"
+                          min={1}
+                          value={item.qty}
+                          onChange={(e) => updateItem(idx, 'qty', Number(e.target.value))}
+                          className="w-full h-7 rounded border border-slate-700 bg-slate-950 px-2 text-xs text-white text-center focus:border-sky-600 focus:outline-none"
+                        />
+                      </div>
+                      <div className="col-span-3">
+                        <input
+                          type="number"
+                          min={0}
+                          step={100}
+                          value={item.unitPrice}
+                          onChange={(e) => updateItem(idx, 'unitPrice', Number(e.target.value))}
+                          className="w-full h-7 rounded border border-slate-700 bg-slate-950 px-2 text-xs text-white text-right focus:border-sky-600 focus:outline-none font-mono"
+                        />
+                      </div>
+                      <div className="col-span-1 flex justify-center">
+                        <button
+                          type="button"
+                          onClick={() => removeItem(idx)}
+                          disabled={items.length === 1}
+                          className="p-1 rounded text-slate-500 hover:text-red-400 hover:bg-red-900/20 disabled:opacity-30 transition-colors"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 

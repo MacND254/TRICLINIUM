@@ -357,200 +357,208 @@ export default function AdminInquiriesPage() {
       {/* Create Custom Quote Modal */}
       {/* ───────────────────────────────────────────────────────── */}
       {showQuoteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm overflow-y-auto">
-          <div className="relative w-full max-w-3xl rounded-2xl border border-slate-700 bg-slate-900 p-6 sm:p-8 space-y-6 shadow-2xl my-8">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-slate-950/80 backdrop-blur-sm">
+          <div className="relative w-full max-w-3xl max-h-[92vh] sm:max-h-[88vh] flex flex-col rounded-2xl border border-slate-700 bg-slate-900 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+            {/* Modal Header - Sticky at Top */}
+            <div className="shrink-0 flex items-center justify-between border-b border-slate-800 px-5 py-3.5 sm:px-6 sm:py-4 bg-slate-900 z-10">
               <div className="flex items-center gap-3">
-                <div className="h-9 w-9 rounded-lg bg-sky-600 flex items-center justify-center text-white font-bold">
+                <div className="h-9 w-9 rounded-lg bg-sky-600 flex items-center justify-center text-white font-bold shrink-0 shadow-sm">
                   <FileText className="h-5 w-5" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-extrabold text-white">Create Custom Security Quotation</h3>
-                  <p className="text-xs text-slate-400">Generate an official proposal in Kenyan Shillings (KES) with PDF &amp; Email options.</p>
+                  <h3 className="text-base sm:text-lg font-extrabold text-white leading-tight">Create Custom Security Quotation</h3>
+                  <p className="text-[11px] sm:text-xs text-slate-400">Generate an official proposal in Kenyan Shillings (KES) with PDF &amp; Email options.</p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setShowQuoteModal(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors shrink-0"
+                aria-label="Close modal"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateCustomQuote} className="space-y-5">
-              {modalError && (
-                <div className="p-3 rounded-lg bg-rose-950/60 border border-rose-800 text-rose-300 text-xs flex items-start gap-2">
-                  <AlertCircle className="h-4 w-4 shrink-0 text-rose-400 mt-0.5" />
-                  <span>{modalError}</span>
-                </div>
-              )}
+            {/* Modal Form with Scrollable Body */}
+            <form onSubmit={handleCreateCustomQuote} className="flex-1 flex flex-col min-h-0 overflow-hidden">
+              <div className="flex-1 overflow-y-auto px-5 py-4 sm:px-6 sm:py-5 space-y-4 overscroll-contain">
+                {modalError && (
+                  <div className="p-3 rounded-lg bg-rose-950/60 border border-rose-800 text-rose-300 text-xs flex items-start gap-2">
+                    <AlertCircle className="h-4 w-4 shrink-0 text-rose-400 mt-0.5" />
+                    <span>{modalError}</span>
+                  </div>
+                )}
 
-              {/* Client Info Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Client Info Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-300">Customer / Client Full Name *</label>
+                    <Input
+                      required
+                      value={quoteCustomerName}
+                      onChange={(e) => setQuoteCustomerName(e.target.value)}
+                      placeholder="e.g. David Mwangi"
+                      className="mt-1 bg-slate-950 border-slate-700 text-white text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-300">Client Email Address *</label>
+                    <Input
+                      type="email"
+                      required
+                      value={quoteEmail}
+                      onChange={(e) => setQuoteEmail(e.target.value)}
+                      placeholder="e.g. david@example.com"
+                      className="mt-1 bg-slate-950 border-slate-700 text-white text-xs"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-300">Phone (Auto-formats to +254)</label>
+                    <Input
+                      value={quotePhone}
+                      onChange={(e) => handleKenyanPhoneChange(e, setQuotePhone)}
+                      onBlur={() => setQuotePhone(formatKenyanPhone(quotePhone))}
+                      placeholder="e.g. 0722 000 000 -> +254..."
+                      className="mt-1 bg-slate-950 border-slate-700 text-white text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-300">Company / Estate / Residence</label>
+                    <Input
+                      value={quoteCompany}
+                      onChange={(e) => setQuoteCompany(e.target.value)}
+                      placeholder="e.g. Karen Residence / Apex Towers"
+                      className="mt-1 bg-slate-950 border-slate-700 text-white text-xs"
+                    />
+                  </div>
+                </div>
+
                 <div>
-                  <label className="text-xs font-semibold text-slate-300">Customer / Client Full Name *</label>
+                  <label className="text-xs font-semibold text-slate-300">Quotation Title / Subject</label>
                   <Input
                     required
-                    value={quoteCustomerName}
-                    onChange={(e) => setQuoteCustomerName(e.target.value)}
-                    placeholder="e.g. David Mwangi"
+                    value={quoteSubject}
+                    onChange={(e) => setQuoteSubject(e.target.value)}
+                    placeholder="e.g. 8-Camera 4K CCTV & Video Doorbell Installation"
                     className="mt-1 bg-slate-950 border-slate-700 text-white text-xs"
                   />
                 </div>
-                <div>
-                  <label className="text-xs font-semibold text-slate-300">Client Email Address *</label>
-                  <Input
-                    type="email"
-                    required
-                    value={quoteEmail}
-                    onChange={(e) => setQuoteEmail(e.target.value)}
-                    placeholder="e.g. david@example.com"
-                    className="mt-1 bg-slate-950 border-slate-700 text-white text-xs"
-                  />
-                </div>
-              </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-semibold text-slate-300">Phone (Auto-formats to +254)</label>
-                  <Input
-                    value={quotePhone}
-                    onChange={(e) => handleKenyanPhoneChange(e, setQuotePhone)}
-                    onBlur={() => setQuotePhone(formatKenyanPhone(quotePhone))}
-                    placeholder="e.g. 0722 000 000 -> +254..."
-                    className="mt-1 bg-slate-950 border-slate-700 text-white text-xs"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-slate-300">Company / Estate / Residence</label>
-                  <Input
-                    value={quoteCompany}
-                    onChange={(e) => setQuoteCompany(e.target.value)}
-                    placeholder="e.g. Karen Residence / Apex Towers"
-                    className="mt-1 bg-slate-950 border-slate-700 text-white text-xs"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="text-xs font-semibold text-slate-300">Quotation Title / Subject</label>
-                <Input
-                  required
-                  value={quoteSubject}
-                  onChange={(e) => setQuoteSubject(e.target.value)}
-                  placeholder="e.g. 8-Camera 4K CCTV & Video Doorbell Installation"
-                  className="mt-1 bg-slate-950 border-slate-700 text-white text-xs"
-                />
-              </div>
-
-              {/* Line Items Editor */}
-              <div className="space-y-3 pt-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-200 uppercase tracking-wider">Itemized Scope &amp; Pricing</span>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={addQuoteItem}
-                    className="h-7 text-xs border-slate-700 bg-slate-950 text-slate-300 hover:text-white"
-                  >
-                    <Plus className="h-3 w-3 mr-1" /> Add Row
-                  </Button>
-                </div>
-
-                <div className="rounded-lg border border-slate-800 bg-slate-950 overflow-hidden divide-y divide-slate-800">
-                  <div className="grid grid-cols-12 gap-2 px-3 py-2 text-[10px] text-slate-400 uppercase font-semibold">
-                    <div className="col-span-6">Description</div>
-                    <div className="col-span-2 text-center">Qty</div>
-                    <div className="col-span-3 text-right">Price (KES)</div>
-                    <div className="col-span-1"></div>
+                {/* Line Items Editor */}
+                <div className="space-y-2.5 pt-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-200 uppercase tracking-wider">Itemized Scope &amp; Pricing</span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={addQuoteItem}
+                      className="h-7 text-xs border-slate-700 bg-slate-950 text-slate-300 hover:text-white"
+                    >
+                      <Plus className="h-3 w-3 mr-1" /> Add Row
+                    </Button>
                   </div>
 
-                  {quoteItems.map((item, idx) => (
-                    <div key={idx} className="grid grid-cols-12 gap-2 p-2 items-center">
-                      <div className="col-span-6">
-                        <input
-                          required
-                          value={item.description}
-                          onChange={(e) => updateQuoteItem(idx, 'description', e.target.value)}
-                          placeholder="Equipment or service name..."
-                          className="w-full h-8 rounded border border-slate-800 bg-slate-900 px-2 text-xs text-white"
-                        />
+                  <div className="overflow-x-auto rounded-lg border border-slate-800 bg-slate-950 shadow-inner">
+                    <div className="min-w-[540px] divide-y divide-slate-800">
+                      <div className="grid grid-cols-12 gap-2 px-3 py-2 text-[10px] text-slate-400 uppercase font-semibold bg-slate-950/80">
+                        <div className="col-span-6">Description</div>
+                        <div className="col-span-2 text-center">Qty</div>
+                        <div className="col-span-3 text-right">Price (KES)</div>
+                        <div className="col-span-1"></div>
                       </div>
-                      <div className="col-span-2">
-                        <input
-                          type="number"
-                          min={1}
-                          value={item.qty}
-                          onChange={(e) => updateQuoteItem(idx, 'qty', Number(e.target.value))}
-                          className="w-full h-8 rounded border border-slate-800 bg-slate-900 px-2 text-xs text-white text-center"
-                        />
-                      </div>
-                      <div className="col-span-3">
-                        <input
-                          type="number"
-                          min={0}
-                          step={100}
-                          value={item.unitPrice}
-                          onChange={(e) => updateQuoteItem(idx, 'unitPrice', Number(e.target.value))}
-                          className="w-full h-8 rounded border border-slate-800 bg-slate-900 px-2 text-xs text-white text-right"
-                        />
-                      </div>
-                      <div className="col-span-1 flex justify-center">
-                        <button
-                          type="button"
-                          onClick={() => removeQuoteItem(idx)}
-                          disabled={quoteItems.length === 1}
-                          className="p-1 text-slate-500 hover:text-red-400 disabled:opacity-30"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
+
+                      {quoteItems.map((item, idx) => (
+                        <div key={idx} className="grid grid-cols-12 gap-2 p-2 items-center hover:bg-slate-900/40">
+                          <div className="col-span-6">
+                            <input
+                              required
+                              value={item.description}
+                              onChange={(e) => updateQuoteItem(idx, 'description', e.target.value)}
+                              placeholder="Equipment or service name..."
+                              className="w-full h-8 rounded border border-slate-800 bg-slate-900 px-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
+                            />
+                          </div>
+                          <div className="col-span-2">
+                            <input
+                              type="number"
+                              min={1}
+                              value={item.qty}
+                              onChange={(e) => updateQuoteItem(idx, 'qty', Number(e.target.value))}
+                              className="w-full h-8 rounded border border-slate-800 bg-slate-900 px-2 text-xs text-white text-center focus:outline-none focus:border-sky-500"
+                            />
+                          </div>
+                          <div className="col-span-3">
+                            <input
+                              type="number"
+                              min={0}
+                              step={100}
+                              value={item.unitPrice}
+                              onChange={(e) => updateQuoteItem(idx, 'unitPrice', Number(e.target.value))}
+                              className="w-full h-8 rounded border border-slate-800 bg-slate-900 px-2 text-xs text-white text-right font-mono focus:outline-none focus:border-sky-500"
+                            />
+                          </div>
+                          <div className="col-span-1 flex justify-center">
+                            <button
+                              type="button"
+                              onClick={() => removeQuoteItem(idx)}
+                              disabled={quoteItems.length === 1}
+                              className="p-1 rounded text-slate-500 hover:text-rose-400 disabled:opacity-30 transition-colors"
+                              title="Remove item"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  </div>
+
+                  {/* Totals Preview */}
+                  <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+                    <div className="text-slate-400">
+                      Subtotal: <span className="text-slate-200 font-mono">Ksh {quoteSubtotal.toLocaleString()}</span> · VAT (16%): <span className="text-slate-200 font-mono">Ksh {quoteVat.toLocaleString()}</span>
+                    </div>
+                    <div className="font-extrabold text-sm text-sky-400 font-mono">
+                      Total: Ksh {quoteGrandTotal.toLocaleString()}
+                    </div>
+                  </div>
                 </div>
 
-                {/* Totals Preview */}
-                <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 flex justify-between items-center text-xs">
-                  <div className="text-slate-400">
-                    Subtotal: Ksh {quoteSubtotal.toLocaleString()} · VAT (16%): Ksh {quoteVat.toLocaleString()}
+                {/* Notes & Terms */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-300">Warranty &amp; Notes</label>
+                    <Textarea
+                      value={quoteNotes}
+                      onChange={(e) => setQuoteNotes(e.target.value)}
+                      rows={2}
+                      className="mt-1 bg-slate-950 border-slate-700 text-white text-xs"
+                    />
                   </div>
-                  <div className="font-extrabold text-sm text-sky-400 font-mono">
-                    Total: Ksh {quoteGrandTotal.toLocaleString()}
+                  <div>
+                    <label className="text-xs font-semibold text-slate-300">Payment Terms</label>
+                    <Textarea
+                      value={quotePaymentTerms}
+                      onChange={(e) => setQuotePaymentTerms(e.target.value)}
+                      rows={2}
+                      className="mt-1 bg-slate-950 border-slate-700 text-white text-xs"
+                    />
                   </div>
                 </div>
               </div>
 
-              {/* Notes & Terms */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-semibold text-slate-300">Warranty &amp; Notes</label>
-                  <Textarea
-                    value={quoteNotes}
-                    onChange={(e) => setQuoteNotes(e.target.value)}
-                    rows={2}
-                    className="mt-1 bg-slate-950 border-slate-700 text-white text-xs"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-slate-300">Payment Terms</label>
-                  <Textarea
-                    value={quotePaymentTerms}
-                    onChange={(e) => setQuotePaymentTerms(e.target.value)}
-                    rows={2}
-                    className="mt-1 bg-slate-950 border-slate-700 text-white text-xs"
-                  />
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+              {/* Actions - Sticky at Bottom */}
+              <div className="shrink-0 flex items-center justify-end gap-3 px-5 py-3.5 sm:px-6 sm:py-4 border-t border-slate-800 bg-slate-900 z-10">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setShowQuoteModal(false)}
-                  className="border-slate-700 text-slate-300 text-xs"
+                  className="border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 text-xs"
                 >
                   Cancel
                 </Button>
