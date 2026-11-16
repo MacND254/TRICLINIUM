@@ -256,21 +256,22 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
     <div className="container mx-auto px-4 sm:px-8 py-12">
       {/* Page Header / Hero Banner */}
       {heroData.backgroundImage ? (
-        <div className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-slate-50 via-sky-50/40 to-slate-100 dark:bg-slate-950 text-slate-900 dark:text-white p-8 sm:p-12 border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-2xl mb-8 transition-colors">
+        <div className="relative rounded-3xl overflow-hidden bg-slate-900 text-white p-8 sm:p-12 border border-slate-700/60 dark:border-slate-800 shadow-xl shadow-slate-900/10 dark:shadow-2xl mb-8 transition-colors">
           <div
             className="absolute inset-0 bg-cover bg-center"
             style={{ backgroundImage: `url(${heroData.backgroundImage})` }}
           >
-            <div className="absolute inset-0 bg-white/85 dark:bg-slate-950/80 backdrop-blur-[1.5px] bg-gradient-to-r from-white/95 via-white/85 to-white/70 dark:from-slate-950/95 dark:via-slate-950/85 dark:to-slate-950/70" />
+            {/* Dimmed cinematic overlay: keeps image richly visible while ensuring text contrast */}
+            <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[0.5px] bg-gradient-to-r from-slate-950/85 via-slate-950/60 to-slate-950/30" />
           </div>
           <div className="relative z-10 max-w-2xl space-y-3">
-            <div className="inline-block text-xs font-bold text-sky-700 dark:text-sky-400 uppercase tracking-widest bg-sky-500/10 dark:bg-sky-500/20 px-3 py-1 rounded-full border border-sky-500/20 dark:border-sky-400/30 backdrop-blur-sm">
+            <div className="inline-block text-xs font-bold text-sky-200 uppercase tracking-widest bg-sky-500/20 px-3 py-1 rounded-full border border-sky-400/40 backdrop-blur-md">
               {heroData.badge}
             </div>
-            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white drop-shadow-sm">
               {heroData.title}
             </h1>
-            <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+            <p className="text-sm text-slate-200 leading-relaxed drop-shadow-sm">
               {heroData.subtitle}
             </p>
           </div>

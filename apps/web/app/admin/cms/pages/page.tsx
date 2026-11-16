@@ -355,7 +355,7 @@ function PageModal({
                 {/* Banner Preview Box */}
                 <div className={`relative aspect-[21/8] w-full rounded-xl overflow-hidden border transition-colors ${
                   previewTheme === 'light'
-                    ? 'border-slate-200 bg-slate-100 text-slate-900'
+                    ? 'border-slate-300 bg-slate-900 text-white'
                     : 'border-slate-700 bg-slate-900 text-white'
                 } flex items-center justify-center`}>
                   {hero.backgroundImage ? (
@@ -365,29 +365,17 @@ function PageModal({
                         alt="Hero background preview"
                         className="h-full w-full object-cover"
                       />
-                      {/* Live overlay preview adhering to selected mode */}
-                      <div className={`absolute inset-0 p-6 flex flex-col justify-center backdrop-blur-[1.5px] ${
-                        previewTheme === 'light'
-                          ? 'bg-white/85 bg-gradient-to-r from-white/95 via-white/85 to-white/70 text-slate-900'
-                          : 'bg-slate-950/75 bg-gradient-to-r from-slate-950/95 via-slate-950/80 to-slate-950/60 text-white'
-                      }`}>
+                      {/* Live overlay preview adhering to dimmed, high-visibility cinematic style */}
+                      <div className="absolute inset-0 p-6 flex flex-col justify-center backdrop-blur-[0.5px] bg-slate-950/40 bg-gradient-to-r from-slate-950/85 via-slate-950/60 to-slate-950/30 text-white">
                         {hero.badge && (
-                          <span className={`inline-block text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full w-fit mb-2 ${
-                            previewTheme === 'light'
-                              ? 'bg-sky-500/10 border border-sky-500/20 text-sky-700'
-                              : 'bg-sky-500/20 border border-sky-400/30 text-sky-400'
-                          }`}>
+                          <span className="inline-block text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full w-fit mb-2 bg-sky-500/20 border border-sky-400/40 text-sky-200">
                             {hero.badge}
                           </span>
                         )}
-                        <h4 className={`text-lg font-bold line-clamp-1 ${
-                          previewTheme === 'light' ? 'text-slate-900' : 'text-white'
-                        }`}>
+                        <h4 className="text-lg font-bold line-clamp-1 text-white drop-shadow-sm">
                           {hero.title || form.title || 'Page Headline'}
                         </h4>
-                        <p className={`text-xs line-clamp-2 max-w-xl mt-1 ${
-                          previewTheme === 'light' ? 'text-slate-700' : 'text-slate-300'
-                        }`}>
+                        <p className="text-xs line-clamp-2 max-w-xl mt-1 text-slate-200 drop-shadow-sm">
                           {hero.subtitle || 'Page subtitle and description text will render here over the background image.'}
                         </p>
                       </div>
@@ -397,7 +385,7 @@ function PageModal({
                       <ImageIcon className="h-10 w-10 text-slate-500" />
                       <span className="text-xs font-medium">No custom hero background image assigned</span>
                       <span className="text-[11px] text-slate-500">
-                        Adaptive {previewTheme === 'light' ? 'light' : 'dark'} gradient styling is active
+                        Default gradient styling is active
                       </span>
                     </div>
                   )}
