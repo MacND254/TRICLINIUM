@@ -26,6 +26,9 @@ import { Badge } from '@/components/ui/badge';
 import { fetchApi } from '@/lib/api-client';
 import { formatDate } from '@/lib/utils';
 import { handleKenyanPhoneChange, formatKenyanPhone } from '@/lib/phone';
+import { QuotationPDF } from '@/components/admin/quotation-pdf';
+import { InvoicePDF } from '@/components/admin/invoice-pdf';
+import { PdfPreviewModal } from '@/components/admin/pdf-preview-modal';
 
 interface CustomQuoteItem {
   description: string;
@@ -40,6 +43,16 @@ export default function AdminInquiriesPage() {
   const [typeFilter, setTypeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [search, setSearch] = useState('');
+
+  // PDF Interactive Preview & Quick Download States
+  const [previewModalOpen, setPreviewModalOpen] = useState(false);
+  const [previewPdfUrl, setPreviewPdfUrl] = useState<string | null>(null);
+  const [previewPdfTitle, setPreviewPdfTitle] = useState('');
+  const [previewPdfFilename, setPreviewPdfFilename] = useState('');
+  const [previewDocType, setPreviewDocType] = useState<'QUOTATION' | 'INVOICE'>('QUOTATION');
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const [activeActionId, setActiveActionId] = useState<string | null>(null);
+  const [actionType, setActionType] = useState<'preview' | 'download' | null>(null);
 
   // Custom Quote Modal State
   const [showQuoteModal, setShowQuoteModal] = useState(false);
@@ -83,6 +96,134 @@ export default function AdminInquiriesPage() {
 
   const handleExportCsv = () => {
     window.open(`${process.env.NEXT_PUBLIC_API_URL || '/api/v1'}/admin/inquiries/export`, '_blank');
+  };
+
+  const buildInquiryDocData = (inq: any) => {
+    const isInvoice = inq.status === 'CONVERTED' || inq.status === 'CLOSED';
+    const initialItems =
+      inq.items && inq.items.length > 0
+        ? inq.items.map((item: any) => ({
+            description: item.productName || item.product?.name || 'Security Equipment / Installation',
+            qty: item.quantity || 1,
+            unitPrice: 12500,
+          }))
+        : [
+            {
+              description:
+                inq.subject || inq.product?.name || inq.service?.name || 'CCTV Surveillance & Security System',
+              qty: 1,
+              unitPrice: 28500,
+            },
+          ];
+
+    if (isInvoice) {
+      return {
+        docType: 'INVOICE' as const,
+        data: {
+          invoiceNumber: `INV-${inq.referenceNumber || '2026-001'}`,
+          date: inq.createdAt ? new Date(inq.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          dueDate: 'Upon Receipt',
+          clientName: inq.customerName || 'Valued Client',
+          clientCompany: inq.company || '',
+          clientEmail: inq.email || '',
+          clientPhone: inq.phone || '',
+          clientPin: '',
+          items: initialItems,
+          taxRate: 16,
+          notes: 'Goods remain the property of TRICLINIUM SYSTEMS until settled in full.',
+          paymentInstructions: 'M-Pesa Paybill: 247247 | Acc: [Invoice Number] or Equity Bank Westlands',
+          preparedBy: 'Finance & Accounts',
+          status: inq.status === 'CONVERTED' ? 'PAID' : 'ISSUED',
+        },
+      };
+    } else {
+      return {
+        docType: 'QUOTATION' as const,
+        data: {
+          quoteRef: `QT-${inq.referenceNumber || '2026-001'}`,
+          date: inq.createdAt ? new Date(inq.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          validUntil: '30 Days',
+          clientName: inq.customerName || 'Valued Client',
+          clientCompany: inq.company || '',
+          clientEmail: inq.email || '',
+          clientPhone: inq.phone || '',
+          items: initialItems,
+          taxRate: 16,
+          notes: 'Includes 1-year on-site equipment warranty and mobile app configuration.',
+          paymentTerms: 'Payment terms: 50% commitment upon project confirmation, 50% upon completed commissioning.',
+          preparedBy: 'Chief Technical Engineer',
+        },
+      };
+    }
+  };
+
+  const handlePreviewRowPdf = async (inq: any) => {
+    setActiveActionId(inq.id);
+    setActionType('preview');
+    setIsPreviewLoading(true);
+
+    const { docType, data } = buildInquiryDocData(inq);
+    setPreviewDocType(docType);
+    const title =
+      docType === 'QUOTATION'
+        ? `Quotation: QT-${inq.referenceNumber}`
+        : `Tax Invoice: INV-${inq.referenceNumber}`;
+    const filename = `${docType === 'QUOTATION' ? 'QT' : 'INV'}-${inq.referenceNumber}.pdf`;
+    setPreviewPdfTitle(title);
+    setPreviewPdfFilename(filename);
+    setPreviewModalOpen(true);
+
+    try {
+      const { pdf } = await import('@react-pdf/renderer');
+      const doc =
+        docType === 'QUOTATION' ? (
+          <QuotationPDF quoteData={data} />
+        ) : (
+          <InvoicePDF invoiceData={data} />
+        );
+      const blob = await pdf(doc).toBlob();
+      const url = URL.createObjectURL(blob);
+      setPreviewPdfUrl(url);
+    } catch (err: any) {
+      console.error('PDF preview error:', err);
+      alert('Failed to generate PDF for preview');
+      setPreviewModalOpen(false);
+    } finally {
+      setIsPreviewLoading(false);
+      setActiveActionId(null);
+      setActionType(null);
+    }
+  };
+
+  const handleDownloadRowPdf = async (inq: any) => {
+    setActiveActionId(inq.id);
+    setActionType('download');
+    try {
+      const { docType, data } = buildInquiryDocData(inq);
+      const { pdf } = await import('@react-pdf/renderer');
+      const doc =
+        docType === 'QUOTATION' ? (
+          <QuotationPDF quoteData={data} />
+        ) : (
+          <InvoicePDF invoiceData={data} />
+        );
+      const blob = await pdf(doc).toBlob();
+      const url = URL.createObjectURL(blob);
+      const filename = `${docType === 'QUOTATION' ? 'QT' : 'INV'}-${inq.referenceNumber}.pdf`;
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      console.error('PDF download error:', err);
+      alert('Failed to download PDF');
+    } finally {
+      setActiveActionId(null);
+      setActionType(null);
+    }
   };
 
   const addQuoteItem = () => {
@@ -333,16 +474,53 @@ export default function AdminInquiriesPage() {
                         {formatDate(inq.createdAt)}
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <Link href={`/admin/inquiries/${inq.id}`}>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-8 border-slate-700 bg-slate-950 text-slate-200 hover:border-sky-500 hover:text-white text-xs gap-1.5"
-                          >
-                            <Eye className="h-3 w-3" />
-                            <span>Manage &amp; PDF</span>
-                          </Button>
-                        </Link>
+                        <div className="flex items-center justify-end gap-1.5">
+                          {['QUOTED', 'CONVERTED', 'CLOSED'].includes(inq.status) && (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handlePreviewRowPdf(inq)}
+                                disabled={activeActionId === inq.id}
+                                title={`Preview ${inq.status === 'QUOTED' ? 'Quotation' : 'Tax Invoice'} PDF`}
+                                className="h-8 px-2 border-slate-700 bg-slate-950 text-slate-300 hover:text-white hover:border-sky-500 text-xs flex items-center gap-1.5 shadow-sm"
+                              >
+                                {activeActionId === inq.id && actionType === 'preview' ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <Eye className="h-3.5 w-3.5 text-sky-400" />
+                                )}
+                                <span className="hidden xl:inline text-[11px] font-medium">Preview</span>
+                              </Button>
+
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleDownloadRowPdf(inq)}
+                                disabled={activeActionId === inq.id}
+                                title={`Download ${inq.status === 'QUOTED' ? 'Quotation' : 'Tax Invoice'} PDF`}
+                                className="h-8 px-2 border-slate-700 bg-slate-950 text-slate-300 hover:text-white hover:border-emerald-500 text-xs flex items-center gap-1.5 shadow-sm"
+                              >
+                                {activeActionId === inq.id && actionType === 'download' ? (
+                                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                ) : (
+                                  <Download className="h-3.5 w-3.5 text-emerald-400" />
+                                )}
+                                <span className="hidden xl:inline text-[11px] font-medium">Download</span>
+                              </Button>
+                            </>
+                          )}
+
+                          <Link href={`/admin/inquiries/${inq.id}`}>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-8 border-slate-700 bg-slate-950 text-slate-200 hover:border-sky-500 hover:text-white text-xs gap-1.5 font-semibold"
+                            >
+                              <span>Manage</span>
+                            </Button>
+                          </Link>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -584,6 +762,23 @@ export default function AdminInquiriesPage() {
           </div>
         </div>
       )}
+
+      {/* PDF Interactive Preview Modal */}
+      <PdfPreviewModal
+        isOpen={previewModalOpen}
+        onClose={() => {
+          setPreviewModalOpen(false);
+          if (previewPdfUrl) {
+            URL.revokeObjectURL(previewPdfUrl);
+            setPreviewPdfUrl(null);
+          }
+        }}
+        title={previewPdfTitle}
+        blobUrl={previewPdfUrl}
+        fileName={previewPdfFilename}
+        isLoading={isPreviewLoading}
+        docType={previewDocType}
+      />
     </div>
   );
 }
