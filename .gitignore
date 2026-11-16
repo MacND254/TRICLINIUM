@@ -42,3 +42,4 @@ Thumbs.db
 # Uploads
 apps/web/public/uploads/*
 !apps/web/public/uploads/.gitkeep
+.neon
