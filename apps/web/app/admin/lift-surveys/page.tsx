@@ -97,7 +97,8 @@ export default function AdminLiftSurveysPage() {
       if (search) query.set('search', search);
       if (statusFilter) query.set('status', statusFilter);
       const res = await fetchApi(`/admin/lift-surveys?${query.toString()}`);
-      setSurveys(res.data?.items || []);
+      const list = res?.items || res?.data?.items || (Array.isArray(res) ? res : []);
+      setSurveys(list);
     } catch (e) {
       console.error('Failed to load lift surveys:', e);
     } finally {
@@ -216,8 +217,10 @@ export default function AdminLiftSurveysPage() {
       });
 
       setShowCreateModal(false);
-      if (res?.data?.id) {
-        router.push(`/admin/lift-surveys/${res.data.id}`);
+      const newSurvey = res?.data ?? res;
+      const newId = newSurvey?.id;
+      if (newId) {
+        window.location.href = `/admin/lift-surveys/${newId}`;
       } else {
         await loadSurveys();
       }

@@ -47,6 +47,8 @@ export class LiftSurveysController {
           limit: limitNum,
           totalPages: Math.ceil(total / limitNum),
         },
+        items,
+        total,
       });
     } catch (err) {
       next(err);
@@ -71,6 +73,7 @@ export class LiftSurveysController {
       return res.json({
         success: true,
         data: survey,
+        ...survey,
       });
     } catch (err) {
       next(err);
@@ -148,6 +151,7 @@ export class LiftSurveysController {
       return res.status(201).json({
         success: true,
         data: survey,
+        ...survey,
         message: 'Building Survey Report created successfully',
       });
     } catch (err) {
@@ -223,6 +227,7 @@ export class LiftSurveysController {
       return res.json({
         success: true,
         data: updated,
+        ...updated,
         message: 'Building Survey Report updated successfully',
       });
     } catch (err) {

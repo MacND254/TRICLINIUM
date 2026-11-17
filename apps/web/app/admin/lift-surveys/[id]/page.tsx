@@ -71,8 +71,8 @@ export default function AdminLiftSurveyDetailPage() {
     setIsLoading(true);
     try {
       const res = await fetchApi(`/admin/lift-surveys/${id}`);
-      const data = res.data;
-      if (data) {
+      const data = res?.data ?? res;
+      if (data && (data.id || data.surveyNumber)) {
         setSurvey(data);
         setProjectName(data.projectName || '');
         setClientName(data.clientName || '');
@@ -81,8 +81,55 @@ export default function AdminLiftSurveyDetailPage() {
         setStatus(data.status || 'DRAFT');
         setNumberOfLifts(data.numberOfLifts || 1);
         setNumberOfStops(data.numberOfStops || 6);
-        setFloorNames(data.floorNames || ['B', 'G', '1', '2', '3', '4']);
-        setLiftsData(data.liftsData || []);
+
+        const fNames = Array.isArray(data.floorNames) && data.floorNames.length > 0
+          ? data.floorNames
+          : ['B', 'G', '1', '2', '3', '4'];
+        setFloorNames(fNames);
+
+        let initialLifts = Array.isArray(data.liftsData) && data.liftsData.length > 0
+          ? data.liftsData
+          : [];
+
+        if (initialLifts.length === 0) {
+          initialLifts = Array.from({ length: data.numberOfLifts || 1 }).map((_, idx) => ({
+            liftNumber: idx + 1,
+            liftName: (data.numberOfLifts || 1) > 1 ? `Lift ${idx + 1} (L${idx + 1} ELE.)` : 'Lift 1 (L1 ELE.)',
+            pitDepth: 'not accessible',
+            overheadHeight: '4634',
+            requiredDimensions: { a: '', b: '', c: '2004', d: '2000', e: '', f: '963', g: '2207', h: '', i: '' },
+            floors: fNames.map((fn: string, fIdx: number) => ({
+              floorName: fn,
+              a: '', b: '',
+              c: fIdx === 0 ? '2004' : fIdx === 1 ? '1999' : '',
+              d: '2000',
+              e: '',
+              f: fIdx === 0 ? '963' : fIdx === 1 ? '974' : '',
+              g: fIdx === 0 ? '2207' : fIdx === 1 ? '2200' : '',
+              h: '', i: '',
+              height: fIdx === 0 ? '3433' : fIdx === 1 ? '4634' : '',
+            })),
+          }));
+        } else {
+          initialLifts = initialLifts.map((l: any, idx: number) => {
+            let fls = l.floors || [];
+            if (fls.length === 0) {
+              fls = fNames.map((fn: string) => ({
+                floorName: fn,
+                a: '', b: '', c: '', d: '', e: '',
+                f: '', g: '', h: '', i: '', height: '',
+              }));
+            }
+            return {
+              ...l,
+              liftNumber: l.liftNumber || idx + 1,
+              liftName: l.liftName || `Lift ${idx + 1}`,
+              floors: fls,
+            };
+          });
+        }
+
+        setLiftsData(initialLifts);
 
         const obsArr = Array(12).fill('');
         if (Array.isArray(data.observations)) {
