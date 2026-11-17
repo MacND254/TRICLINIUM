@@ -351,29 +351,29 @@ const styles = StyleSheet.create({
 
 function ShaftPlanSvg({ liftLabel = 'L1 ELE.' }: { liftLabel?: string }) {
   return (
-    <Svg width="180" height="110" viewBox="0 0 200 125">
-      {/* Outer Hoistway Wall Outline */}
+    <Svg width="180" height="115" viewBox="0 0 210 135">
+      {/* Outer & Inner Hoistway Wall Structure (Exclusive of walls) */}
       <Path
-        d="M 25 105 L 25 20 L 175 20 L 175 105 L 140 105 L 140 95 L 165 95 L 165 30 L 35 30 L 35 95 L 60 95 L 60 105 Z"
+        d="M 24 104 L 24 20 L 186 20 L 186 104 L 132 104 L 132 90 L 168 90 L 168 34 L 42 34 L 42 90 L 78 90 L 78 104 Z"
         fill="#f1f5f9"
-        stroke="#475569"
-        strokeWidth="1.5"
+        stroke="#334155"
+        strokeWidth="1.2"
       />
 
-      {/* Lift Car Cabin (Red Rectangle) */}
+      {/* Lift Car Cabin (Red Rectangle in clear shaft void) */}
       <Rect
-        x="55"
-        y="38"
-        width="90"
-        height="50"
+        x="64"
+        y="42"
+        width="82"
+        height="38"
         fill="#fff1f2"
         stroke="#dc2626"
-        strokeWidth="1.5"
+        strokeWidth="1.2"
       />
       <SvgText
-        x="100"
-        y="66"
-        fontSize="10"
+        x="105"
+        y="65"
+        fontSize="9"
         fontFamily="Helvetica-Bold"
         fill="#dc2626"
         textAnchor="middle"
@@ -381,33 +381,50 @@ function ShaftPlanSvg({ liftLabel = 'L1 ELE.' }: { liftLabel?: string }) {
         {liftLabel}
       </SvgText>
 
-      {/* Dimension C (Depth) - Left vertical arrow */}
-      <Line x1="15" y1="20" x2="15" y2="105" stroke="#000000" strokeWidth="0.8" />
-      <Polygon points="15,18 13,24 17,24" fill="#000000" />
-      <Polygon points="15,107 13,101 17,101" fill="#000000" />
-      <SvgText x="8" y="65" fontSize="9" fontFamily="Helvetica-Bold" fill="#000000">C</SvgText>
+      {/* ================= INNER WALL DIMENSIONS (EXCLUSIVE OF WALLS) ================= */}
 
-      {/* Dimension D (Width) - Top horizontal arrow */}
-      <Line x1="25" y1="12" x2="175" y2="12" stroke="#000000" strokeWidth="0.8" />
-      <Polygon points="23,12 29,10 29,14" fill="#000000" />
-      <Polygon points="177,12 171,10 171,14" fill="#000000" />
-      <SvgText x="100" y="9" fontSize="9" fontFamily="Helvetica-Bold" fill="#000000" textAnchor="middle">D</SvgText>
+      {/* Dimension C (Rear Inner Wall Length - measuring between inner corners x=42 and x=168 at y=34) */}
+      <Line x1="42" y1="32" x2="42" y2="10" stroke="#94a3b8" strokeWidth="0.6" strokeDasharray="1,1" />
+      <Line x1="168" y1="32" x2="168" y2="10" stroke="#94a3b8" strokeWidth="0.6" strokeDasharray="1,1" />
+      <Line x1="42" y1="14" x2="168" y2="14" stroke="#000000" strokeWidth="0.8" />
+      <Polygon points="42,14 47,12 47,16" fill="#000000" />
+      <Polygon points="168,14 163,12 163,16" fill="#000000" />
+      <SvgText x="105" y="11" fontSize="9" fontFamily="Helvetica-Bold" fill="#000000" textAnchor="middle">C</SvgText>
 
-      {/* Dimension A (Left Return Jamb) */}
-      <Line x1="25" y1="114" x2="60" y2="114" stroke="#000000" strokeWidth="0.8" />
-      <Polygon points="24,114 29,112 29,116" fill="#000000" />
-      <Polygon points="61,114 56,112 56,116" fill="#000000" />
-      <SvgText x="42" y="123" fontSize="8" fontFamily="Helvetica-Bold" fill="#000000" textAnchor="middle">A</SvgText>
+      {/* Dimension D (Front Inner Wall Length - measuring between inner corners x=42 and x=168 at y=90) */}
+      <Line x1="42" y1="92" x2="42" y2="118" stroke="#94a3b8" strokeWidth="0.6" strokeDasharray="1,1" />
+      <Line x1="168" y1="92" x2="168" y2="118" stroke="#94a3b8" strokeWidth="0.6" strokeDasharray="1,1" />
+      <Line x1="42" y1="114" x2="168" y2="114" stroke="#000000" strokeWidth="0.8" />
+      <Polygon points="42,114 47,112 47,116" fill="#000000" />
+      <Polygon points="168,114 163,112 163,116" fill="#000000" />
+      <SvgText x="105" y="124" fontSize="9" fontFamily="Helvetica-Bold" fill="#000000" textAnchor="middle">D</SvgText>
 
-      {/* Dimension B (Right Return Jamb) */}
-      <Line x1="140" y1="114" x2="175" y2="114" stroke="#000000" strokeWidth="0.8" />
-      <Polygon points="139,114 144,112 144,116" fill="#000000" />
-      <Polygon points="176,114 171,112 171,116" fill="#000000" />
-      <SvgText x="157" y="123" fontSize="8" fontFamily="Helvetica-Bold" fill="#000000" textAnchor="middle">B</SvgText>
+      {/* Dimension A (Left Inner Wall Length - measuring between inner corners y=34 and y=90 at x=42) */}
+      <Line x1="40" y1="34" x2="14" y2="34" stroke="#94a3b8" strokeWidth="0.6" strokeDasharray="1,1" />
+      <Line x1="40" y1="90" x2="14" y2="90" stroke="#94a3b8" strokeWidth="0.6" strokeDasharray="1,1" />
+      <Line x1="18" y1="34" x2="18" y2="90" stroke="#000000" strokeWidth="0.8" />
+      <Polygon points="18,34 16,39 20,39" fill="#000000" />
+      <Polygon points="18,90 16,85 20,85" fill="#000000" />
+      <SvgText x="9" y="66" fontSize="9" fontFamily="Helvetica-Bold" fill="#000000" textAnchor="middle">A</SvgText>
 
-      {/* Dimension E (Front Opening) */}
-      <Line x1="60" y1="105" x2="140" y2="105" stroke="#000000" strokeWidth="0.8" strokeDasharray="2,2" />
-      <SvgText x="100" y="118" fontSize="9" fontFamily="Helvetica-Bold" fill="#000000" textAnchor="middle">E</SvgText>
+      {/* Dimension B (Right Inner Wall Length - measuring between inner corners y=34 and y=90 at x=168) */}
+      <Line x1="170" y1="34" x2="196" y2="34" stroke="#94a3b8" strokeWidth="0.6" strokeDasharray="1,1" />
+      <Line x1="170" y1="90" x2="196" y2="90" stroke="#94a3b8" strokeWidth="0.6" strokeDasharray="1,1" />
+      <Line x1="192" y1="34" x2="192" y2="90" stroke="#000000" strokeWidth="0.8" />
+      <Polygon points="192,34 190,39 194,39" fill="#000000" />
+      <Polygon points="192,90 190,85 194,85" fill="#000000" />
+      <SvgText x="201" y="66" fontSize="9" fontFamily="Helvetica-Bold" fill="#000000" textAnchor="middle">B</SvgText>
+
+      {/* Dimension E (Front Opening Width between return jambs x=78 to x=132) */}
+      <Line x1="78" y1="98" x2="132" y2="98" stroke="#000000" strokeWidth="0.8" strokeDasharray="2,2" />
+      <Polygon points="78,98 83,96 83,100" fill="#000000" />
+      <Polygon points="132,98 127,96 127,100" fill="#000000" />
+      <SvgText x="105" y="95" fontSize="8" fontFamily="Helvetica-Bold" fill="#000000" textAnchor="middle">E</SvgText>
+
+      {/* Technical Sub-Annotation */}
+      <SvgText x="105" y="132" fontSize="5" fontFamily="Helvetica" fill="#64748b" textAnchor="middle">
+        INNER LENGTH OF SHAFT WALLS (EXCLUSIVE OF WALLS)
+      </SvgText>
     </Svg>
   );
 }
@@ -564,11 +581,11 @@ function LiftReportPage({
             <Text style={styles.tableHeaderTitle}>SHAFT PLAN</Text>
             <View style={styles.tableHeaderCells}>
               <Text style={[styles.thCell, { width: '20%' }]}>FLOOR NO</Text>
-              <Text style={[styles.thCell, { width: '16%' }]}>A (MM)</Text>
-              <Text style={[styles.thCell, { width: '16%' }]}>B (MM)</Text>
-              <Text style={[styles.thCell, { width: '16%' }]}>C (MM)</Text>
-              <Text style={[styles.thCell, { width: '16%' }]}>D (MM)</Text>
-              <Text style={[styles.thCell, { width: '16%', borderRightWidth: 0 }]}>E (MM)</Text>
+              <Text style={[styles.thCell, { width: '16%' }]}>A</Text>
+              <Text style={[styles.thCell, { width: '16%' }]}>B</Text>
+              <Text style={[styles.thCell, { width: '16%' }]}>C</Text>
+              <Text style={[styles.thCell, { width: '16%' }]}>D</Text>
+              <Text style={[styles.thCell, { width: '16%', borderRightWidth: 0 }]}>E</Text>
             </View>
 
             {/* Required Dimensions Row */}
@@ -601,8 +618,8 @@ function LiftReportPage({
             <Text style={styles.tableHeaderTitle}>ENTRANCE VIEW</Text>
             <View style={styles.tableHeaderCells}>
               <Text style={[styles.thCell, { width: '30%' }]}>FLOOR NO</Text>
-              <Text style={[styles.thCell, { width: '35%' }]}>F (MM)</Text>
-              <Text style={[styles.thCell, { width: '35%', borderRightWidth: 0 }]}>G (MM)</Text>
+              <Text style={[styles.thCell, { width: '35%' }]}>F</Text>
+              <Text style={[styles.thCell, { width: '35%', borderRightWidth: 0 }]}>G</Text>
             </View>
 
             {/* Required Dimensions Row */}
@@ -628,8 +645,8 @@ function LiftReportPage({
           <View style={styles.tableColButton}>
             <Text style={styles.tableHeaderTitle}>HALL BUTTON CUT OUT</Text>
             <View style={styles.tableHeaderCells}>
-              <Text style={[styles.thCell, { width: '50%' }]}>H (MM)</Text>
-              <Text style={[styles.thCell, { width: '50%', borderRightWidth: 0 }]}>I (MM)</Text>
+              <Text style={[styles.thCell, { width: '50%' }]}>H</Text>
+              <Text style={[styles.thCell, { width: '50%', borderRightWidth: 0 }]}>I</Text>
             </View>
 
             {/* Empty required row to align with siblings */}
@@ -652,7 +669,7 @@ function LiftReportPage({
             <Text style={styles.tableHeaderTitle}>FLOOR TO FLOOR HT</Text>
             <View style={styles.tableHeaderCells}>
               <Text style={[styles.thCell, { width: '45%' }]}>FLOOR</Text>
-              <Text style={[styles.thCell, { width: '55%', borderRightWidth: 0 }]}>HT (MM)</Text>
+              <Text style={[styles.thCell, { width: '55%', borderRightWidth: 0 }]}>HT</Text>
             </View>
 
             {/* Required row to align */}

@@ -95,19 +95,21 @@ export default function AdminLiftSurveyDetailPage() {
           initialLifts = Array.from({ length: data.numberOfLifts || 1 }).map((_, idx) => ({
             liftNumber: idx + 1,
             liftName: (data.numberOfLifts || 1) > 1 ? `Lift ${idx + 1} (L${idx + 1} ELE.)` : 'Lift 1 (L1 ELE.)',
-            pitDepth: 'not accessible',
+            pitDepth: '1500',
             overheadHeight: '4634',
-            requiredDimensions: { a: '', b: '', c: '2004', d: '2000', e: '', f: '963', g: '2207', h: '', i: '' },
+            requiredDimensions: { a: '2000', b: '2000', c: '2000', d: '2000', e: '1100', f: '1000', g: '2100', h: '110', i: '280' },
             floors: fNames.map((fn: string, fIdx: number) => ({
               floorName: fn,
-              a: '', b: '',
-              c: fIdx === 0 ? '2004' : fIdx === 1 ? '1999' : '',
+              a: fIdx === 0 ? '2004' : '2000',
+              b: '2000',
+              c: fIdx === 0 ? '2004' : fIdx === 1 ? '1999' : '2000',
               d: '2000',
-              e: '',
-              f: fIdx === 0 ? '963' : fIdx === 1 ? '974' : '',
-              g: fIdx === 0 ? '2207' : fIdx === 1 ? '2200' : '',
-              h: '', i: '',
-              height: fIdx === 0 ? '3433' : fIdx === 1 ? '4634' : '',
+              e: '1100',
+              f: fIdx === 0 ? '963' : fIdx === 1 ? '974' : '1100',
+              g: fIdx === 0 ? '2207' : '2200',
+              h: '110',
+              i: '280',
+              height: fIdx === 0 ? '3200' : fIdx === 1 ? '3600' : fIdx === fNames.length - 1 ? '4634' : '3300',
             })),
           }));
         } else {
@@ -507,37 +509,68 @@ export default function AdminLiftSurveyDetailPage() {
               1. Shaft Plan Dimensions
             </span>
             <div className="w-full flex justify-center py-1">
-              <svg width="180" height="110" viewBox="0 0 200 125" className="overflow-visible">
+              <svg width="190" height="115" viewBox="0 0 210 135" className="overflow-visible">
+                {/* Hoistway Wall Structure */}
                 <path
-                  d="M 25 105 L 25 20 L 175 20 L 175 105 L 140 105 L 140 95 L 165 95 L 165 30 L 35 30 L 35 95 L 60 95 L 60 105 Z"
+                  d="M 24 104 L 24 20 L 186 20 L 186 104 L 132 104 L 132 90 L 168 90 L 168 34 L 42 34 L 42 90 L 78 90 L 78 104 Z"
                   fill="#1e293b"
                   stroke="#64748b"
-                  strokeWidth="1.5"
+                  strokeWidth="1.2"
                 />
-                <rect x="55" y="38" width="90" height="50" fill="#450a0a" stroke="#ef4444" strokeWidth="1.5" />
-                <text x="100" y="66" fontSize="10" fontWeight="bold" fill="#f87171" textAnchor="middle">
+
+                {/* Cabin in clear shaft void */}
+                <rect x="64" y="42" width="82" height="38" fill="#450a0a" stroke="#ef4444" strokeWidth="1.2" />
+                <text x="105" y="65" fontSize="10" fontWeight="bold" fill="#f87171" textAnchor="middle">
                   {currentLift.liftName || 'L1 ELE.'}
                 </text>
-                {/* Lines */}
-                <line x1="15" y1="20" x2="15" y2="105" stroke="#38bdf8" strokeWidth="1" />
-                <text x="5" y="65" fontSize="10" fontWeight="bold" fill="#38bdf8">C</text>
 
-                <line x1="25" y1="12" x2="175" y2="12" stroke="#38bdf8" strokeWidth="1" />
-                <text x="100" y="9" fontSize="10" fontWeight="bold" fill="#38bdf8" textAnchor="middle">D</text>
+                {/* Dimension C (Rear Inner Wall Length - between x=42 and x=168) */}
+                <line x1="42" y1="32" x2="42" y2="10" stroke="#475569" strokeWidth="0.8" strokeDasharray="1,1" />
+                <line x1="168" y1="32" x2="168" y2="10" stroke="#475569" strokeWidth="0.8" strokeDasharray="1,1" />
+                <line x1="42" y1="14" x2="168" y2="14" stroke="#38bdf8" strokeWidth="1" />
+                <polygon points="42,14 47,12 47,16" fill="#38bdf8" />
+                <polygon points="168,14 163,12 163,16" fill="#38bdf8" />
+                <text x="105" y="11" fontSize="10" fontWeight="bold" fill="#38bdf8" textAnchor="middle">C</text>
 
-                <line x1="25" y1="114" x2="60" y2="114" stroke="#38bdf8" strokeWidth="1" />
-                <text x="42" y="123" fontSize="9" fontWeight="bold" fill="#38bdf8" textAnchor="middle">A</text>
+                {/* Dimension D (Front Inner Wall Length - between x=42 and x=168) */}
+                <line x1="42" y1="92" x2="42" y2="118" stroke="#475569" strokeWidth="0.8" strokeDasharray="1,1" />
+                <line x1="168" y1="92" x2="168" y2="118" stroke="#475569" strokeWidth="0.8" strokeDasharray="1,1" />
+                <line x1="42" y1="114" x2="168" y2="114" stroke="#38bdf8" strokeWidth="1" />
+                <polygon points="42,114 47,112 47,116" fill="#38bdf8" />
+                <polygon points="168,114 163,112 163,116" fill="#38bdf8" />
+                <text x="105" y="124" fontSize="10" fontWeight="bold" fill="#38bdf8" textAnchor="middle">D</text>
 
-                <line x1="140" y1="114" x2="175" y2="114" stroke="#38bdf8" strokeWidth="1" />
-                <text x="157" y="123" fontSize="9" fontWeight="bold" fill="#38bdf8" textAnchor="middle">B</text>
+                {/* Dimension A (Left Inner Wall Length - between y=34 and y=90) */}
+                <line x1="40" y1="34" x2="14" y2="34" stroke="#475569" strokeWidth="0.8" strokeDasharray="1,1" />
+                <line x1="40" y1="90" x2="14" y2="90" stroke="#475569" strokeWidth="0.8" strokeDasharray="1,1" />
+                <line x1="18" y1="34" x2="18" y2="90" stroke="#38bdf8" strokeWidth="1" />
+                <polygon points="18,34 16,39 20,39" fill="#38bdf8" />
+                <polygon points="18,90 16,85 20,85" fill="#38bdf8" />
+                <text x="9" y="66" fontSize="10" fontWeight="bold" fill="#38bdf8" textAnchor="middle">A</text>
 
-                <line x1="60" y1="105" x2="140" y2="105" stroke="#a855f7" strokeWidth="1" strokeDasharray="2,2" />
-                <text x="100" y="118" fontSize="10" fontWeight="bold" fill="#a855f7" textAnchor="middle">E</text>
+                {/* Dimension B (Right Inner Wall Length - between y=34 and y=90) */}
+                <line x1="170" y1="34" x2="196" y2="34" stroke="#475569" strokeWidth="0.8" strokeDasharray="1,1" />
+                <line x1="170" y1="90" x2="196" y2="90" stroke="#475569" strokeWidth="0.8" strokeDasharray="1,1" />
+                <line x1="192" y1="34" x2="192" y2="90" stroke="#38bdf8" strokeWidth="1" />
+                <polygon points="192,34 190,39 194,39" fill="#38bdf8" />
+                <polygon points="192,90 190,85 194,85" fill="#38bdf8" />
+                <text x="201" y="66" fontSize="10" fontWeight="bold" fill="#38bdf8" textAnchor="middle">B</text>
+
+                {/* Dimension E (Front Opening Width between return jambs x=78 to x=132) */}
+                <line x1="78" y1="98" x2="132" y2="98" stroke="#c084fc" strokeWidth="1" strokeDasharray="2,2" />
+                <polygon points="78,98 83,96 83,100" fill="#c084fc" />
+                <polygon points="132,98 127,96 127,100" fill="#c084fc" />
+                <text x="105" y="95" fontSize="9" fontWeight="bold" fill="#c084fc" textAnchor="middle">E</text>
+
+                {/* Sub-label */}
+                <text x="105" y="132" fontSize="6.5" fill="#64748b" textAnchor="middle">
+                  INNER WALL LENGTHS (EXCLUSIVE OF WALLS)
+                </text>
               </svg>
             </div>
             <div className="w-full text-[10px] text-slate-400 space-y-0.5 mt-2 border-t border-slate-900 pt-1.5">
-              <p><strong className="text-sky-400">A / B:</strong> Left / Right Front Door Jamb Returns</p>
-              <p><strong className="text-sky-400">C:</strong> Shaft Internal Depth · <strong className="text-sky-400">D:</strong> Shaft Width</p>
+              <p><strong className="text-sky-400">A / B:</strong> Left / Right Inner Wall Lengths (Exclusive of Walls)</p>
+              <p><strong className="text-sky-400">C / D:</strong> Rear / Front Inner Wall Lengths (Exclusive of Walls)</p>
               <p><strong className="text-purple-400">E:</strong> Front Shaft Opening Width</p>
             </div>
           </div>
@@ -697,19 +730,19 @@ export default function AdminLiftSurveyDetailPage() {
                 </th>
               </tr>
 
-              {/* Sub-column Indicators */}
+              {/* Sub-column Indicators - Strictly Pure Letters (No Brackets) */}
               <tr className="bg-slate-950 text-slate-400 text-[10px] uppercase font-semibold border-b border-slate-800">
                 <th className="px-3 py-2 border-r border-slate-800">STOP NO</th>
-                <th className="px-2 py-2 text-center border-r border-slate-800">A (Left)</th>
-                <th className="px-2 py-2 text-center border-r border-slate-800">B (Right)</th>
-                <th className="px-2 py-2 text-center border-r border-slate-800">C (Depth)</th>
-                <th className="px-2 py-2 text-center border-r border-slate-800">D (Width)</th>
-                <th className="px-2 py-2 text-center border-r border-slate-800">E (Opening)</th>
-                <th className="px-2 py-2 text-center border-r border-slate-800">F (Door W)</th>
-                <th className="px-2 py-2 text-center border-r border-slate-800">G (Door H)</th>
-                <th className="px-2 py-2 text-center border-r border-slate-800">H (Btn W)</th>
-                <th className="px-2 py-2 text-center border-r border-slate-800">I (Btn H)</th>
-                <th className="px-2 py-2 text-center">HT IN MM</th>
+                <th className="px-2 py-2 text-center border-r border-slate-800">A</th>
+                <th className="px-2 py-2 text-center border-r border-slate-800">B</th>
+                <th className="px-2 py-2 text-center border-r border-slate-800">C</th>
+                <th className="px-2 py-2 text-center border-r border-slate-800">D</th>
+                <th className="px-2 py-2 text-center border-r border-slate-800">E</th>
+                <th className="px-2 py-2 text-center border-r border-slate-800">F</th>
+                <th className="px-2 py-2 text-center border-r border-slate-800">G</th>
+                <th className="px-2 py-2 text-center border-r border-slate-800">H</th>
+                <th className="px-2 py-2 text-center border-r border-slate-800">I</th>
+                <th className="px-2 py-2 text-center">HT</th>
               </tr>
             </thead>
 
@@ -723,7 +756,7 @@ export default function AdminLiftSurveyDetailPage() {
                   <input
                     value={currentLift.requiredDimensions?.a || ''}
                     onChange={(e) => updateRequiredDim('a', e.target.value)}
-                    placeholder="-"
+                    placeholder="2000"
                     className="w-full h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-rose-300 font-mono focus:outline-none focus:border-rose-500"
                   />
                 </td>
@@ -731,7 +764,7 @@ export default function AdminLiftSurveyDetailPage() {
                   <input
                     value={currentLift.requiredDimensions?.b || ''}
                     onChange={(e) => updateRequiredDim('b', e.target.value)}
-                    placeholder="-"
+                    placeholder="2000"
                     className="w-full h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-rose-300 font-mono focus:outline-none focus:border-rose-500"
                   />
                 </td>
@@ -739,7 +772,7 @@ export default function AdminLiftSurveyDetailPage() {
                   <input
                     value={currentLift.requiredDimensions?.c || ''}
                     onChange={(e) => updateRequiredDim('c', e.target.value)}
-                    placeholder="2004"
+                    placeholder="2000"
                     className="w-full h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-rose-300 font-mono focus:outline-none focus:border-rose-500"
                   />
                 </td>
@@ -755,7 +788,7 @@ export default function AdminLiftSurveyDetailPage() {
                   <input
                     value={currentLift.requiredDimensions?.e || ''}
                     onChange={(e) => updateRequiredDim('e', e.target.value)}
-                    placeholder="-"
+                    placeholder="1100"
                     className="w-full h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-rose-300 font-mono focus:outline-none focus:border-rose-500"
                   />
                 </td>
@@ -763,7 +796,7 @@ export default function AdminLiftSurveyDetailPage() {
                   <input
                     value={currentLift.requiredDimensions?.f || ''}
                     onChange={(e) => updateRequiredDim('f', e.target.value)}
-                    placeholder="963"
+                    placeholder="1000"
                     className="w-full h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-rose-300 font-mono focus:outline-none focus:border-rose-500"
                   />
                 </td>
@@ -771,7 +804,7 @@ export default function AdminLiftSurveyDetailPage() {
                   <input
                     value={currentLift.requiredDimensions?.g || ''}
                     onChange={(e) => updateRequiredDim('g', e.target.value)}
-                    placeholder="2207"
+                    placeholder="2100"
                     className="w-full h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-rose-300 font-mono focus:outline-none focus:border-rose-500"
                   />
                 </td>
@@ -779,7 +812,7 @@ export default function AdminLiftSurveyDetailPage() {
                   <input
                     value={currentLift.requiredDimensions?.h || ''}
                     onChange={(e) => updateRequiredDim('h', e.target.value)}
-                    placeholder="-"
+                    placeholder="110"
                     className="w-full h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-rose-300 font-mono focus:outline-none focus:border-rose-500"
                   />
                 </td>
@@ -787,7 +820,7 @@ export default function AdminLiftSurveyDetailPage() {
                   <input
                     value={currentLift.requiredDimensions?.i || ''}
                     onChange={(e) => updateRequiredDim('i', e.target.value)}
-                    placeholder="-"
+                    placeholder="280"
                     className="w-full h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-rose-300 font-mono focus:outline-none focus:border-rose-500"
                   />
                 </td>
