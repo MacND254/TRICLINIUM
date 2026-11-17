@@ -147,56 +147,43 @@ export default function AdminLiftSurveysPage() {
 
     setIsSubmitting(true);
     try {
-      // Build lift data structure for each configured lift with standard passenger lift dimensions
+      // Build lift data structure for each configured lift with blank measurements ready for on-site keying
       const liftsData = Array.from({ length: numberOfLifts }).map((_, idx) => {
         const liftNo = idx + 1;
         return {
           liftNumber: liftNo,
           liftName: numberOfLifts > 1 ? `Lift ${liftNo} (L${liftNo} ELE.)` : 'Lift 1 (L1 ELE.)',
-          pitDepth: '1500',
-          overheadHeight: '4634',
+          pitDepth: '',
+          overheadHeight: '',
           requiredDimensions: {
-            a: '2000',
-            b: '2000',
-            c: '2000',
-            d: '2000',
-            e: '1100',
-            f: '1000',
-            g: '2100',
-            h: '110',
-            i: '280',
+            a: '',
+            b: '',
+            c: '',
+            d: '',
+            e: '',
+            f: '',
+            g: '',
+            h: '',
+            i: '',
           },
-          floors: cleanFloors.map((fn, fIdx) => ({
+          floors: cleanFloors.map((fn) => ({
             floorName: fn,
-            a: fIdx === 0 ? '2004' : '2000',
-            b: '2000',
-            c: fIdx === 0 ? '2004' : fIdx === 1 ? '1999' : '2000',
-            d: '2000',
-            e: '1100',
-            f: fIdx === 0 ? '963' : fIdx === 1 ? '974' : '1100',
-            g: fIdx === 0 ? '2207' : '2200',
-            h: '110',
-            i: '280',
-            height: fIdx === 0 ? '3200' : fIdx === 1 ? '3600' : fIdx === cleanFloors.length - 1 ? '4634' : '3300',
+            a: '',
+            b: '',
+            c: '',
+            d: '',
+            e: '',
+            f: '',
+            g: '',
+            h: '',
+            i: '',
+            height: '',
           })),
         };
       });
 
-      // Default industry observation points from engineering specification
-      const initialObservations = [
-        '1. Pit depth confirmed at 1500mm; pit floor clean, dry, and free of water ingress.',
-        '2. Controller area cut out on 1st floor from a height of 200mm above finished floor level.',
-        '3. Machinery cutout dimensions verified at 1600mm x 400mm as per architectural blueprint.',
-        '4. Ventilation louvered window provided at rear top left shaft corner (min 1% shaft area).',
-        '5. 3-Phase 415V, 50Hz main power isolator installed on top left front wall of hoistway.',
-        '6. Landing door structural openings standardized to 1100mm width across all landings.',
-        '7. Shaft vertical plumbness checked via 4-wire laser; deviation strictly within ±5mm tolerance.',
-        '8. Landing sill recesses cast to 120mm depth from finished floor level at all landings.',
-        '9. Buffer mounting pedestals pre-marked on reinforced concrete pit foundation slab.',
-        '10. Shaft maintenance lighting and pit access ladder installed in compliance with EN 81-20.',
-        '11. Shaft ceiling certified lifting beam load rating verified at 2.5 tonnes capacity.',
-        '12. Shaft enclosure completely sealed with no alien pipes, wiring, or unauthorized services.',
-      ];
+      // Blank observation checklist ready for fresh on-site surveyor remarks
+      const initialObservations = Array(12).fill('');
 
       const res = await fetchApi('/admin/lift-surveys', {
         method: 'POST',

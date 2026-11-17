@@ -19,6 +19,12 @@ import {
   Layers,
   Ruler,
   Compass,
+  Smartphone,
+  Table2,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -67,6 +73,18 @@ export default function AdminLiftSurveyDetailPage() {
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
 
+  // Mobile Workspace View State (Floor-by-Floor Cards vs Full Grid Table)
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
+  const [selectedMobileFloorIdx, setSelectedMobileFloorIdx] = useState<number>(-1); // -1 = Required Blueprint, 0..N = Floor stops
+  const [showSketchesMobile, setShowSketchesMobile] = useState<boolean>(false);
+
+  useEffect(() => {
+    // Default to grid table on large desktop screens, and touch-optimized floor card view on mobile phones
+    if (typeof window !== 'undefined' && window.innerWidth >= 1024) {
+      setViewMode('table');
+    }
+  }, []);
+
   const loadSurvey = async () => {
     setIsLoading(true);
     try {
@@ -92,24 +110,25 @@ export default function AdminLiftSurveyDetailPage() {
           : [];
 
         if (initialLifts.length === 0) {
+          // Initialize every new lift survey with completely blank measurements
           initialLifts = Array.from({ length: data.numberOfLifts || 1 }).map((_, idx) => ({
             liftNumber: idx + 1,
             liftName: (data.numberOfLifts || 1) > 1 ? `Lift ${idx + 1} (L${idx + 1} ELE.)` : 'Lift 1 (L1 ELE.)',
-            pitDepth: '1500',
-            overheadHeight: '4634',
-            requiredDimensions: { a: '2000', b: '2000', c: '2000', d: '2000', e: '1100', f: '1000', g: '2100', h: '110', i: '280' },
-            floors: fNames.map((fn: string, fIdx: number) => ({
+            pitDepth: '',
+            overheadHeight: '',
+            requiredDimensions: { a: '', b: '', c: '', d: '', e: '', f: '', g: '', h: '', i: '' },
+            floors: fNames.map((fn: string) => ({
               floorName: fn,
-              a: fIdx === 0 ? '2004' : '2000',
-              b: '2000',
-              c: fIdx === 0 ? '2004' : fIdx === 1 ? '1999' : '2000',
-              d: '2000',
-              e: '1100',
-              f: fIdx === 0 ? '963' : fIdx === 1 ? '974' : '1100',
-              g: fIdx === 0 ? '2207' : '2200',
-              h: '110',
-              i: '280',
-              height: fIdx === 0 ? '3200' : fIdx === 1 ? '3600' : fIdx === fNames.length - 1 ? '4634' : '3300',
+              a: '',
+              b: '',
+              c: '',
+              d: '',
+              e: '',
+              f: '',
+              g: '',
+              h: '',
+              i: '',
+              height: '',
             })),
           }));
         } else {
@@ -141,9 +160,9 @@ export default function AdminLiftSurveyDetailPage() {
         }
         setObservations(obsArr);
 
-        setSurveyorName(data.surveyorName || 'Suleiman Marenya & Arjun Gandhi');
+        setSurveyorName(data.surveyorName || '');
         setSurveyorSignDate(data.surveyorSignDate || data.date);
-        setDirectorName(data.directorName || 'Field Operation Director');
+        setDirectorName(data.directorName || '');
         setDirectorSignDate(data.directorSignDate || data.date);
       }
     } catch (err: any) {
@@ -227,6 +246,33 @@ export default function AdminLiftSurveyDetailPage() {
         floors: source.floors.map((fl: any) => ({ ...fl })),
       };
       return updated;
+    });
+  };
+
+  const copyPreviousFloorToCurrent = (targetIdx: number) => {
+    if (targetIdx <= 0) return;
+    const prev = currentLift.floors?.[targetIdx - 1];
+    if (!prev) return;
+    setLiftsData((prevLifts: any[]) => {
+      const copy = [...prevLifts];
+      const lift = { ...copy[activeLiftIdx] };
+      const fls = [...(lift.floors || [])];
+      fls[targetIdx] = {
+        ...fls[targetIdx],
+        a: prev.a || '',
+        b: prev.b || '',
+        c: prev.c || '',
+        d: prev.d || '',
+        e: prev.e || '',
+        f: prev.f || '',
+        g: prev.g || '',
+        h: prev.h || '',
+        i: prev.i || '',
+        height: prev.height || '',
+      };
+      lift.floors = fls;
+      copy[activeLiftIdx] = lift;
+      return copy;
     });
   };
 
@@ -349,7 +395,7 @@ export default function AdminLiftSurveyDetailPage() {
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-24">
+    <div className="space-y-6 max-w-7xl mx-auto pb-32 md:pb-24">
       {/* Top Action Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
         <div className="flex items-center gap-3">
@@ -490,7 +536,7 @@ export default function AdminLiftSurveyDetailPage() {
         </div>
       </div>
 
-      {/* Visual Technical Diagram Reference Card */}
+      {/* Visual Technical Diagram Reference Card (Collapsible on mobile screens to save screen real estate) */}
       <div className="p-4 rounded-xl border border-slate-800 bg-slate-900 space-y-3">
         <div className="flex items-center justify-between border-b border-slate-800 pb-2">
           <div className="flex items-center gap-2">
@@ -499,129 +545,33 @@ export default function AdminLiftSurveyDetailPage() {
               Technical Dimension Reference Diagrams
             </h3>
           </div>
-          <span className="text-[11px] text-slate-400">All dimensions in millimeters (MM)</span>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-slate-400 hidden sm:inline">All dimensions in millimeters (MM)</span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowSketchesMobile(!showSketchesMobile)}
+              className="md:hidden h-7 px-2 text-[11px] text-sky-400 hover:text-white"
+            >
+              {showSketchesMobile ? 'Hide Sketches' : 'View Sketches'}
+              {showSketchesMobile ? <ChevronUp className="h-3.5 w-3.5 ml-1" /> : <ChevronDown className="h-3.5 w-3.5 ml-1" />}
+            </Button>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+        <div className={`grid-cols-1 md:grid-cols-3 gap-4 text-xs ${showSketchesMobile ? 'grid' : 'hidden md:grid'}`}>
           {/* Sketch 1: Shaft Plan */}
           <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 flex flex-col items-center">
             <span className="font-bold text-slate-300 text-[11px] uppercase tracking-wider mb-2">
               1. Shaft Plan Dimensions
             </span>
             <div className="w-full flex justify-center py-1">
-              <svg width="200" height="130" viewBox="0 0 260 195" className="overflow-visible">
-                {/* Top Wall (Full Width) */}
-                <rect
-                  x="25"
-                  y="12"
-                  width="210"
-                  height="29"
-                  fill="#1d4ed8"
-                  fillOpacity="0.4"
-                  stroke="#3b82f6"
-                  strokeWidth="1.2"
-                />
-
-                {/* Left Wall */}
-                <rect
-                  x="25"
-                  y="41"
-                  width="39"
-                  height="107"
-                  fill="#1d4ed8"
-                  fillOpacity="0.4"
-                  stroke="#3b82f6"
-                  strokeWidth="1.2"
-                />
-
-                {/* Right Wall */}
-                <rect
-                  x="196"
-                  y="41"
-                  width="39"
-                  height="107"
-                  fill="#1d4ed8"
-                  fillOpacity="0.4"
-                  stroke="#3b82f6"
-                  strokeWidth="1.2"
-                />
-
-                {/* Bottom-Left Return Wall */}
-                <rect
-                  x="25"
-                  y="148"
-                  width="81"
-                  height="33"
-                  fill="#1d4ed8"
-                  fillOpacity="0.4"
-                  stroke="#3b82f6"
-                  strokeWidth="1.2"
-                />
-
-                {/* Bottom-Right Return Wall */}
-                <rect
-                  x="154"
-                  y="148"
-                  width="81"
-                  height="33"
-                  fill="#1d4ed8"
-                  fillOpacity="0.4"
-                  stroke="#3b82f6"
-                  strokeWidth="1.2"
-                />
-
-                {/* Lift Label in Cavity */}
-                <text
-                  x="130"
-                  y="102"
-                  fontSize="10"
-                  fontWeight="bold"
-                  fill="#64748b"
-                  textAnchor="middle"
-                >
-                  {currentLift.liftName || 'L1 ELE.'}
-                </text>
-
-                {/* Dimension C (Left Vertical Double-Headed Arrow from y=41 to y=148) */}
-                <line x1="18" y1="41" x2="18" y2="148" stroke="#38bdf8" strokeWidth="1.5" />
-                <polygon points="18,41 14,48 22,48" fill="#38bdf8" />
-                <polygon points="18,148 14,141 22,141" fill="#38bdf8" />
-                <text x="7" y="98" fontSize="12" fontWeight="bold" fill="#38bdf8" textAnchor="middle">
-                  C
-                </text>
-
-                {/* Dimension D (Top Inner Horizontal Double-Headed Arrow from x=64 to x=196) */}
-                <line x1="64" y1="48" x2="196" y2="48" stroke="#38bdf8" strokeWidth="1.5" />
-                <polygon points="64,48 72,44 72,52" fill="#38bdf8" />
-                <polygon points="196,48 188,44 188,52" fill="#38bdf8" />
-                <text x="130" y="62" fontSize="12" fontWeight="bold" fill="#38bdf8" textAnchor="middle">
-                  D
-                </text>
-
-                {/* Dimension A (Bottom-Left Return Wall Arrow from x=64 to x=106) */}
-                <line x1="64" y1="142" x2="106" y2="142" stroke="#38bdf8" strokeWidth="1.5" />
-                <polygon points="64,142 70,139 70,145" fill="#38bdf8" />
-                <polygon points="106,142 100,139 100,145" fill="#38bdf8" />
-                <text x="85" y="134" fontSize="12" fontWeight="bold" fill="#38bdf8" textAnchor="middle">
-                  A
-                </text>
-
-                {/* Dimension B (Bottom-Right Return Wall Arrow from x=154 to x=196) */}
-                <line x1="154" y1="142" x2="196" y2="142" stroke="#38bdf8" strokeWidth="1.5" />
-                <polygon points="154,142 160,139 160,145" fill="#38bdf8" />
-                <polygon points="196,142 190,139 190,145" fill="#38bdf8" />
-                <text x="175" y="134" fontSize="12" fontWeight="bold" fill="#38bdf8" textAnchor="middle">
-                  B
-                </text>
-
-                {/* Dimension E (Door Opening Arrow between return jambs from x=106 to x=154) */}
-                <line x1="106" y1="165" x2="154" y2="165" stroke="#38bdf8" strokeWidth="1.5" />
-                <polygon points="106,165 112,162 112,168" fill="#38bdf8" />
-                <polygon points="154,165 148,162 148,168" fill="#38bdf8" />
-                <text x="130" y="180" fontSize="12" fontWeight="bold" fill="#38bdf8" textAnchor="middle">
-                  E
-                </text>
-              </svg>
+              <img
+                src="/images/shaft-plan-diagram-cropped.png"
+                alt="Shaft Plan Dimensions"
+                className="max-h-[135px] w-auto object-contain rounded bg-white p-1 shadow-sm"
+              />
             </div>
             <div className="w-full text-[10px] text-slate-400 space-y-0.5 mt-2 border-t border-slate-900 pt-1.5">
               <p><strong className="text-sky-400">A / B:</strong> Front Left / Right Return Walls</p>
@@ -752,229 +702,796 @@ export default function AdminLiftSurveyDetailPage() {
         </div>
       </div>
 
-      {/* Master Measurement Table */}
-      <div className="rounded-xl border border-slate-800 bg-slate-900 overflow-hidden shadow-lg">
-        <div className="p-3 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="font-extrabold text-white text-xs uppercase tracking-wider">
-              {currentLift.liftName || `Lift ${activeLiftIdx + 1}`} Dimensional Measurements Table
-            </span>
-            <Badge variant="outline" className="text-[10px] border-slate-700 text-slate-400">
-              {floorNames.length} Stops Configured
-            </Badge>
-          </div>
-          <span className="text-[10px] text-slate-400">Input values in mm (or design target)</span>
+      {/* View Mode Toggle: Floor-by-Floor (Mobile Optimized) vs Full Grid Table */}
+      <div className="flex items-center justify-between flex-wrap gap-2 pt-1">
+        <div className="flex items-center p-1 bg-slate-950 rounded-lg border border-slate-800">
+          <button
+            type="button"
+            onClick={() => setViewMode('cards')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+              viewMode === 'cards'
+                ? 'bg-sky-600 text-white shadow-sm'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Smartphone className="h-3.5 w-3.5" />
+            <span>Floor-by-Floor (Mobile View)</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode('table')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-bold transition-all ${
+              viewMode === 'table'
+                ? 'bg-sky-600 text-white shadow-sm'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Table2 className="h-3.5 w-3.5" />
+            <span>Full Grid Table</span>
+          </button>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              {/* Category Grouping Header */}
-              <tr className="bg-slate-950/90 text-slate-300 border-b border-slate-800 text-[11px] font-bold">
-                <th className="px-3 py-2 border-r border-slate-800">FLOOR</th>
-                <th colSpan={5} className="px-3 py-2 border-r border-slate-800 text-center bg-sky-950/20 text-sky-300">
-                  SHAFT PLAN DIMENSIONS (MM)
-                </th>
-                <th colSpan={2} className="px-3 py-2 border-r border-slate-800 text-center bg-blue-950/20 text-blue-300">
-                  ENTRANCE VIEW (MM)
-                </th>
-                <th colSpan={2} className="px-3 py-2 border-r border-slate-800 text-center bg-purple-950/20 text-purple-300">
-                  HALL BUTTON CUT OUT (MM)
-                </th>
-                <th className="px-3 py-2 text-center bg-emerald-950/20 text-emerald-300">
-                  FLOOR HEIGHT (MM)
-                </th>
-              </tr>
-
-              {/* Sub-column Indicators - Strictly Pure Letters (No Brackets) */}
-              <tr className="bg-slate-950 text-slate-400 text-[10px] uppercase font-semibold border-b border-slate-800">
-                <th className="px-3 py-2 border-r border-slate-800">STOP NO</th>
-                <th className="px-2 py-2 text-center border-r border-slate-800">A</th>
-                <th className="px-2 py-2 text-center border-r border-slate-800">B</th>
-                <th className="px-2 py-2 text-center border-r border-slate-800">C</th>
-                <th className="px-2 py-2 text-center border-r border-slate-800">D</th>
-                <th className="px-2 py-2 text-center border-r border-slate-800">E</th>
-                <th className="px-2 py-2 text-center border-r border-slate-800">F</th>
-                <th className="px-2 py-2 text-center border-r border-slate-800">G</th>
-                <th className="px-2 py-2 text-center border-r border-slate-800">H</th>
-                <th className="px-2 py-2 text-center border-r border-slate-800">I</th>
-                <th className="px-2 py-2 text-center">HT</th>
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-slate-800 text-slate-200">
-              {/* Row 1: Required Dimensions (Design Blueprint) */}
-              <tr className="bg-rose-950/20 font-bold border-b border-rose-900/50">
-                <td className="px-3 py-2 text-rose-400 text-xs border-r border-slate-800">
-                  Required Dim.
-                </td>
-                <td className="p-1 border-r border-slate-800">
-                  <input
-                    value={currentLift.requiredDimensions?.a || ''}
-                    onChange={(e) => updateRequiredDim('a', e.target.value)}
-                    placeholder="2000"
-                    className="w-full h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-rose-300 font-mono focus:outline-none focus:border-rose-500"
-                  />
-                </td>
-                <td className="p-1 border-r border-slate-800">
-                  <input
-                    value={currentLift.requiredDimensions?.b || ''}
-                    onChange={(e) => updateRequiredDim('b', e.target.value)}
-                    placeholder="2000"
-                    className="w-full h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-rose-300 font-mono focus:outline-none focus:border-rose-500"
-                  />
-                </td>
-                <td className="p-1 border-r border-slate-800">
-                  <input
-                    value={currentLift.requiredDimensions?.c || ''}
-                    onChange={(e) => updateRequiredDim('c', e.target.value)}
-                    placeholder="2000"
-                    className="w-full h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-rose-300 font-mono focus:outline-none focus:border-rose-500"
-                  />
-                </td>
-                <td className="p-1 border-r border-slate-800">
-                  <input
-                    value={currentLift.requiredDimensions?.d || ''}
-                    onChange={(e) => updateRequiredDim('d', e.target.value)}
-                    placeholder="2000"
-                    className="w-full h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-rose-300 font-mono focus:outline-none focus:border-rose-500"
-                  />
-                </td>
-                <td className="p-1 border-r border-slate-800">
-                  <input
-                    value={currentLift.requiredDimensions?.e || ''}
-                    onChange={(e) => updateRequiredDim('e', e.target.value)}
-                    placeholder="1100"
-                    className="w-full h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-rose-300 font-mono focus:outline-none focus:border-rose-500"
-                  />
-                </td>
-                <td className="p-1 border-r border-slate-800">
-                  <input
-                    value={currentLift.requiredDimensions?.f || ''}
-                    onChange={(e) => updateRequiredDim('f', e.target.value)}
-                    placeholder="1000"
-                    className="w-full h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-rose-300 font-mono focus:outline-none focus:border-rose-500"
-                  />
-                </td>
-                <td className="p-1 border-r border-slate-800">
-                  <input
-                    value={currentLift.requiredDimensions?.g || ''}
-                    onChange={(e) => updateRequiredDim('g', e.target.value)}
-                    placeholder="2100"
-                    className="w-full h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-rose-300 font-mono focus:outline-none focus:border-rose-500"
-                  />
-                </td>
-                <td className="p-1 border-r border-slate-800">
-                  <input
-                    value={currentLift.requiredDimensions?.h || ''}
-                    onChange={(e) => updateRequiredDim('h', e.target.value)}
-                    placeholder="110"
-                    className="w-full h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-rose-300 font-mono focus:outline-none focus:border-rose-500"
-                  />
-                </td>
-                <td className="p-1 border-r border-slate-800">
-                  <input
-                    value={currentLift.requiredDimensions?.i || ''}
-                    onChange={(e) => updateRequiredDim('i', e.target.value)}
-                    placeholder="280"
-                    className="w-full h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-rose-300 font-mono focus:outline-none focus:border-rose-500"
-                  />
-                </td>
-                <td className="p-1 text-center text-slate-500 text-xs">-</td>
-              </tr>
-
-              {/* Floor Stop Measurement Rows */}
-              {currentLift.floors?.map((fl: any, fIdx: number) => (
-                <tr key={fIdx} className="hover:bg-slate-800/40">
-                  <td className="px-3 py-2 font-mono font-bold text-sky-400 border-r border-slate-800">
-                    {fl.floorName}
-                  </td>
-                  <td className="p-1 border-r border-slate-800">
-                    <input
-                      value={fl.a || ''}
-                      onChange={(e) => updateFloorMeasurement(fIdx, 'a', e.target.value)}
-                      placeholder="mm"
-                      className="w-full h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-white font-mono focus:outline-none focus:border-sky-500"
-                    />
-                  </td>
-                  <td className="p-1 border-r border-slate-800">
-                    <input
-                      value={fl.b || ''}
-                      onChange={(e) => updateFloorMeasurement(fIdx, 'b', e.target.value)}
-                      placeholder="mm"
-                      className="w-full h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-white font-mono focus:outline-none focus:border-sky-500"
-                    />
-                  </td>
-                  <td className="p-1 border-r border-slate-800">
-                    <input
-                      value={fl.c || ''}
-                      onChange={(e) => updateFloorMeasurement(fIdx, 'c', e.target.value)}
-                      placeholder="mm"
-                      className="w-full h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-white font-mono focus:outline-none focus:border-sky-500"
-                    />
-                  </td>
-                  <td className="p-1 border-r border-slate-800">
-                    <input
-                      value={fl.d || ''}
-                      onChange={(e) => updateFloorMeasurement(fIdx, 'd', e.target.value)}
-                      placeholder="mm"
-                      className="w-full h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-white font-mono focus:outline-none focus:border-sky-500"
-                    />
-                  </td>
-                  <td className="p-1 border-r border-slate-800">
-                    <input
-                      value={fl.e || ''}
-                      onChange={(e) => updateFloorMeasurement(fIdx, 'e', e.target.value)}
-                      placeholder="mm"
-                      className="w-full h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-white font-mono focus:outline-none focus:border-sky-500"
-                    />
-                  </td>
-                  <td className="p-1 border-r border-slate-800">
-                    <input
-                      value={fl.f || ''}
-                      onChange={(e) => updateFloorMeasurement(fIdx, 'f', e.target.value)}
-                      placeholder="mm"
-                      className="w-full h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-white font-mono focus:outline-none focus:border-sky-500"
-                    />
-                  </td>
-                  <td className="p-1 border-r border-slate-800">
-                    <input
-                      value={fl.g || ''}
-                      onChange={(e) => updateFloorMeasurement(fIdx, 'g', e.target.value)}
-                      placeholder="mm"
-                      className="w-full h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-white font-mono focus:outline-none focus:border-sky-500"
-                    />
-                  </td>
-                  <td className="p-1 border-r border-slate-800">
-                    <input
-                      value={fl.h || ''}
-                      onChange={(e) => updateFloorMeasurement(fIdx, 'h', e.target.value)}
-                      placeholder="mm"
-                      className="w-full h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-white font-mono focus:outline-none focus:border-sky-500"
-                    />
-                  </td>
-                  <td className="p-1 border-r border-slate-800">
-                    <input
-                      value={fl.i || ''}
-                      onChange={(e) => updateFloorMeasurement(fIdx, 'i', e.target.value)}
-                      placeholder="mm"
-                      className="w-full h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-white font-mono focus:outline-none focus:border-sky-500"
-                    />
-                  </td>
-                  <td className="p-1">
-                    <input
-                      value={fl.height || ''}
-                      onChange={(e) => updateFloorMeasurement(fIdx, 'height', e.target.value)}
-                      placeholder="mm"
-                      className="w-full h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-emerald-400 font-mono font-bold focus:outline-none focus:border-emerald-500"
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <span className="text-[11px] text-slate-400 hidden sm:inline">
+          {viewMode === 'cards'
+            ? 'Optimized for fast one-thumb keying with phone numeric keypad'
+            : 'Multi-column overview with sticky floor headers'}
+        </span>
       </div>
+
+      {/* MODE 1: Mobile Floor-by-Floor Touch Cards Workspace */}
+      {viewMode === 'cards' && (
+        <div className="space-y-4">
+          {/* Scrollable Floor Selector Tabs */}
+          <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
+            <div className="flex items-center justify-between text-xs text-slate-400 px-0.5">
+              <span className="font-bold text-slate-200 text-xs flex items-center gap-1.5">
+                <Smartphone className="h-3.5 w-3.5 text-sky-400" />
+                <span>Select Stop to Key In Measurements:</span>
+              </span>
+              <span className="text-[11px] text-slate-400 font-mono">
+                {selectedMobileFloorIdx === -1
+                  ? 'Blueprint Target'
+                  : `Stop ${selectedMobileFloorIdx + 1} of ${floorNames.length}`}
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-thin">
+              <button
+                type="button"
+                onClick={() => setSelectedMobileFloorIdx(-1)}
+                className={`px-3.5 py-2.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all flex items-center gap-1.5 shrink-0 ${
+                  selectedMobileFloorIdx === -1
+                    ? 'bg-rose-600 text-white shadow-md shadow-rose-600/30 ring-2 ring-rose-400/50'
+                    : 'bg-slate-950 text-rose-300 border border-rose-900/40 hover:bg-slate-800'
+                }`}
+              >
+                <span>📐 Required Dim</span>
+              </button>
+
+              {floorNames.map((fn: string, fIdx: number) => {
+                const fl = currentLift.floors?.[fIdx] || {};
+                const filledCount = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'height'].filter((k) =>
+                  Boolean(fl[k])
+                ).length;
+                const isComplete = filledCount >= 10;
+                const isSelected = selectedMobileFloorIdx === fIdx;
+
+                return (
+                  <button
+                    key={fIdx}
+                    type="button"
+                    onClick={() => setSelectedMobileFloorIdx(fIdx)}
+                    className={`px-4 py-2.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all flex items-center gap-2 shrink-0 ${
+                      isSelected
+                        ? 'bg-sky-600 text-white shadow-md shadow-sky-600/30 ring-2 ring-sky-400/50'
+                        : isComplete
+                        ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-800 hover:bg-emerald-900/40'
+                        : 'bg-slate-950 text-slate-300 border border-slate-800 hover:bg-slate-800'
+                    }`}
+                  >
+                    <span>Stop {fn}</span>
+                    <span
+                      className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${
+                        isSelected
+                          ? 'bg-sky-800 text-white'
+                          : isComplete
+                          ? 'bg-emerald-900 text-emerald-200'
+                          : filledCount > 0
+                          ? 'bg-amber-950 text-amber-300 border border-amber-800/60'
+                          : 'bg-slate-900 text-slate-500'
+                      }`}
+                    >
+                      {filledCount}/10
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Card Body: Either Required Blueprint or Current Floor Stop */}
+          {selectedMobileFloorIdx === -1 ? (
+            /* Required Blueprint Card */
+            <div className="p-4 sm:p-5 rounded-xl border border-rose-900/60 bg-gradient-to-b from-rose-950/20 to-slate-900 space-y-5 shadow-xl">
+              <div className="flex items-center justify-between border-b border-rose-900/40 pb-3 flex-wrap gap-2">
+                <div>
+                  <Badge variant="outline" className="border-rose-700 bg-rose-950/60 text-rose-300 uppercase text-[10px] font-bold">
+                    Design Target Specification
+                  </Badge>
+                  <h3 className="text-base font-bold text-white mt-1">Required Architectural Dimensions</h3>
+                  <p className="text-xs text-slate-400">Baseline values from layout drawings to compare against actual shaft</p>
+                </div>
+              </div>
+
+              {/* Sub-section 1: Shaft Plan Walls */}
+              <div className="space-y-2.5">
+                <span className="text-xs font-bold text-sky-400 uppercase tracking-wider block">
+                  1. Shaft Plan Dimensions (mm)
+                </span>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-300 block">
+                      <strong className="text-sky-400 font-mono text-sm">A</strong> · Left Return
+                    </label>
+                    <Input
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={currentLift.requiredDimensions?.a || ''}
+                      onChange={(e) => updateRequiredDim('a', e.target.value)}
+                      placeholder="mm"
+                      className="h-11 bg-slate-950 border-slate-800 text-rose-300 font-mono text-base focus:border-rose-500"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-300 block">
+                      <strong className="text-sky-400 font-mono text-sm">B</strong> · Right Return
+                    </label>
+                    <Input
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={currentLift.requiredDimensions?.b || ''}
+                      onChange={(e) => updateRequiredDim('b', e.target.value)}
+                      placeholder="mm"
+                      className="h-11 bg-slate-950 border-slate-800 text-rose-300 font-mono text-base focus:border-rose-500"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-300 block">
+                      <strong className="text-sky-400 font-mono text-sm">C</strong> · Shaft Depth
+                    </label>
+                    <Input
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={currentLift.requiredDimensions?.c || ''}
+                      onChange={(e) => updateRequiredDim('c', e.target.value)}
+                      placeholder="mm"
+                      className="h-11 bg-slate-950 border-slate-800 text-rose-300 font-mono text-base focus:border-rose-500"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-300 block">
+                      <strong className="text-sky-400 font-mono text-sm">D</strong> · Shaft Width
+                    </label>
+                    <Input
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={currentLift.requiredDimensions?.d || ''}
+                      onChange={(e) => updateRequiredDim('d', e.target.value)}
+                      placeholder="mm"
+                      className="h-11 bg-slate-950 border-slate-800 text-rose-300 font-mono text-base focus:border-rose-500"
+                    />
+                  </div>
+                  <div className="col-span-2 sm:col-span-1 space-y-1">
+                    <label className="text-xs text-slate-300 block">
+                      <strong className="text-sky-400 font-mono text-sm">E</strong> · Front Opening
+                    </label>
+                    <Input
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={currentLift.requiredDimensions?.e || ''}
+                      onChange={(e) => updateRequiredDim('e', e.target.value)}
+                      placeholder="mm"
+                      className="h-11 bg-slate-950 border-slate-800 text-rose-300 font-mono text-base focus:border-rose-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Sub-section 2: Entrance & Hall Button */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-slate-800">
+                <div className="space-y-2.5">
+                  <span className="text-xs font-bold text-blue-400 uppercase tracking-wider block">
+                    2. Entrance View (mm)
+                  </span>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-xs text-slate-300 block">
+                        <strong className="text-blue-400 font-mono text-sm">F</strong> · Door Width
+                      </label>
+                      <Input
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={currentLift.requiredDimensions?.f || ''}
+                        onChange={(e) => updateRequiredDim('f', e.target.value)}
+                        placeholder="mm"
+                        className="h-11 bg-slate-950 border-slate-800 text-rose-300 font-mono text-base focus:border-rose-500"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs text-slate-300 block">
+                        <strong className="text-blue-400 font-mono text-sm">G</strong> · Door Height
+                      </label>
+                      <Input
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={currentLift.requiredDimensions?.g || ''}
+                        onChange={(e) => updateRequiredDim('g', e.target.value)}
+                        placeholder="mm"
+                        className="h-11 bg-slate-950 border-slate-800 text-rose-300 font-mono text-base focus:border-rose-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2.5">
+                  <span className="text-xs font-bold text-purple-400 uppercase tracking-wider block">
+                    3. Hall Button Station (mm)
+                  </span>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-xs text-slate-300 block">
+                        <strong className="text-purple-400 font-mono text-sm">H</strong> · Cutout Width
+                      </label>
+                      <Input
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={currentLift.requiredDimensions?.h || ''}
+                        onChange={(e) => updateRequiredDim('h', e.target.value)}
+                        placeholder="mm"
+                        className="h-11 bg-slate-950 border-slate-800 text-rose-300 font-mono text-base focus:border-rose-500"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs text-slate-300 block">
+                        <strong className="text-purple-400 font-mono text-sm">I</strong> · Cutout Height
+                      </label>
+                      <Input
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={currentLift.requiredDimensions?.i || ''}
+                        onChange={(e) => updateRequiredDim('i', e.target.value)}
+                        placeholder="mm"
+                        className="h-11 bg-slate-950 border-slate-800 text-rose-300 font-mono text-base focus:border-rose-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Navigation Button */}
+              <div className="pt-3 flex justify-end">
+                <Button
+                  type="button"
+                  onClick={() => setSelectedMobileFloorIdx(0)}
+                  className="h-11 px-5 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md"
+                >
+                  <span>Start Floor Stops (Stop {floorNames[0]})</span>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          ) : (
+            /* Selected Floor Stop Card */
+            <div className="p-4 sm:p-5 rounded-xl border border-slate-800 bg-slate-900 space-y-5 shadow-xl">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3 flex-wrap gap-2">
+                <div className="flex items-center gap-3">
+                  <span className="h-9 w-9 rounded-xl bg-sky-600 text-white font-mono font-extrabold flex items-center justify-center text-base shadow-md shadow-sky-600/30">
+                    {floorNames[selectedMobileFloorIdx]}
+                  </span>
+                  <div>
+                    <h3 className="text-base font-bold text-white">
+                      Stop {floorNames[selectedMobileFloorIdx]} Measurements
+                    </h3>
+                    <p className="text-xs text-slate-400">
+                      Floor {selectedMobileFloorIdx + 1} of {floorNames.length} · {currentLift.liftName || `Lift ${activeLiftIdx + 1}`}
+                    </p>
+                  </div>
+                </div>
+
+                {selectedMobileFloorIdx > 0 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => copyPreviousFloorToCurrent(selectedMobileFloorIdx)}
+                    className="h-8 text-xs border-slate-700 bg-slate-950 text-slate-300 hover:text-white flex items-center gap-1.5"
+                  >
+                    <Copy className="h-3.5 w-3.5 text-sky-400" />
+                    <span>Copy Stop {floorNames[selectedMobileFloorIdx - 1]}</span>
+                  </Button>
+                )}
+              </div>
+
+              {/* Section 1: Shaft Plan Dimensions A, B, C, D, E */}
+              <div className="space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-sky-400 uppercase tracking-wider">
+                    1. Shaft Plan Dimensions (mm)
+                  </span>
+                  <span className="text-[10px] text-slate-400">Inner length exclusive of walls</span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-300 block">
+                      <strong className="text-sky-400 font-mono text-sm">A</strong> · Left Return
+                    </label>
+                    <Input
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={currentLift.floors?.[selectedMobileFloorIdx]?.a || ''}
+                      onChange={(e) => updateFloorMeasurement(selectedMobileFloorIdx, 'a', e.target.value)}
+                      placeholder="mm"
+                      className="h-11 bg-slate-950 border-slate-800 text-white font-mono text-base focus:border-sky-500"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-300 block">
+                      <strong className="text-sky-400 font-mono text-sm">B</strong> · Right Return
+                    </label>
+                    <Input
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={currentLift.floors?.[selectedMobileFloorIdx]?.b || ''}
+                      onChange={(e) => updateFloorMeasurement(selectedMobileFloorIdx, 'b', e.target.value)}
+                      placeholder="mm"
+                      className="h-11 bg-slate-950 border-slate-800 text-white font-mono text-base focus:border-sky-500"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-300 block">
+                      <strong className="text-sky-400 font-mono text-sm">C</strong> · Shaft Depth
+                    </label>
+                    <Input
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={currentLift.floors?.[selectedMobileFloorIdx]?.c || ''}
+                      onChange={(e) => updateFloorMeasurement(selectedMobileFloorIdx, 'c', e.target.value)}
+                      placeholder="mm"
+                      className="h-11 bg-slate-950 border-slate-800 text-white font-mono text-base focus:border-sky-500"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-xs text-slate-300 block">
+                      <strong className="text-sky-400 font-mono text-sm">D</strong> · Shaft Width
+                    </label>
+                    <Input
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={currentLift.floors?.[selectedMobileFloorIdx]?.d || ''}
+                      onChange={(e) => updateFloorMeasurement(selectedMobileFloorIdx, 'd', e.target.value)}
+                      placeholder="mm"
+                      className="h-11 bg-slate-950 border-slate-800 text-white font-mono text-base focus:border-sky-500"
+                    />
+                  </div>
+                  <div className="col-span-2 sm:col-span-1 space-y-1">
+                    <label className="text-xs text-slate-300 block">
+                      <strong className="text-sky-400 font-mono text-sm">E</strong> · Front Opening
+                    </label>
+                    <Input
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={currentLift.floors?.[selectedMobileFloorIdx]?.e || ''}
+                      onChange={(e) => updateFloorMeasurement(selectedMobileFloorIdx, 'e', e.target.value)}
+                      placeholder="mm"
+                      className="h-11 bg-slate-950 border-slate-800 text-white font-mono text-base focus:border-sky-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 2: Entrance & Hall Button */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-slate-800">
+                <div className="space-y-2.5">
+                  <span className="text-xs font-bold text-blue-400 uppercase tracking-wider block">
+                    2. Entrance View (mm)
+                  </span>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-xs text-slate-300 block">
+                        <strong className="text-blue-400 font-mono text-sm">F</strong> · Door Clear Width
+                      </label>
+                      <Input
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={currentLift.floors?.[selectedMobileFloorIdx]?.f || ''}
+                        onChange={(e) => updateFloorMeasurement(selectedMobileFloorIdx, 'f', e.target.value)}
+                        placeholder="mm"
+                        className="h-11 bg-slate-950 border-slate-800 text-white font-mono text-base focus:border-blue-500"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs text-slate-300 block">
+                        <strong className="text-blue-400 font-mono text-sm">G</strong> · Door Clear Height
+                      </label>
+                      <Input
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={currentLift.floors?.[selectedMobileFloorIdx]?.g || ''}
+                        onChange={(e) => updateFloorMeasurement(selectedMobileFloorIdx, 'g', e.target.value)}
+                        placeholder="mm"
+                        className="h-11 bg-slate-950 border-slate-800 text-white font-mono text-base focus:border-blue-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2.5">
+                  <span className="text-xs font-bold text-purple-400 uppercase tracking-wider block">
+                    3. Hall Button Station (mm)
+                  </span>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="text-xs text-slate-300 block">
+                        <strong className="text-purple-400 font-mono text-sm">H</strong> · Cutout Width
+                      </label>
+                      <Input
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={currentLift.floors?.[selectedMobileFloorIdx]?.h || ''}
+                        onChange={(e) => updateFloorMeasurement(selectedMobileFloorIdx, 'h', e.target.value)}
+                        placeholder="mm"
+                        className="h-11 bg-slate-950 border-slate-800 text-white font-mono text-base focus:border-purple-500"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs text-slate-300 block">
+                        <strong className="text-purple-400 font-mono text-sm">I</strong> · Cutout Height
+                      </label>
+                      <Input
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={currentLift.floors?.[selectedMobileFloorIdx]?.i || ''}
+                        onChange={(e) => updateFloorMeasurement(selectedMobileFloorIdx, 'i', e.target.value)}
+                        placeholder="mm"
+                        className="h-11 bg-slate-950 border-slate-800 text-white font-mono text-base focus:border-purple-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 3: Floor to Floor Height HT */}
+              <div className="pt-3 border-t border-slate-800">
+                <div className="space-y-1.5">
+                  <span className="text-xs font-bold text-emerald-400 uppercase tracking-wider block">
+                    4. Floor-to-Floor Height (HT in mm)
+                  </span>
+                  <div className="max-w-xs space-y-1">
+                    <label className="text-xs text-slate-300 block">
+                      <strong className="text-emerald-400 font-mono text-sm">HT</strong> · Height to Next Landing Floor
+                    </label>
+                    <Input
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={currentLift.floors?.[selectedMobileFloorIdx]?.height || ''}
+                      onChange={(e) => updateFloorMeasurement(selectedMobileFloorIdx, 'height', e.target.value)}
+                      placeholder="mm"
+                      className="h-11 bg-slate-950 border-slate-800 text-emerald-400 font-bold font-mono text-base focus:border-emerald-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Step Navigation Footer */}
+              <div className="pt-4 border-t border-slate-800 flex items-center justify-between gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setSelectedMobileFloorIdx(selectedMobileFloorIdx - 1)}
+                  className="h-11 px-4 text-xs border-slate-700 bg-slate-950 text-slate-200 hover:text-white flex items-center gap-1.5"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  <span>
+                    {selectedMobileFloorIdx === 0
+                      ? 'Required Dim'
+                      : `Stop ${floorNames[selectedMobileFloorIdx - 1]}`}
+                  </span>
+                </Button>
+
+                {selectedMobileFloorIdx < floorNames.length - 1 ? (
+                  <Button
+                    type="button"
+                    onClick={() => setSelectedMobileFloorIdx(selectedMobileFloorIdx + 1)}
+                    className="h-11 px-5 bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-sky-600/30"
+                  >
+                    <span>Next: Stop {floorNames[selectedMobileFloorIdx + 1]}</span>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    className="h-11 px-5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md shadow-emerald-600/30"
+                  >
+                    <Save className="h-4 w-4" />
+                    <span>{isSaving ? 'Saving...' : 'Save All Floors'}</span>
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* MODE 2: Master Measurement Grid Table (Sticky headers, overview layout) */}
+      {viewMode === 'table' && (
+        <div className="rounded-xl border border-slate-800 bg-slate-900 overflow-hidden shadow-lg">
+          <div className="p-3 bg-slate-950 border-b border-slate-800 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="font-extrabold text-white text-xs uppercase tracking-wider">
+                {currentLift.liftName || `Lift ${activeLiftIdx + 1}`} Dimensional Measurements Table
+              </span>
+              <Badge variant="outline" className="text-[10px] border-slate-700 text-slate-400">
+                {floorNames.length} Stops Configured
+              </Badge>
+            </div>
+            <span className="text-[10px] text-slate-400">All input values in mm (or design target)</span>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs border-collapse">
+              <thead>
+                {/* Category Grouping Header */}
+                <tr className="bg-slate-950/90 text-slate-300 border-b border-slate-800 text-[11px] font-bold">
+                  <th className="px-3 py-2 border-r border-slate-800 sticky left-0 bg-slate-950 z-20 shadow-sm">
+                    FLOOR
+                  </th>
+                  <th colSpan={5} className="px-3 py-2 border-r border-slate-800 text-center bg-sky-950/20 text-sky-300">
+                    SHAFT PLAN DIMENSIONS (MM)
+                  </th>
+                  <th colSpan={2} className="px-3 py-2 border-r border-slate-800 text-center bg-blue-950/20 text-blue-300">
+                    ENTRANCE VIEW (MM)
+                  </th>
+                  <th colSpan={2} className="px-3 py-2 border-r border-slate-800 text-center bg-purple-950/20 text-purple-300">
+                    HALL BUTTON CUT OUT (MM)
+                  </th>
+                  <th className="px-3 py-2 text-center bg-emerald-950/20 text-emerald-300">
+                    FLOOR HEIGHT (MM)
+                  </th>
+                </tr>
+
+                {/* Sub-column Indicators - Strictly Pure Letters (No Brackets) */}
+                <tr className="bg-slate-950 text-slate-400 text-[10px] uppercase font-semibold border-b border-slate-800">
+                  <th className="px-3 py-2 border-r border-slate-800 sticky left-0 bg-slate-950 z-20 shadow-sm">
+                    STOP NO
+                  </th>
+                  <th className="px-2 py-2 text-center border-r border-slate-800">A</th>
+                  <th className="px-2 py-2 text-center border-r border-slate-800">B</th>
+                  <th className="px-2 py-2 text-center border-r border-slate-800">C</th>
+                  <th className="px-2 py-2 text-center border-r border-slate-800">D</th>
+                  <th className="px-2 py-2 text-center border-r border-slate-800">E</th>
+                  <th className="px-2 py-2 text-center border-r border-slate-800">F</th>
+                  <th className="px-2 py-2 text-center border-r border-slate-800">G</th>
+                  <th className="px-2 py-2 text-center border-r border-slate-800">H</th>
+                  <th className="px-2 py-2 text-center border-r border-slate-800">I</th>
+                  <th className="px-2 py-2 text-center">HT</th>
+                </tr>
+              </thead>
+
+              <tbody className="divide-y divide-slate-800 text-slate-200">
+                {/* Row 1: Required Dimensions (Design Blueprint) */}
+                <tr className="bg-rose-950/20 font-bold border-b border-rose-900/50">
+                  <td className="px-3 py-2 text-rose-400 text-xs border-r border-slate-800 sticky left-0 bg-slate-950 z-10 shadow-sm">
+                    Required Dim.
+                  </td>
+                  <td className="p-1 border-r border-slate-800">
+                    <input
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={currentLift.requiredDimensions?.a || ''}
+                      onChange={(e) => updateRequiredDim('a', e.target.value)}
+                      placeholder="-"
+                      className="w-full h-8 sm:h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-rose-300 font-mono focus:outline-none focus:border-rose-500"
+                    />
+                  </td>
+                  <td className="p-1 border-r border-slate-800">
+                    <input
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={currentLift.requiredDimensions?.b || ''}
+                      onChange={(e) => updateRequiredDim('b', e.target.value)}
+                      placeholder="-"
+                      className="w-full h-8 sm:h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-rose-300 font-mono focus:outline-none focus:border-rose-500"
+                    />
+                  </td>
+                  <td className="p-1 border-r border-slate-800">
+                    <input
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={currentLift.requiredDimensions?.c || ''}
+                      onChange={(e) => updateRequiredDim('c', e.target.value)}
+                      placeholder="-"
+                      className="w-full h-8 sm:h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-rose-300 font-mono focus:outline-none focus:border-rose-500"
+                    />
+                  </td>
+                  <td className="p-1 border-r border-slate-800">
+                    <input
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={currentLift.requiredDimensions?.d || ''}
+                      onChange={(e) => updateRequiredDim('d', e.target.value)}
+                      placeholder="-"
+                      className="w-full h-8 sm:h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-rose-300 font-mono focus:outline-none focus:border-rose-500"
+                    />
+                  </td>
+                  <td className="p-1 border-r border-slate-800">
+                    <input
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={currentLift.requiredDimensions?.e || ''}
+                      onChange={(e) => updateRequiredDim('e', e.target.value)}
+                      placeholder="-"
+                      className="w-full h-8 sm:h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-rose-300 font-mono focus:outline-none focus:border-rose-500"
+                    />
+                  </td>
+                  <td className="p-1 border-r border-slate-800">
+                    <input
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={currentLift.requiredDimensions?.f || ''}
+                      onChange={(e) => updateRequiredDim('f', e.target.value)}
+                      placeholder="-"
+                      className="w-full h-8 sm:h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-rose-300 font-mono focus:outline-none focus:border-rose-500"
+                    />
+                  </td>
+                  <td className="p-1 border-r border-slate-800">
+                    <input
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={currentLift.requiredDimensions?.g || ''}
+                      onChange={(e) => updateRequiredDim('g', e.target.value)}
+                      placeholder="-"
+                      className="w-full h-8 sm:h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-rose-300 font-mono focus:outline-none focus:border-rose-500"
+                    />
+                  </td>
+                  <td className="p-1 border-r border-slate-800">
+                    <input
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={currentLift.requiredDimensions?.h || ''}
+                      onChange={(e) => updateRequiredDim('h', e.target.value)}
+                      placeholder="-"
+                      className="w-full h-8 sm:h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-rose-300 font-mono focus:outline-none focus:border-rose-500"
+                    />
+                  </td>
+                  <td className="p-1 border-r border-slate-800">
+                    <input
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={currentLift.requiredDimensions?.i || ''}
+                      onChange={(e) => updateRequiredDim('i', e.target.value)}
+                      placeholder="-"
+                      className="w-full h-8 sm:h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-rose-300 font-mono focus:outline-none focus:border-rose-500"
+                    />
+                  </td>
+                  <td className="p-1 text-center text-slate-500 text-xs">-</td>
+                </tr>
+
+                {/* Floor Stop Measurement Rows */}
+                {currentLift.floors?.map((fl: any, fIdx: number) => (
+                  <tr key={fIdx} className="hover:bg-slate-800/40">
+                    <td className="px-3 py-2 font-mono font-bold text-sky-400 border-r border-slate-800 sticky left-0 bg-slate-950 z-10 shadow-sm">
+                      {fl.floorName}
+                    </td>
+                    <td className="p-1 border-r border-slate-800">
+                      <input
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={fl.a || ''}
+                        onChange={(e) => updateFloorMeasurement(fIdx, 'a', e.target.value)}
+                        placeholder="-"
+                        className="w-full h-8 sm:h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-white font-mono focus:outline-none focus:border-sky-500"
+                      />
+                    </td>
+                    <td className="p-1 border-r border-slate-800">
+                      <input
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={fl.b || ''}
+                        onChange={(e) => updateFloorMeasurement(fIdx, 'b', e.target.value)}
+                        placeholder="-"
+                        className="w-full h-8 sm:h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-white font-mono focus:outline-none focus:border-sky-500"
+                      />
+                    </td>
+                    <td className="p-1 border-r border-slate-800">
+                      <input
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={fl.c || ''}
+                        onChange={(e) => updateFloorMeasurement(fIdx, 'c', e.target.value)}
+                        placeholder="-"
+                        className="w-full h-8 sm:h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-white font-mono focus:outline-none focus:border-sky-500"
+                      />
+                    </td>
+                    <td className="p-1 border-r border-slate-800">
+                      <input
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={fl.d || ''}
+                        onChange={(e) => updateFloorMeasurement(fIdx, 'd', e.target.value)}
+                        placeholder="-"
+                        className="w-full h-8 sm:h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-white font-mono focus:outline-none focus:border-sky-500"
+                      />
+                    </td>
+                    <td className="p-1 border-r border-slate-800">
+                      <input
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={fl.e || ''}
+                        onChange={(e) => updateFloorMeasurement(fIdx, 'e', e.target.value)}
+                        placeholder="-"
+                        className="w-full h-8 sm:h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-white font-mono focus:outline-none focus:border-sky-500"
+                      />
+                    </td>
+                    <td className="p-1 border-r border-slate-800">
+                      <input
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={fl.f || ''}
+                        onChange={(e) => updateFloorMeasurement(fIdx, 'f', e.target.value)}
+                        placeholder="-"
+                        className="w-full h-8 sm:h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-white font-mono focus:outline-none focus:border-sky-500"
+                      />
+                    </td>
+                    <td className="p-1 border-r border-slate-800">
+                      <input
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={fl.g || ''}
+                        onChange={(e) => updateFloorMeasurement(fIdx, 'g', e.target.value)}
+                        placeholder="-"
+                        className="w-full h-8 sm:h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-white font-mono focus:outline-none focus:border-sky-500"
+                      />
+                    </td>
+                    <td className="p-1 border-r border-slate-800">
+                      <input
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={fl.h || ''}
+                        onChange={(e) => updateFloorMeasurement(fIdx, 'h', e.target.value)}
+                        placeholder="-"
+                        className="w-full h-8 sm:h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-white font-mono focus:outline-none focus:border-sky-500"
+                      />
+                    </td>
+                    <td className="p-1 border-r border-slate-800">
+                      <input
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={fl.i || ''}
+                        onChange={(e) => updateFloorMeasurement(fIdx, 'i', e.target.value)}
+                        placeholder="-"
+                        className="w-full h-8 sm:h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-white font-mono focus:outline-none focus:border-sky-500"
+                      />
+                    </td>
+                    <td className="p-1">
+                      <input
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        value={fl.height || ''}
+                        onChange={(e) => updateFloorMeasurement(fIdx, 'height', e.target.value)}
+                        placeholder="-"
+                        className="w-full h-8 sm:h-7 rounded bg-slate-950 border border-slate-800 text-center text-xs text-emerald-400 font-mono font-bold focus:outline-none focus:border-emerald-500"
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Observations / Comments (1 to 12) */}
       <div className="p-5 rounded-xl border border-slate-800 bg-slate-900 space-y-4">
@@ -1064,9 +1581,9 @@ export default function AdminLiftSurveyDetailPage() {
         </div>
       </div>
 
-      {/* Floating Save Toolbar at Bottom */}
-      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-slate-900/95 border border-slate-700 shadow-2xl rounded-full px-5 py-2.5 flex items-center gap-3 backdrop-blur-md">
-        <span className="text-xs text-slate-300 font-medium hidden sm:inline">
+      {/* Desktop Floating Save Toolbar */}
+      <div className="hidden md:flex fixed bottom-4 left-1/2 -translate-x-1/2 z-40 bg-slate-900/95 border border-slate-700 shadow-2xl rounded-full px-5 py-2.5 items-center gap-3 backdrop-blur-md">
+        <span className="text-xs text-slate-300 font-medium">
           {survey.surveyNumber} · {projectName}
         </span>
         <Button
@@ -1098,6 +1615,41 @@ export default function AdminLiftSurveyDetailPage() {
           {isDownloadingPdf ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5 text-emerald-400" />}
           <span>Download PDF</span>
         </Button>
+      </div>
+
+      {/* Mobile Sticky Bottom Bar (Thumb-optimized for on-site phone surveying) */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-slate-950/95 border-t border-slate-800 backdrop-blur-md px-3 py-2.5 flex items-center justify-between gap-2 shadow-2xl">
+        <div className="flex flex-col min-w-0 pr-1">
+          <span className="text-[10px] text-slate-400 uppercase font-mono tracking-wider truncate">
+            {survey.surveyNumber}
+          </span>
+          <span className="text-xs font-bold text-sky-400 truncate">
+            {currentLift.liftName || `Lift ${activeLiftIdx + 1}`} · {selectedMobileFloorIdx === -1 ? 'Req Dim' : `Stop ${floorNames[selectedMobileFloorIdx] || ''}`}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handlePreviewPdf}
+            disabled={isPreviewLoading}
+            className="h-9 px-3 border-slate-700 bg-slate-900 text-slate-200 text-xs font-medium rounded-lg flex items-center gap-1"
+          >
+            {isPreviewLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Eye className="h-4 w-4 text-sky-400" />}
+            <span>PDF</span>
+          </Button>
+
+          <Button
+            size="sm"
+            onClick={handleSave}
+            disabled={isSaving}
+            className="h-9 px-4 bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold rounded-lg flex items-center gap-1.5 shadow-md shadow-sky-600/30"
+          >
+            {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            <span>Save</span>
+          </Button>
+        </div>
       </div>
 
       {/* PDF Interactive Preview Modal */}

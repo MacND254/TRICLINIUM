@@ -95,7 +95,7 @@ export default function AdminLoginPage() {
             alt="TRICLINIUM SYSTEMS"
             className="h-14 w-14 object-contain mx-auto rounded-xl shadow-lg shadow-sky-950/40"
           />
-          <h1 className="text-2xl font-extrabold tracking-tight text-white">TRICLINIUM Console</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight text-white">TRICLINIUM</h1>
           <p className="text-xs text-slate-400">Enterprise Administration &amp; Security Console</p>
         </div>
 
