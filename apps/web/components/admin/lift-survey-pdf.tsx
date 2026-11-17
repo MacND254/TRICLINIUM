@@ -351,79 +351,114 @@ const styles = StyleSheet.create({
 
 function ShaftPlanSvg({ liftLabel = 'L1 ELE.' }: { liftLabel?: string }) {
   return (
-    <Svg width="180" height="115" viewBox="0 0 210 135">
-      {/* Outer & Inner Hoistway Wall Structure (Exclusive of walls) */}
-      <Path
-        d="M 24 104 L 24 20 L 186 20 L 186 104 L 132 104 L 132 90 L 168 90 L 168 34 L 42 34 L 42 90 L 78 90 L 78 104 Z"
-        fill="#f1f5f9"
-        stroke="#334155"
-        strokeWidth="1.2"
+    <Svg width="160" height="115" viewBox="0 0 260 195">
+      {/* Top Wall (Full Width) */}
+      <Rect
+        x="25"
+        y="12"
+        width="210"
+        height="29"
+        fill="#729fcf"
+        stroke="#3465a4"
+        strokeWidth="0.8"
       />
 
-      {/* Lift Car Cabin (Red Rectangle in clear shaft void) */}
+      {/* Left Wall */}
       <Rect
-        x="64"
-        y="42"
-        width="82"
-        height="38"
-        fill="#fff1f2"
-        stroke="#dc2626"
-        strokeWidth="1.2"
+        x="25"
+        y="41"
+        width="39"
+        height="107"
+        fill="#729fcf"
+        stroke="#3465a4"
+        strokeWidth="0.8"
       />
+
+      {/* Right Wall */}
+      <Rect
+        x="196"
+        y="41"
+        width="39"
+        height="107"
+        fill="#729fcf"
+        stroke="#3465a4"
+        strokeWidth="0.8"
+      />
+
+      {/* Bottom-Left Return Wall */}
+      <Rect
+        x="25"
+        y="148"
+        width="81"
+        height="33"
+        fill="#729fcf"
+        stroke="#3465a4"
+        strokeWidth="0.8"
+      />
+
+      {/* Bottom-Right Return Wall */}
+      <Rect
+        x="154"
+        y="148"
+        width="81"
+        height="33"
+        fill="#729fcf"
+        stroke="#3465a4"
+        strokeWidth="0.8"
+      />
+
+      {/* Lift Cabin / Label in Cavity */}
       <SvgText
-        x="105"
-        y="65"
-        fontSize="9"
+        x="130"
+        y="102"
+        fontSize="8.5"
         fontFamily="Helvetica-Bold"
-        fill="#dc2626"
+        fill="#94a3b8"
         textAnchor="middle"
       >
         {liftLabel}
       </SvgText>
 
-      {/* ================= INNER WALL DIMENSIONS (EXCLUSIVE OF WALLS) ================= */}
+      {/* ================= EXACT DIMENSION ARROWS AS PER USER SPEC ================= */}
 
-      {/* Dimension C (Rear Inner Wall Length - measuring between inner corners x=42 and x=168 at y=34) */}
-      <Line x1="42" y1="32" x2="42" y2="10" stroke="#94a3b8" strokeWidth="0.6" strokeDasharray="1,1" />
-      <Line x1="168" y1="32" x2="168" y2="10" stroke="#94a3b8" strokeWidth="0.6" strokeDasharray="1,1" />
-      <Line x1="42" y1="14" x2="168" y2="14" stroke="#000000" strokeWidth="0.8" />
-      <Polygon points="42,14 47,12 47,16" fill="#000000" />
-      <Polygon points="168,14 163,12 163,16" fill="#000000" />
-      <SvgText x="105" y="11" fontSize="9" fontFamily="Helvetica-Bold" fill="#000000" textAnchor="middle">C</SvgText>
+      {/* Dimension C (Left Vertical Double-Headed Arrow spanning inner depth from y=41 to y=148) */}
+      <Line x1="18" y1="41" x2="18" y2="148" stroke="#3465a4" strokeWidth="1" />
+      <Polygon points="18,41 15,48 21,48" fill="#3465a4" />
+      <Polygon points="18,148 15,141 21,141" fill="#3465a4" />
+      <SvgText x="8" y="98" fontSize="11" fontFamily="Helvetica" fill="#000000" textAnchor="middle">
+        C
+      </SvgText>
 
-      {/* Dimension D (Front Inner Wall Length - measuring between inner corners x=42 and x=168 at y=90) */}
-      <Line x1="42" y1="92" x2="42" y2="118" stroke="#94a3b8" strokeWidth="0.6" strokeDasharray="1,1" />
-      <Line x1="168" y1="92" x2="168" y2="118" stroke="#94a3b8" strokeWidth="0.6" strokeDasharray="1,1" />
-      <Line x1="42" y1="114" x2="168" y2="114" stroke="#000000" strokeWidth="0.8" />
-      <Polygon points="42,114 47,112 47,116" fill="#000000" />
-      <Polygon points="168,114 163,112 163,116" fill="#000000" />
-      <SvgText x="105" y="124" fontSize="9" fontFamily="Helvetica-Bold" fill="#000000" textAnchor="middle">D</SvgText>
+      {/* Dimension D (Top Inner Horizontal Double-Headed Arrow from x=64 to x=196) */}
+      <Line x1="64" y1="48" x2="196" y2="48" stroke="#3465a4" strokeWidth="1" />
+      <Polygon points="64,48 71,45 71,51" fill="#3465a4" />
+      <Polygon points="196,48 189,45 189,51" fill="#3465a4" />
+      <SvgText x="130" y="60" fontSize="11" fontFamily="Helvetica" fill="#000000" textAnchor="middle">
+        D
+      </SvgText>
 
-      {/* Dimension A (Left Inner Wall Length - measuring between inner corners y=34 and y=90 at x=42) */}
-      <Line x1="40" y1="34" x2="14" y2="34" stroke="#94a3b8" strokeWidth="0.6" strokeDasharray="1,1" />
-      <Line x1="40" y1="90" x2="14" y2="90" stroke="#94a3b8" strokeWidth="0.6" strokeDasharray="1,1" />
-      <Line x1="18" y1="34" x2="18" y2="90" stroke="#000000" strokeWidth="0.8" />
-      <Polygon points="18,34 16,39 20,39" fill="#000000" />
-      <Polygon points="18,90 16,85 20,85" fill="#000000" />
-      <SvgText x="9" y="66" fontSize="9" fontFamily="Helvetica-Bold" fill="#000000" textAnchor="middle">A</SvgText>
+      {/* Dimension A (Bottom-Left Return Wall Horizontal Arrow from x=64 to x=106) */}
+      <Line x1="64" y1="142" x2="106" y2="142" stroke="#3465a4" strokeWidth="1" />
+      <Polygon points="64,142 69,139.5 69,144.5" fill="#3465a4" />
+      <Polygon points="106,142 101,139.5 101,144.5" fill="#3465a4" />
+      <SvgText x="85" y="136" fontSize="11" fontFamily="Helvetica" fill="#000000" textAnchor="middle">
+        A
+      </SvgText>
 
-      {/* Dimension B (Right Inner Wall Length - measuring between inner corners y=34 and y=90 at x=168) */}
-      <Line x1="170" y1="34" x2="196" y2="34" stroke="#94a3b8" strokeWidth="0.6" strokeDasharray="1,1" />
-      <Line x1="170" y1="90" x2="196" y2="90" stroke="#94a3b8" strokeWidth="0.6" strokeDasharray="1,1" />
-      <Line x1="192" y1="34" x2="192" y2="90" stroke="#000000" strokeWidth="0.8" />
-      <Polygon points="192,34 190,39 194,39" fill="#000000" />
-      <Polygon points="192,90 190,85 194,85" fill="#000000" />
-      <SvgText x="201" y="66" fontSize="9" fontFamily="Helvetica-Bold" fill="#000000" textAnchor="middle">B</SvgText>
+      {/* Dimension B (Bottom-Right Return Wall Horizontal Arrow from x=154 to x=196) */}
+      <Line x1="154" y1="142" x2="196" y2="142" stroke="#3465a4" strokeWidth="1" />
+      <Polygon points="154,142 159,139.5 159,144.5" fill="#3465a4" />
+      <Polygon points="196,142 191,139.5 191,144.5" fill="#3465a4" />
+      <SvgText x="175" y="136" fontSize="11" fontFamily="Helvetica" fill="#000000" textAnchor="middle">
+        B
+      </SvgText>
 
-      {/* Dimension E (Front Opening Width between return jambs x=78 to x=132) */}
-      <Line x1="78" y1="98" x2="132" y2="98" stroke="#000000" strokeWidth="0.8" strokeDasharray="2,2" />
-      <Polygon points="78,98 83,96 83,100" fill="#000000" />
-      <Polygon points="132,98 127,96 127,100" fill="#000000" />
-      <SvgText x="105" y="95" fontSize="8" fontFamily="Helvetica-Bold" fill="#000000" textAnchor="middle">E</SvgText>
-
-      {/* Technical Sub-Annotation */}
-      <SvgText x="105" y="132" fontSize="5" fontFamily="Helvetica" fill="#64748b" textAnchor="middle">
-        INNER LENGTH OF SHAFT WALLS (EXCLUSIVE OF WALLS)
+      {/* Dimension E (Door Opening Horizontal Arrow between return jambs from x=106 to x=154) */}
+      <Line x1="106" y1="165" x2="154" y2="165" stroke="#3465a4" strokeWidth="1" />
+      <Polygon points="106,165 111,162.5 111,167.5" fill="#3465a4" />
+      <Polygon points="154,165 149,162.5 149,167.5" fill="#3465a4" />
+      <SvgText x="130" y="177" fontSize="11" fontFamily="Helvetica" fill="#000000" textAnchor="middle">
+        E
       </SvgText>
     </Svg>
   );

@@ -509,69 +509,125 @@ export default function AdminLiftSurveyDetailPage() {
               1. Shaft Plan Dimensions
             </span>
             <div className="w-full flex justify-center py-1">
-              <svg width="190" height="115" viewBox="0 0 210 135" className="overflow-visible">
-                {/* Hoistway Wall Structure */}
-                <path
-                  d="M 24 104 L 24 20 L 186 20 L 186 104 L 132 104 L 132 90 L 168 90 L 168 34 L 42 34 L 42 90 L 78 90 L 78 104 Z"
-                  fill="#1e293b"
-                  stroke="#64748b"
+              <svg width="200" height="130" viewBox="0 0 260 195" className="overflow-visible">
+                {/* Top Wall (Full Width) */}
+                <rect
+                  x="25"
+                  y="12"
+                  width="210"
+                  height="29"
+                  fill="#1d4ed8"
+                  fillOpacity="0.4"
+                  stroke="#3b82f6"
                   strokeWidth="1.2"
                 />
 
-                {/* Cabin in clear shaft void */}
-                <rect x="64" y="42" width="82" height="38" fill="#450a0a" stroke="#ef4444" strokeWidth="1.2" />
-                <text x="105" y="65" fontSize="10" fontWeight="bold" fill="#f87171" textAnchor="middle">
+                {/* Left Wall */}
+                <rect
+                  x="25"
+                  y="41"
+                  width="39"
+                  height="107"
+                  fill="#1d4ed8"
+                  fillOpacity="0.4"
+                  stroke="#3b82f6"
+                  strokeWidth="1.2"
+                />
+
+                {/* Right Wall */}
+                <rect
+                  x="196"
+                  y="41"
+                  width="39"
+                  height="107"
+                  fill="#1d4ed8"
+                  fillOpacity="0.4"
+                  stroke="#3b82f6"
+                  strokeWidth="1.2"
+                />
+
+                {/* Bottom-Left Return Wall */}
+                <rect
+                  x="25"
+                  y="148"
+                  width="81"
+                  height="33"
+                  fill="#1d4ed8"
+                  fillOpacity="0.4"
+                  stroke="#3b82f6"
+                  strokeWidth="1.2"
+                />
+
+                {/* Bottom-Right Return Wall */}
+                <rect
+                  x="154"
+                  y="148"
+                  width="81"
+                  height="33"
+                  fill="#1d4ed8"
+                  fillOpacity="0.4"
+                  stroke="#3b82f6"
+                  strokeWidth="1.2"
+                />
+
+                {/* Lift Label in Cavity */}
+                <text
+                  x="130"
+                  y="102"
+                  fontSize="10"
+                  fontWeight="bold"
+                  fill="#64748b"
+                  textAnchor="middle"
+                >
                   {currentLift.liftName || 'L1 ELE.'}
                 </text>
 
-                {/* Dimension C (Rear Inner Wall Length - between x=42 and x=168) */}
-                <line x1="42" y1="32" x2="42" y2="10" stroke="#475569" strokeWidth="0.8" strokeDasharray="1,1" />
-                <line x1="168" y1="32" x2="168" y2="10" stroke="#475569" strokeWidth="0.8" strokeDasharray="1,1" />
-                <line x1="42" y1="14" x2="168" y2="14" stroke="#38bdf8" strokeWidth="1" />
-                <polygon points="42,14 47,12 47,16" fill="#38bdf8" />
-                <polygon points="168,14 163,12 163,16" fill="#38bdf8" />
-                <text x="105" y="11" fontSize="10" fontWeight="bold" fill="#38bdf8" textAnchor="middle">C</text>
+                {/* Dimension C (Left Vertical Double-Headed Arrow from y=41 to y=148) */}
+                <line x1="18" y1="41" x2="18" y2="148" stroke="#38bdf8" strokeWidth="1.5" />
+                <polygon points="18,41 14,48 22,48" fill="#38bdf8" />
+                <polygon points="18,148 14,141 22,141" fill="#38bdf8" />
+                <text x="7" y="98" fontSize="12" fontWeight="bold" fill="#38bdf8" textAnchor="middle">
+                  C
+                </text>
 
-                {/* Dimension D (Front Inner Wall Length - between x=42 and x=168) */}
-                <line x1="42" y1="92" x2="42" y2="118" stroke="#475569" strokeWidth="0.8" strokeDasharray="1,1" />
-                <line x1="168" y1="92" x2="168" y2="118" stroke="#475569" strokeWidth="0.8" strokeDasharray="1,1" />
-                <line x1="42" y1="114" x2="168" y2="114" stroke="#38bdf8" strokeWidth="1" />
-                <polygon points="42,114 47,112 47,116" fill="#38bdf8" />
-                <polygon points="168,114 163,112 163,116" fill="#38bdf8" />
-                <text x="105" y="124" fontSize="10" fontWeight="bold" fill="#38bdf8" textAnchor="middle">D</text>
+                {/* Dimension D (Top Inner Horizontal Double-Headed Arrow from x=64 to x=196) */}
+                <line x1="64" y1="48" x2="196" y2="48" stroke="#38bdf8" strokeWidth="1.5" />
+                <polygon points="64,48 72,44 72,52" fill="#38bdf8" />
+                <polygon points="196,48 188,44 188,52" fill="#38bdf8" />
+                <text x="130" y="62" fontSize="12" fontWeight="bold" fill="#38bdf8" textAnchor="middle">
+                  D
+                </text>
 
-                {/* Dimension A (Left Inner Wall Length - between y=34 and y=90) */}
-                <line x1="40" y1="34" x2="14" y2="34" stroke="#475569" strokeWidth="0.8" strokeDasharray="1,1" />
-                <line x1="40" y1="90" x2="14" y2="90" stroke="#475569" strokeWidth="0.8" strokeDasharray="1,1" />
-                <line x1="18" y1="34" x2="18" y2="90" stroke="#38bdf8" strokeWidth="1" />
-                <polygon points="18,34 16,39 20,39" fill="#38bdf8" />
-                <polygon points="18,90 16,85 20,85" fill="#38bdf8" />
-                <text x="9" y="66" fontSize="10" fontWeight="bold" fill="#38bdf8" textAnchor="middle">A</text>
+                {/* Dimension A (Bottom-Left Return Wall Arrow from x=64 to x=106) */}
+                <line x1="64" y1="142" x2="106" y2="142" stroke="#38bdf8" strokeWidth="1.5" />
+                <polygon points="64,142 70,139 70,145" fill="#38bdf8" />
+                <polygon points="106,142 100,139 100,145" fill="#38bdf8" />
+                <text x="85" y="134" fontSize="12" fontWeight="bold" fill="#38bdf8" textAnchor="middle">
+                  A
+                </text>
 
-                {/* Dimension B (Right Inner Wall Length - between y=34 and y=90) */}
-                <line x1="170" y1="34" x2="196" y2="34" stroke="#475569" strokeWidth="0.8" strokeDasharray="1,1" />
-                <line x1="170" y1="90" x2="196" y2="90" stroke="#475569" strokeWidth="0.8" strokeDasharray="1,1" />
-                <line x1="192" y1="34" x2="192" y2="90" stroke="#38bdf8" strokeWidth="1" />
-                <polygon points="192,34 190,39 194,39" fill="#38bdf8" />
-                <polygon points="192,90 190,85 194,85" fill="#38bdf8" />
-                <text x="201" y="66" fontSize="10" fontWeight="bold" fill="#38bdf8" textAnchor="middle">B</text>
+                {/* Dimension B (Bottom-Right Return Wall Arrow from x=154 to x=196) */}
+                <line x1="154" y1="142" x2="196" y2="142" stroke="#38bdf8" strokeWidth="1.5" />
+                <polygon points="154,142 160,139 160,145" fill="#38bdf8" />
+                <polygon points="196,142 190,139 190,145" fill="#38bdf8" />
+                <text x="175" y="134" fontSize="12" fontWeight="bold" fill="#38bdf8" textAnchor="middle">
+                  B
+                </text>
 
-                {/* Dimension E (Front Opening Width between return jambs x=78 to x=132) */}
-                <line x1="78" y1="98" x2="132" y2="98" stroke="#c084fc" strokeWidth="1" strokeDasharray="2,2" />
-                <polygon points="78,98 83,96 83,100" fill="#c084fc" />
-                <polygon points="132,98 127,96 127,100" fill="#c084fc" />
-                <text x="105" y="95" fontSize="9" fontWeight="bold" fill="#c084fc" textAnchor="middle">E</text>
-
-                {/* Sub-label */}
-                <text x="105" y="132" fontSize="6.5" fill="#64748b" textAnchor="middle">
-                  INNER WALL LENGTHS (EXCLUSIVE OF WALLS)
+                {/* Dimension E (Door Opening Arrow between return jambs from x=106 to x=154) */}
+                <line x1="106" y1="165" x2="154" y2="165" stroke="#38bdf8" strokeWidth="1.5" />
+                <polygon points="106,165 112,162 112,168" fill="#38bdf8" />
+                <polygon points="154,165 148,162 148,168" fill="#38bdf8" />
+                <text x="130" y="180" fontSize="12" fontWeight="bold" fill="#38bdf8" textAnchor="middle">
+                  E
                 </text>
               </svg>
             </div>
             <div className="w-full text-[10px] text-slate-400 space-y-0.5 mt-2 border-t border-slate-900 pt-1.5">
-              <p><strong className="text-sky-400">A / B:</strong> Left / Right Inner Wall Lengths (Exclusive of Walls)</p>
-              <p><strong className="text-sky-400">C / D:</strong> Rear / Front Inner Wall Lengths (Exclusive of Walls)</p>
-              <p><strong className="text-purple-400">E:</strong> Front Shaft Opening Width</p>
+              <p><strong className="text-sky-400">A / B:</strong> Front Left / Right Return Walls</p>
+              <p><strong className="text-sky-400">C:</strong> Shaft Depth (Exclusive of Walls)</p>
+              <p><strong className="text-sky-400">D:</strong> Shaft Width (Exclusive of Walls)</p>
+              <p><strong className="text-sky-400">E:</strong> Door Opening Width</p>
             </div>
           </div>
 
