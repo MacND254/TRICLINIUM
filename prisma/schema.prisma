@@ -709,3 +709,43 @@ model AnalyticsEvent {
   @@index([createdAt])
   @@map("analytics_events")
 }
+
+// ==========================================
+// LIFT SURVEY & SHAFT MEASUREMENTS
+// ==========================================
+
+model LiftSurvey {
+  id               String   @id @default(uuid())
+  surveyNumber     String   @unique // e.g. BSR-2026-001
+  projectName      String   // e.g. COAST CABLES
+  clientName       String?
+  siteLocation     String?
+  buildingName     String?
+  date             String   // e.g. 17-Nov-26 or 04-Apr-25
+  numberOfLifts    Int      @default(1)
+  numberOfStops    Int      @default(6)
+  floorNames       String[] // e.g. ["B", "G", "1", "2", "3", "4"]
+  status           String   @default("DRAFT") // DRAFT, COMPLETED, APPROVED
+  
+  // Data for each lift (shaft measurements, entrance view, hall button cutouts, heights)
+  liftsData        Json
+  
+  // Observations / notes (up to 12 items)
+  observations     Json?
+  
+  // Signatures & personnel
+  surveyorName     String?
+  surveyorSignDate String?
+  directorName     String?
+  directorSignDate String?
+  notes            String?
+
+  createdById      String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([projectName])
+  @@index([status])
+  @@map("lift_surveys")
+}
+

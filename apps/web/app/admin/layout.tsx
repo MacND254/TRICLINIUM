@@ -24,6 +24,7 @@ import {
   ShieldCheck,
   Palette,
   Loader2,
+  Building2,
 } from 'lucide-react';
 import AdminLoginPage from './login/page';
 import { AdminAuthProvider, useAdminAuth } from '@/lib/admin-auth-context';
@@ -147,6 +148,12 @@ function AdminLayoutInner({ children }: { children: React.ReactNode }) {
       items: [
         { label: 'Inquiries, Quotes & Invoices', href: '/admin/inquiries', icon: Inbox },
         { label: 'Media Library', href: '/admin/media', icon: ImageIcon },
+      ],
+    },
+    {
+      title: 'Field Operations & Engineering',
+      items: [
+        { label: 'Lift Surveys (Building Reports)', href: '/admin/lift-surveys', icon: Building2 },
       ],
     },
     {

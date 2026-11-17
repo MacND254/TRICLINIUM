@@ -12,7 +12,7 @@ interface PdfPreviewModalProps {
   blobUrl: string | null;
   fileName: string;
   isLoading?: boolean;
-  docType?: 'QUOTATION' | 'INVOICE';
+  docType?: 'QUOTATION' | 'INVOICE' | 'SURVEY' | string;
 }
 
 export function PdfPreviewModal({
@@ -46,7 +46,11 @@ export function PdfPreviewModal({
           <div className="flex items-center gap-3 min-w-0">
             <div
               className={`h-9 w-9 rounded-lg flex items-center justify-center text-white font-bold shrink-0 shadow-sm ${
-                isQuote ? 'bg-sky-600' : 'bg-emerald-600'
+                docType === 'SURVEY'
+                  ? 'bg-blue-600'
+                  : isQuote
+                  ? 'bg-sky-600'
+                  : 'bg-emerald-600'
               }`}
             >
               <FileText className="h-5 w-5" />
@@ -59,12 +63,14 @@ export function PdfPreviewModal({
                 <Badge
                   variant="outline"
                   className={`text-[10px] uppercase font-bold shrink-0 px-2 py-0.5 ${
-                    isQuote
+                    docType === 'SURVEY'
+                      ? 'bg-blue-950/80 text-blue-300 border-blue-700'
+                      : isQuote
                       ? 'bg-sky-950/80 text-sky-300 border-sky-700'
                       : 'bg-emerald-950/80 text-emerald-300 border-emerald-700'
                   }`}
                 >
-                  {isQuote ? 'Official Quotation' : 'Tax Invoice'}
+                  {docType === 'SURVEY' ? 'Building Survey Report' : isQuote ? 'Official Quotation' : 'Tax Invoice'}
                 </Badge>
               </div>
               <p className="text-[11px] text-slate-400 truncate">

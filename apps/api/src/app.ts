@@ -18,6 +18,7 @@ import { cmsRouter } from './modules/cms/cms.router';
 import { mediaRouter } from './modules/media/media.router';
 import { adminRouter } from './modules/admin/admin.router';
 import { settingsRouter } from './modules/settings/settings.router';
+import { liftSurveysRouter } from './modules/lift-surveys/lift-surveys.router';
 
 export function createApp(): Express {
   const app = express();
@@ -126,6 +127,7 @@ export function createApp(): Express {
   v1.use(mediaRouter);
   v1.use(adminRouter);
   v1.use(settingsRouter);
+  v1.use(liftSurveysRouter);
 
   app.use('/api/v1', v1);
 
