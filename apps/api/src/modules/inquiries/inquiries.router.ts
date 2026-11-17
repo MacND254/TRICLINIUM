@@ -89,3 +89,10 @@ inquiriesRouter.post(
   requirePermission(PERMISSIONS.INQUIRIES_EDIT),
   InquiriesController.convertToInvoice
 );
+
+inquiriesRouter.post(
+  '/admin/inquiries/:id/reply',
+  authenticate,
+  requirePermission(PERMISSIONS.INQUIRIES_EDIT),
+  InquiriesController.replyToInquiry
+);

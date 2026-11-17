@@ -85,6 +85,11 @@ export default function AdminInquiryDetailPage() {
   const [noteContent, setNoteContent] = useState('');
   const [isAddingNote, setIsAddingNote] = useState(false);
 
+  // Email Reply to Client State
+  const [replySubject, setReplySubject] = useState('');
+  const [replyMessage, setReplyMessage] = useState('');
+  const [isSendingReply, setIsSendingReply] = useState(false);
+
   // Document Generator Section (Quotation & Invoice)
   const [showDocGenerator, setShowDocGenerator] = useState(false);
   const [docType, setDocType] = useState<'QUOTATION' | 'INVOICE'>('QUOTATION');
@@ -236,6 +241,9 @@ export default function AdminInquiryDetailPage() {
         clientPhone: data.phone || '',
         items: initialItems,
       }));
+
+      // Pre-populate reply subject
+      setReplySubject(`Re: ${data.subject || 'Your Inquiry to TRICLINIUM SYSTEMS'} [${data.referenceNumber || cleanRef}]`);
     } catch (e) {
       console.error(e);
     } finally {
@@ -295,6 +303,29 @@ export default function AdminInquiryDetailPage() {
       alert(err.message || 'Failed to add note');
     } finally {
       setIsAddingNote(false);
+    }
+  };
+
+  const handleSendDirectReply = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!replyMessage.trim()) return;
+
+    setIsSendingReply(true);
+    try {
+      await fetchApi(`/admin/inquiries/${id}/reply`, {
+        method: 'POST',
+        body: JSON.stringify({
+          subject: replySubject.trim() || `Re: ${inquiry?.subject || 'Inquiry'} [${inquiry?.referenceNumber}]`,
+          message: replyMessage.trim(),
+        }),
+      });
+      setReplyMessage('');
+      await loadInquiry();
+      alert(`Reply successfully dispatched to ${inquiry?.email} via Mail Gateway.`);
+    } catch (err: any) {
+      alert(err.message || 'Failed to dispatch email reply');
+    } finally {
+      setIsSendingReply(false);
     }
   };
 
@@ -816,6 +847,55 @@ export default function AdminInquiryDetailPage() {
                 </span>
               </div>
             )}
+          </div>
+
+          {/* Email Reply to Client via Mail Gateway */}
+          <div className="p-6 rounded-xl border border-sky-800/50 bg-slate-900 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Mail className="h-4 w-4 text-sky-400" />
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                  Reply to Client via Mail Gateway
+                </h3>
+              </div>
+              <span className="text-xs text-sky-400 font-mono">
+                To: {inquiry.email}
+              </span>
+            </div>
+
+            <form onSubmit={handleSendDirectReply} className="space-y-3">
+              <div>
+                <label className="text-xs font-medium text-slate-300">Subject</label>
+                <input
+                  value={replySubject}
+                  onChange={(e) => setReplySubject(e.target.value)}
+                  className="w-full mt-1 h-8 rounded border border-slate-800 bg-slate-950 px-3 text-xs text-white focus:outline-none focus:border-sky-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-slate-300">Reply Message</label>
+                <Textarea
+                  value={replyMessage}
+                  onChange={(e) => setReplyMessage(e.target.value)}
+                  placeholder={`Write your official response to ${inquiry.customerName}. It will be sent via Mail Gateway directly to ${inquiry.email}...`}
+                  rows={4}
+                  className="mt-1 bg-slate-950 border-slate-800 text-white text-xs"
+                />
+              </div>
+
+              <div className="flex justify-end">
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={isSendingReply || !replyMessage.trim()}
+                  className="bg-sky-600 hover:bg-sky-500 text-white text-xs flex items-center gap-1.5 shadow-md shadow-sky-600/30"
+                >
+                  {isSendingReply ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+                  <span>Send Reply via Mail Gateway</span>
+                </Button>
+              </div>
+            </form>
           </div>
 
           {/* Internal Notes & Communications */}

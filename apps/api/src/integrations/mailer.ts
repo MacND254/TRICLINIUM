@@ -273,3 +273,70 @@ export function generateClientInvoiceEmail(data: {
   </div>`;
 }
 
+// ================= EMAIL TEMPLATE FOR INQUIRY REPLIES =================
+
+export function generateInquiryReplyEmail(data: {
+  customerName: string;
+  referenceNumber?: string;
+  subject: string;
+  replyMessage: string;
+  originalMessage?: string;
+  adminName?: string;
+}) {
+  const safeClientName = escapeHtml(data.customerName || 'Valued Customer');
+  const safeRef = escapeHtml(data.referenceNumber || '');
+  const safeAdminName = escapeHtml(data.adminName || 'TRICLINIUM Support Team');
+
+  const formattedReply = escapeHtml(data.replyMessage)
+    .split('\n\n')
+    .map((p) => `<p style="margin: 0 0 12px 0; font-size: 14px; line-height: 1.6; color: #1e293b;">${p.replace(/\n/g, '<br/>')}</p>`)
+    .join('');
+
+  const formattedOriginal = data.originalMessage
+    ? escapeHtml(data.originalMessage)
+        .split('\n')
+        .join('<br/>')
+    : '';
+
+  return `
+  <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 650px; margin: 0 auto; padding: 28px; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; color: #1e293b;">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0284c7; padding-bottom: 16px; margin-bottom: 24px;">
+      <div>
+        <h2 style="color: #0f172a; margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.02em;">TRICLINIUM SYSTEMS</h2>
+        <p style="color: #0284c7; margin: 2px 0 0 0; font-size: 12px; font-weight: 600; text-transform: uppercase;">Smart Security &amp; Surveillance Infrastructure</p>
+      </div>
+      ${safeRef ? `
+      <div style="text-align: right;">
+        <span style="background: #e0f2fe; color: #0369a1; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; font-family: monospace;">
+          REF: ${safeRef}
+        </span>
+      </div>` : ''}
+    </div>
+
+    <p style="font-size: 15px; color: #0f172a; margin: 0 0 16px 0; font-weight: 600;">Dear ${safeClientName},</p>
+
+    <div style="margin-bottom: 24px;">
+      ${formattedReply}
+    </div>
+
+    ${formattedOriginal ? `
+    <div style="background: #f8fafc; border-left: 3px solid #cbd5e1; padding: 12px 16px; margin-bottom: 24px; border-radius: 0 6px 6px 0;">
+      <p style="margin: 0 0 6px 0; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em;">Your Original Inquiry:</p>
+      <div style="font-size: 13px; color: #475569; font-style: italic; line-height: 1.5;">
+        ${formattedOriginal}
+      </div>
+    </div>` : ''}
+
+    <div style="margin-top: 28px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
+      <p style="margin: 0 0 4px 0; font-size: 13px; font-weight: 600; color: #0f172a;">Warm regards,</p>
+      <p style="margin: 0 0 2px 0; font-size: 13px; color: #0284c7; font-weight: 700;">${safeAdminName}</p>
+      <p style="margin: 0; font-size: 12px; color: #64748b;">TRICLINIUM SYSTEMS KENYA</p>
+    </div>
+
+    <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #f1f5f9; font-size: 11px; color: #94a3b8; text-align: center; line-height: 1.5;">
+      <p style="margin: 0 0 4px 0; font-weight: 600; color: #64748b;">TRICLINIUM SYSTEMS · Nairobi, Kenya</p>
+      <p style="margin: 0;">Westlands Commercial Center, Ring Road · Hotline: +254 700 555 199 · Email: inquiries@triclinium.com · Web: www.triclinium.co.ke</p>
+    </div>
+  </div>`;
+}
+

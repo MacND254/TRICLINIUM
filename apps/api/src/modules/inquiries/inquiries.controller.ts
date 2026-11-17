@@ -13,6 +13,7 @@ import {
   getNotifyEmail,
   generateClientQuotationEmail,
   generateClientInvoiceEmail,
+  generateInquiryReplyEmail,
 } from '../../integrations/mailer';
 import { config } from '../../config';
 import {
@@ -901,6 +902,85 @@ export class InquiriesController {
         success: true,
         data: updated,
         message: `Quotation converted to Invoice ${invNo} successfully`,
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  // POST /admin/inquiries/:id/reply (Reply to customer inquiry via Mail Gateway)
+  static async replyToInquiry(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const { subject, message, newStatus } = req.body;
+
+      if (!message || !message.trim()) {
+        return res.status(400).json({ success: false, message: 'Reply message cannot be empty' });
+      }
+
+      const inquiry = await prisma.inquiry.findUnique({ where: { id } });
+      if (!inquiry) return res.status(404).json({ success: false, message: 'Inquiry not found' });
+
+      if (!inquiry.email) {
+        return res.status(400).json({ success: false, message: 'Inquiry has no associated client email address' });
+      }
+
+      const adminUser = (req as any).user;
+      const adminName = adminUser?.name || 'TRICLINIUM Support Team';
+      const replySubject = subject?.trim() || `Re: ${inquiry.subject || 'Your Inquiry to TRICLINIUM'} [${inquiry.referenceNumber}]`;
+
+      const html = generateInquiryReplyEmail({
+        customerName: inquiry.customerName,
+        referenceNumber: inquiry.referenceNumber,
+        subject: replySubject,
+        replyMessage: message.trim(),
+        originalMessage: inquiry.message,
+        adminName,
+      });
+
+      const mailRes = await sendMailGateway({
+        to: inquiry.email,
+        subject: replySubject,
+        html,
+        text: `${message.trim()}\n\n---\nOriginal Inquiry:\n${inquiry.message}`,
+      });
+
+      if (!mailRes.success) {
+        return res.status(500).json({ success: false, message: mailRes.error || 'Failed to dispatch email reply via Mail Gateway' });
+      }
+
+      // Optionally advance status (e.g. from NEW to IN_PROGRESS)
+      const targetStatus = newStatus || (inquiry.status === 'NEW' ? 'IN_PROGRESS' : undefined);
+      if (targetStatus && targetStatus !== inquiry.status) {
+        await prisma.inquiry.update({
+          where: { id },
+          data: { status: targetStatus },
+        });
+      }
+
+      await prisma.inquiryNote.create({
+        data: {
+          inquiryId: id,
+          content: `📧 Reply emailed to ${inquiry.email} via Mail Gateway\nSubject: ${replySubject}\n\n${message.trim()}`,
+          authorId: adminUser?.id,
+        },
+      });
+
+      await logAudit({
+        userId: adminUser?.id,
+        action: 'INQUIRY_REPLIED',
+        entityType: 'Inquiry',
+        entityId: id,
+        details: {
+          recipient: inquiry.email,
+          subject: replySubject,
+          updatedStatus: targetStatus,
+        },
+      });
+
+      return res.json({
+        success: true,
+        message: `Reply successfully sent to ${inquiry.email}`,
       });
     } catch (err) {
       next(err);
