@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, Search, Edit2, Trash2, Eye, EyeOff, BookOpen, Loader2, X, Tag, Calendar, Star, UploadCloud } from 'lucide-react';
-import { uploadAdminMedia, apiFetch } from '@/lib/api-client';
+import { uploadAdminMedia, apiFetch, triggerRevalidation } from '@/lib/api-client';
 
 interface BlogPost {
   id: string;
@@ -65,6 +65,20 @@ function PostModal({ post, onClose, onSave }: {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
+  useEffect(() => {
+    setForm({
+      title: post?.title || '',
+      slug: post?.slug || '',
+      excerpt: post?.excerpt || '',
+      content: post?.content || '',
+      coverImageUrl: post?.coverImageUrl || post?.featuredImage || '',
+      category: post?.category || '',
+      tags: (post?.tags || []).join(', '),
+      status: post?.status || 'DRAFT',
+      isFeatured: post?.isFeatured || false,
+    });
+  }, [post]);
+
   const inputCls = "w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:border-sky-500 focus:outline-none";
   const textareaCls = `${inputCls} resize-y`;
 
@@ -89,13 +103,24 @@ function PostModal({ post, onClose, onSave }: {
 
   const handleSave = async () => {
     setSaving(true);
-    await onSave({
-      ...post,
-      ...form,
-      featuredImage: form.coverImageUrl,
-      tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
-    });
-    setSaving(false);
+    try {
+      const excerpt = form.excerpt.trim() || form.content.slice(0, 160).replace(/[#*`]/g, '').trim() || 'Blog post summary';
+      await onSave({
+        id: post?.id,
+        title: form.title,
+        slug: form.slug,
+        excerpt,
+        content: form.content,
+        featuredImage: form.coverImageUrl,
+        coverImageUrl: form.coverImageUrl,
+        category: form.category,
+        status: form.status as any,
+        isFeatured: form.isFeatured,
+        tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -250,8 +275,9 @@ export default function CMSBlogPage() {
         ...data,
         featuredImage: data.coverImageUrl || data.featuredImage,
       };
-      if (data.id) {
-        await apiFetch(`/admin/blog/${data.id}`, { method: 'PATCH', body: JSON.stringify(payload) });
+      const postId = data.id || editing?.id || posts.find(p => p.slug === data.slug)?.id;
+      if (postId) {
+        await apiFetch(`/admin/blog/${postId}`, { method: 'PATCH', body: JSON.stringify(payload) });
         showToast('Post updated');
       } else {
         await apiFetch('/admin/blog', { method: 'POST', body: JSON.stringify(payload) });
@@ -259,6 +285,8 @@ export default function CMSBlogPage() {
       }
       setEditing(undefined);
       await fetchPosts();
+      // Instantly purge stale Next.js ISR edge cache on Vercel
+      await triggerRevalidation(['/blog', `/blog/${data.slug || ''}`]);
     } catch (e: unknown) { showToast((e as Error).message, 'error'); }
   };
 

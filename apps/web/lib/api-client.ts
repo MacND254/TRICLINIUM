@@ -189,7 +189,14 @@ export async function fetchApi<T = any>(
     const data = await res.json().catch(() => null);
 
     if (!res.ok) {
-      const errorMsg = data?.error?.message || data?.message || `Request failed with status ${res.status}`;
+      const detailsList = data?.error?.details;
+      let errorMsg = data?.error?.message || data?.message || `Request failed with status ${res.status}`;
+      if (detailsList && Array.isArray(detailsList) && detailsList.length > 0) {
+        const fieldErrors = detailsList
+          .map((d: any) => `${d.field ? `${d.field}: ` : ''}${d.message}`)
+          .join(', ');
+        errorMsg = `${errorMsg} (${fieldErrors})`;
+      }
       const errorCode = data?.error?.code || 'REQUEST_FAILED';
       const retryHeader = res.headers.get('Retry-After');
       const retryAfter = data?.error?.retryAfter || (retryHeader ? parseInt(retryHeader, 10) : undefined);

@@ -110,6 +110,27 @@ function PageModal({
     isEnabled: initialHeroContent.isEnabled !== undefined ? initialHeroContent.isEnabled : true,
   });
 
+  useEffect(() => {
+    const existingHero = page?.sections?.find((s) => s.key === 'hero');
+    const heroContent = existingHero?.content || {};
+    setForm({
+      title: page?.title || '',
+      slug: page?.slug || '',
+      content: page?.content || '',
+      status: (page?.status as 'PUBLISHED' | 'DRAFT') || 'PUBLISHED',
+      seoTitle: page?.seoTitle || '',
+      seoDescription: page?.seoDescription || '',
+    });
+    setHero({
+      badge: heroContent.badge || '',
+      title: heroContent.title || page?.title || '',
+      subtitle: heroContent.subtitle || '',
+      backgroundImage: heroContent.backgroundImage || '',
+      bullets: Array.isArray(heroContent.bullets) ? heroContent.bullets : [],
+      isEnabled: heroContent.isEnabled !== undefined ? heroContent.isEnabled : true,
+    });
+  }, [page]);
+
   const handleHeroFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -141,6 +162,7 @@ function PageModal({
     setSaving(true);
     try {
       await onSave({
+        id: page?.id,
         ...form,
         hero: {
           ...hero,
@@ -605,8 +627,9 @@ export default function CMSPagesPage() {
 
   const handleSave = async (data: any) => {
     try {
-      if (data.id) {
-        await apiFetch(`/admin/cms/pages/${data.id}`, {
+      const pageId = data.id || editing?.id || pages.find(p => p.slug === data.slug)?.id;
+      if (pageId) {
+        await apiFetch(`/admin/cms/pages/${pageId}`, {
           method: 'PUT',
           body: JSON.stringify(data),
         });

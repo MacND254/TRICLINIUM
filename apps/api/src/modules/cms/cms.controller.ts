@@ -315,17 +315,44 @@ export class CmsController {
       const data = pageSchema.parse(body);
       const slug = slugify(data.slug);
 
-      const page = await prisma.page.create({
-        data: {
-          title: data.title,
-          slug,
-          content: data.content,
-          status: data.status,
-          seoTitle: data.seoTitle,
-          seoDescription: data.seoDescription,
-          publishedAt: data.status === 'PUBLISHED' ? new Date() : null,
+      // Check if page with this slug or id already exists
+      const existingPage = await prisma.page.findFirst({
+        where: {
+          OR: [
+            { slug },
+            ...(body.id ? [{ id: body.id }] : []),
+          ],
         },
       });
+
+      let page;
+      if (existingPage) {
+        // Upsert/Update existing page instead of failing with slug unique constraint error
+        page = await prisma.page.update({
+          where: { id: existingPage.id },
+          data: {
+            title: data.title,
+            slug,
+            content: data.content,
+            status: data.status,
+            seoTitle: data.seoTitle,
+            seoDescription: data.seoDescription,
+            publishedAt: data.status === 'PUBLISHED' ? new Date() : existingPage.publishedAt,
+          },
+        });
+      } else {
+        page = await prisma.page.create({
+          data: {
+            title: data.title,
+            slug,
+            content: data.content,
+            status: data.status,
+            seoTitle: data.seoTitle,
+            seoDescription: data.seoDescription,
+            publishedAt: data.status === 'PUBLISHED' ? new Date() : null,
+          },
+        });
+      }
 
       // Handle Hero Section if provided
       if (req.body.hero && typeof req.body.hero === 'object') {
@@ -354,16 +381,31 @@ export class CmsController {
           }
         }
 
-        await prisma.pageSection.create({
-          data: {
-            pageId: page.id,
-            key: 'hero',
-            title: hero.title || page.title,
-            content: hero,
-            displayOrder: 0,
-            isEnabled: hero.isEnabled !== false,
-          },
+        const existingHero = await prisma.pageSection.findFirst({
+          where: { pageId: page.id, key: 'hero' },
         });
+
+        if (existingHero) {
+          await prisma.pageSection.update({
+            where: { id: existingHero.id },
+            data: {
+              title: hero.title || page.title,
+              content: hero,
+              isEnabled: hero.isEnabled !== false,
+            },
+          });
+        } else {
+          await prisma.pageSection.create({
+            data: {
+              pageId: page.id,
+              key: 'hero',
+              title: hero.title || page.title,
+              content: hero,
+              displayOrder: 0,
+              isEnabled: hero.isEnabled !== false,
+            },
+          });
+        }
       }
 
       const fullPage = await prisma.page.findUnique({
@@ -372,9 +414,9 @@ export class CmsController {
       });
 
       await invalidateCmsCaches(page.slug);
-      await logAudit({ req, action: 'PAGE_CREATED', entityType: 'Page', entityId: page.id });
+      await logAudit({ req, action: existingPage ? 'PAGE_UPDATED' : 'PAGE_CREATED', entityType: 'Page', entityId: page.id });
 
-      return res.status(201).json({ success: true, data: fullPage || page });
+      return res.status(existingPage ? 200 : 201).json({ success: true, data: fullPage || page });
     } catch (err) {
       next(err);
     }
@@ -392,15 +434,43 @@ export class CmsController {
       const data = pageSchema.partial().parse(body);
       const slug = data.slug ? slugify(data.slug) : undefined;
 
+      // Locate target page by id OR slug
+      const targetPage = await prisma.page.findFirst({
+        where: {
+          OR: [
+            { id },
+            { slug: id },
+            ...(slug ? [{ slug }] : []),
+          ],
+        },
+      });
+
+      if (!targetPage) {
+        return res.status(404).json({ success: false, error: { message: 'Page not found' } });
+      }
+
+      // If slug changed, ensure no other page has this slug
+      if (slug && slug !== targetPage.slug) {
+        const conflict = await prisma.page.findFirst({
+          where: { slug, id: { not: targetPage.id } },
+        });
+        if (conflict) {
+          return res.status(409).json({
+            success: false,
+            error: { message: `Another page already uses the slug '/${slug}'. Please choose a different slug.` },
+          });
+        }
+      }
+
       const page = await prisma.page.update({
-        where: { id },
+        where: { id: targetPage.id },
         data: {
           ...(data.title && { title: data.title }),
           ...(slug && { slug }),
           ...(data.content !== undefined && { content: data.content }),
           ...(data.status && {
             status: data.status,
-            publishedAt: data.status === 'PUBLISHED' ? new Date() : null,
+            publishedAt: data.status === 'PUBLISHED' ? new Date() : targetPage.publishedAt,
           }),
           ...(data.seoTitle !== undefined && { seoTitle: data.seoTitle }),
           ...(data.seoDescription !== undefined && { seoDescription: data.seoDescription }),
@@ -467,7 +537,7 @@ export class CmsController {
       });
 
       await invalidateCmsCaches(page.slug);
-      await logAudit({ req, action: 'PAGE_UPDATED', entityType: 'Page', entityId: id });
+      await logAudit({ req, action: 'PAGE_UPDATED', entityType: 'Page', entityId: page.id });
 
       return res.json({ success: true, data: fullPage || page });
     } catch (err) {
@@ -529,44 +599,119 @@ export class CmsController {
       if (body.coverImageUrl && !body.featuredImage) {
         body.featuredImage = body.coverImageUrl;
       }
-      if (body.category && !body.categoryId) {
-        const catName = String(body.category).trim();
-        const catSlug = slugify(catName);
-        let cat = await prisma.blogCategory.findFirst({ where: { slug: catSlug } });
-        if (!cat) {
-          cat = await prisma.blogCategory.create({ data: { name: catName, slug: catSlug } });
+      if (body.featuredImage && typeof body.featuredImage === 'string' && body.featuredImage.startsWith('data:')) {
+        try {
+          const matches = body.featuredImage.match(/^data:([a-zA-Z0-9\/+.-]+);base64,(.+)$/);
+          if (matches) {
+            const mimeType = matches[1];
+            const ext = mimeType === 'image/png' ? '.png' : mimeType === 'image/webp' ? '.webp' : '.jpg';
+            const filename = `${Date.now()}-blog-${Math.random().toString(36).substring(7)}${ext}`;
+            await prisma.mediaAsset.create({
+              data: {
+                filename,
+                originalName: `blog-cover${ext}`,
+                url: body.featuredImage,
+                mimeType,
+                size: Buffer.byteLength(matches[2], 'base64'),
+                provider: 'local',
+              },
+            });
+            body.featuredImage = `/api/v1/media/file/${filename}`;
+          }
+        } catch (e) {
+          console.warn('[Auto-extract blog image base64 failed]:', e);
         }
-        body.categoryId = cat.id;
+      }
+
+      if (body.category && !body.categoryId) {
+        const catName = typeof body.category === 'object' ? (body.category?.name || '') : String(body.category).trim();
+        if (catName) {
+          const catSlug = slugify(catName);
+          let cat = await prisma.blogCategory.findFirst({ where: { slug: catSlug } });
+          if (!cat) {
+            cat = await prisma.blogCategory.create({ data: { name: catName, slug: catSlug } });
+          }
+          body.categoryId = cat.id;
+        }
+      }
+
+      if (!body.excerpt && body.content) {
+        body.excerpt = body.content.slice(0, 160).replace(/[#*`]/g, '');
       }
 
       const data = blogPostSchema.parse(body);
       const slug = slugify(data.slug);
 
-      const post = await prisma.blogPost.create({
-        data: {
-          title: data.title,
-          slug,
-          excerpt: data.excerpt,
-          content: data.content,
-          featuredImage: data.featuredImage || null,
-          categoryId: data.categoryId || null,
-          status: data.status,
-          seoTitle: data.seoTitle,
-          seoDescription: data.seoDescription,
-          publishedAt: data.status === 'PUBLISHED' ? new Date() : null,
+      // Check if a post with this slug or id already exists
+      const existingPost = await prisma.blogPost.findFirst({
+        where: {
+          OR: [
+            { slug },
+            ...(body.id ? [{ id: body.id }] : []),
+          ],
         },
       });
 
-      await invalidateCmsCaches(undefined, post.slug);
-      await logAudit({ req, action: 'BLOG_POST_CREATED', entityType: 'BlogPost', entityId: post.id });
+      let post;
+      if (existingPost) {
+        post = await prisma.blogPost.update({
+          where: { id: existingPost.id },
+          data: {
+            title: data.title,
+            slug,
+            excerpt: data.excerpt,
+            content: data.content,
+            featuredImage: data.featuredImage || null,
+            categoryId: data.categoryId || null,
+            status: data.status,
+            seoTitle: data.seoTitle,
+            seoDescription: data.seoDescription,
+            publishedAt: data.status === 'PUBLISHED' ? new Date() : existingPost.publishedAt,
+          },
+        });
+      } else {
+        post = await prisma.blogPost.create({
+          data: {
+            title: data.title,
+            slug,
+            excerpt: data.excerpt,
+            content: data.content,
+            featuredImage: data.featuredImage || null,
+            categoryId: data.categoryId || null,
+            status: data.status,
+            seoTitle: data.seoTitle,
+            seoDescription: data.seoDescription,
+            publishedAt: data.status === 'PUBLISHED' ? new Date() : null,
+          },
+        });
+      }
 
-      return res.status(201).json({ success: true, data: post });
+      if (Array.isArray(body.tags)) {
+        await prisma.blogPostTag.deleteMany({ where: { postId: post.id } });
+        for (const tagName of body.tags) {
+          const trimmed = String(tagName).trim();
+          if (!trimmed) continue;
+          const tagSlug = slugify(trimmed);
+          let tag = await prisma.blogTag.findFirst({ where: { slug: tagSlug } });
+          if (!tag) {
+            tag = await prisma.blogTag.create({ data: { name: trimmed, slug: tagSlug } });
+          }
+          await prisma.blogPostTag.create({
+            data: { postId: post.id, tagId: tag.id },
+          }).catch(() => {});
+        }
+      }
+
+      await invalidateCmsCaches(undefined, post.slug);
+      await logAudit({ req, action: existingPost ? 'BLOG_POST_UPDATED' : 'BLOG_POST_CREATED', entityType: 'BlogPost', entityId: post.id });
+
+      return res.status(existingPost ? 200 : 201).json({ success: true, data: post });
     } catch (err) {
       next(err);
     }
   }
 
-  // PATCH /admin/blog/:id
+  // PATCH & PUT /admin/blog/:id
   static async updateBlogPost(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
@@ -574,21 +719,74 @@ export class CmsController {
       if (body.coverImageUrl !== undefined && !body.featuredImage) {
         body.featuredImage = body.coverImageUrl;
       }
-      if (body.category && !body.categoryId) {
-        const catName = String(body.category).trim();
-        const catSlug = slugify(catName);
-        let cat = await prisma.blogCategory.findFirst({ where: { slug: catSlug } });
-        if (!cat) {
-          cat = await prisma.blogCategory.create({ data: { name: catName, slug: catSlug } });
+      if (body.featuredImage && typeof body.featuredImage === 'string' && body.featuredImage.startsWith('data:')) {
+        try {
+          const matches = body.featuredImage.match(/^data:([a-zA-Z0-9\/+.-]+);base64,(.+)$/);
+          if (matches) {
+            const mimeType = matches[1];
+            const ext = mimeType === 'image/png' ? '.png' : mimeType === 'image/webp' ? '.webp' : '.jpg';
+            const filename = `${Date.now()}-blog-${Math.random().toString(36).substring(7)}${ext}`;
+            await prisma.mediaAsset.create({
+              data: {
+                filename,
+                originalName: `blog-cover${ext}`,
+                url: body.featuredImage,
+                mimeType,
+                size: Buffer.byteLength(matches[2], 'base64'),
+                provider: 'local',
+              },
+            });
+            body.featuredImage = `/api/v1/media/file/${filename}`;
+          }
+        } catch (e) {
+          console.warn('[Auto-extract blog image base64 failed]:', e);
         }
-        body.categoryId = cat.id;
+      }
+
+      if (body.category && !body.categoryId) {
+        const catName = typeof body.category === 'object' ? (body.category?.name || '') : String(body.category).trim();
+        if (catName) {
+          const catSlug = slugify(catName);
+          let cat = await prisma.blogCategory.findFirst({ where: { slug: catSlug } });
+          if (!cat) {
+            cat = await prisma.blogCategory.create({ data: { name: catName, slug: catSlug } });
+          }
+          body.categoryId = cat.id;
+        }
+      }
+
+      const targetPost = await prisma.blogPost.findFirst({
+        where: {
+          OR: [
+            { id },
+            { slug: id },
+            ...(body.slug ? [{ slug: slugify(body.slug) }] : []),
+          ],
+        },
+      });
+
+      if (!targetPost) {
+        return res.status(404).json({ success: false, error: { message: 'Blog post not found' } });
       }
 
       const data = blogPostSchema.partial().parse(body);
       const slug = data.slug ? slugify(data.slug) : undefined;
 
+      // Check for slug conflicts with OTHER posts
+      if (slug && slug !== targetPost.slug) {
+        const conflict = await prisma.blogPost.findFirst({
+          where: { slug, id: { not: targetPost.id } },
+        });
+        if (conflict) {
+          return res.status(409).json({
+            success: false,
+            error: { message: `Another blog post already uses the slug '/${slug}'. Please choose a different slug.` },
+          });
+        }
+      }
+
       const post = await prisma.blogPost.update({
-        where: { id },
+        where: { id: targetPost.id },
         data: {
           ...(data.title && { title: data.title }),
           ...(slug && { slug }),
@@ -598,15 +796,31 @@ export class CmsController {
           ...(data.categoryId !== undefined && { categoryId: data.categoryId || null }),
           ...(data.status && {
             status: data.status,
-            publishedAt: data.status === 'PUBLISHED' ? new Date() : null,
+            publishedAt: data.status === 'PUBLISHED' ? new Date() : targetPost.publishedAt,
           }),
           ...(data.seoTitle !== undefined && { seoTitle: data.seoTitle }),
           ...(data.seoDescription !== undefined && { seoDescription: data.seoDescription }),
         },
       });
 
+      if (Array.isArray(body.tags)) {
+        await prisma.blogPostTag.deleteMany({ where: { postId: post.id } });
+        for (const tagName of body.tags) {
+          const trimmed = String(tagName).trim();
+          if (!trimmed) continue;
+          const tagSlug = slugify(trimmed);
+          let tag = await prisma.blogTag.findFirst({ where: { slug: tagSlug } });
+          if (!tag) {
+            tag = await prisma.blogTag.create({ data: { name: trimmed, slug: tagSlug } });
+          }
+          await prisma.blogPostTag.create({
+            data: { postId: post.id, tagId: tag.id },
+          }).catch(() => {});
+        }
+      }
+
       await invalidateCmsCaches(undefined, post.slug);
-      await logAudit({ req, action: 'BLOG_POST_UPDATED', entityType: 'BlogPost', entityId: id });
+      await logAudit({ req, action: 'BLOG_POST_UPDATED', entityType: 'BlogPost', entityId: post.id });
 
       return res.json({ success: true, data: post });
     } catch (err) {
