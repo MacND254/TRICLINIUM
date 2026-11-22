@@ -59,11 +59,33 @@ export class CmsController {
         }),
       ]);
 
+      let resolvedSlides = heroSlides.map((s) => ({
+        id: s.id,
+        ...(s.content as any),
+      }));
+
+      // Fallback: If no 'hero_slide' sections exist, check if 'hero' section exists
+      if (resolvedSlides.length === 0) {
+        const heroSection = sections.find((s) => s.key === 'hero');
+        if (heroSection && heroSection.content && Array.isArray((heroSection.content as any).slides)) {
+          resolvedSlides = (heroSection.content as any).slides
+            .filter((s: any) => s.isActive !== false)
+            .map((s: any, idx: number) => ({
+              id: s.id || `hero-slide-${idx + 1}`,
+              headline: s.headline || '',
+              subheadline: s.subheadline || '',
+              description: s.description || '',
+              imageUrl: s.imageUrl || '',
+              primaryCtaText: s.primaryCTA?.label || s.primaryCtaText || 'Explore Products',
+              primaryCtaLink: s.primaryCTA?.href || s.primaryCtaLink || '/products',
+              secondaryCtaText: s.secondaryCTA?.label || s.secondaryCtaText || 'Request Quote',
+              secondaryCtaLink: s.secondaryCTA?.href || s.secondaryCtaLink || '/contact',
+            }));
+        }
+      }
+
       const formatted = {
-        heroSlides: heroSlides.map((s) => ({
-          id: s.id,
-          ...(s.content as any),
-        })),
+        heroSlides: resolvedSlides,
         sections: sections.reduce((acc: any, sec) => {
           acc[sec.key] = {
             id: sec.id,

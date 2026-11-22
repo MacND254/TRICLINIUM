@@ -20,7 +20,7 @@ import {
   Sparkles,
   ShieldAlert,
 } from 'lucide-react';
-import { apiFetch, uploadAdminMedia } from '@/lib/api-client';
+import { apiFetch, uploadAdminMedia, triggerRevalidation } from '@/lib/api-client';
 
 interface PageSection {
   id?: string;
@@ -617,6 +617,9 @@ export default function CMSPagesPage() {
           body: JSON.stringify(data),
         });
         showToast(`Page "${data.title}" created successfully.`);
+      }
+      if (data.slug) {
+        await triggerRevalidation([data.slug === 'home' ? '/' : `/${data.slug}`]);
       }
       setEditing(undefined);
       await fetchPages();

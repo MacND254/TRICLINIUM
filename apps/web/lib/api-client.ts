@@ -1,23 +1,69 @@
 export function getApiBaseUrl(): string {
-  // If explicitly provided via environment, use it
-  if (process.env.NEXT_PUBLIC_API_URL) {
-    return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '');
-  }
+  const isClient = typeof window !== 'undefined';
 
-  // Client-side in browser: use relative path '/api/v1' so it hits the current domain
-  if (typeof window !== 'undefined') {
+  if (isClient) {
+    const hostname = window.location.hostname;
+    const isLocal = hostname === 'localhost' || hostname === '127.0.0.1';
+
+    // In a browser on production (e.g. Vercel *.vercel.app or custom domain):
+    // ALWAYS use relative '/api/v1' so it hits the current domain's serverless API
+    if (!isLocal) {
+      if (
+        process.env.NEXT_PUBLIC_API_URL &&
+        !process.env.NEXT_PUBLIC_API_URL.includes('localhost') &&
+        !process.env.NEXT_PUBLIC_API_URL.includes('127.0.0.1')
+      ) {
+        return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '');
+      }
+      return '/api/v1';
+    }
+
+    if (process.env.NEXT_PUBLIC_API_URL) {
+      return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '');
+    }
     return '/api/v1';
   }
 
-  // Server-side (SSR / build)
+  // Server-side (SSR / ISR / Build)
+  const isVercel = Boolean(
+    process.env.VERCEL ||
+    process.env.VERCEL_ENV ||
+    process.env.NEXT_PUBLIC_VERCEL_ENV ||
+    process.env.VERCEL_URL
+  );
+
+  if (isVercel) {
+    if (
+      process.env.INTERNAL_API_URL &&
+      !process.env.INTERNAL_API_URL.includes('localhost') &&
+      !process.env.INTERNAL_API_URL.includes('127.0.0.1')
+    ) {
+      return process.env.INTERNAL_API_URL.replace(/\/$/, '');
+    }
+    if (
+      process.env.NEXT_PUBLIC_SITE_URL &&
+      !process.env.NEXT_PUBLIC_SITE_URL.includes('localhost') &&
+      !process.env.NEXT_PUBLIC_SITE_URL.includes('127.0.0.1')
+    ) {
+      return `${process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, '')}/api/v1`;
+    }
+    if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+      return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}/api/v1`;
+    }
+    if (process.env.VERCEL_URL) {
+      return `https://${process.env.VERCEL_URL}/api/v1`;
+    }
+  }
+
+  // Local development server-side
   if (process.env.INTERNAL_API_URL) {
     return process.env.INTERNAL_API_URL.replace(/\/$/, '');
   }
   if (process.env.API_URL) {
     return process.env.API_URL.replace(/\/$/, '');
   }
-  if (process.env.VERCEL_URL) {
-    return `https://${process.env.VERCEL_URL}/api/v1`;
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '');
   }
 
   return 'http://localhost:4000/api/v1';
@@ -124,9 +170,9 @@ export async function fetchApi<T = any>(
     // Client-side: attach credentials for session cookies
     fetchConfig.credentials = options.credentials || 'include';
   } else {
-    // Server-side (SSR / ISR): 3-second abort timeout prevents serverless lag
+    // Server-side (SSR / ISR): 10-second abort timeout prevents premature drops on serverless cold starts
     if (!fetchConfig.signal) {
-      fetchConfig.signal = AbortSignal.timeout(3000);
+      fetchConfig.signal = AbortSignal.timeout(10000);
     }
     // Enable Next.js ISR data caching for public GET requests if not specified
     if (!fetchConfig.next && !fetchConfig.cache) {
@@ -228,4 +274,26 @@ export async function uploadAdminMedia(file: File): Promise<{ url: string; filen
 export async function apiFetch<T = any>(path: string, options?: RequestInit): Promise<T> {
   const cleanPath = path.startsWith('/api/v1') ? path.replace('/api/v1', '') : path;
   return fetchApi<T>(cleanPath, options);
+}
+
+/**
+ * Triggers Next.js On-Demand Cache Revalidation so published CMS and settings changes
+ * immediately reflect on the public frontend without waiting for ISR cache timeouts.
+ */
+export async function triggerRevalidation(paths: string | string[] = ['/']): Promise<boolean> {
+  try {
+    const pathList = Array.isArray(paths) ? paths : [paths];
+    const secret =
+      process.env.NEXT_PUBLIC_REVALIDATION_SECRET ||
+      'triclinium_revalidation_secret_key_8842';
+
+    await fetch(`/api/revalidate?secret=${encodeURIComponent(secret)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ paths: pathList }),
+    });
+    return true;
+  } catch {
+    return false;
+  }
 }

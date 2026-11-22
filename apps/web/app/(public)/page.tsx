@@ -17,7 +17,7 @@ import { ServiceCard } from '@/components/public/service-card';
 import { Button } from '@/components/ui/button';
 import { fetchApi } from '@/lib/api-client';
 
-export const revalidate = 300; // ISR 5 minutes
+export const revalidate = 60; // ISR 1 minute
 
 export default async function HomePage() {
   let homepageData: any = null;
@@ -25,6 +25,7 @@ export default async function HomePage() {
   try {
     homepageData = await fetchApi('/homepage');
   } catch (e) {
+    console.error('[HomePage SSR fetchApi error]:', e);
     // Graceful fallback if backend not yet running during initial static build
     homepageData = null;
   }

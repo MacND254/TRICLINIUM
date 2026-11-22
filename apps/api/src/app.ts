@@ -16,6 +16,7 @@ import { servicesRouter } from './modules/services/services.router';
 import { inquiriesRouter } from './modules/inquiries/inquiries.router';
 import { cmsRouter } from './modules/cms/cms.router';
 import { mediaRouter } from './modules/media/media.router';
+import { MediaController } from './modules/media/media.controller';
 import { adminRouter } from './modules/admin/admin.router';
 import { settingsRouter } from './modules/settings/settings.router';
 import { liftSurveysRouter } from './modules/lift-surveys/lift-surveys.router';
@@ -130,6 +131,9 @@ export function createApp(): Express {
   v1.use(liftSurveysRouter);
 
   app.use('/api/v1', v1);
+
+  // Serve media uploads directly from /uploads/:filename (Vercel rewrite & local backward-compatibility)
+  app.get('/uploads/:filename', MediaController.serveFile);
 
   // 404 handler for API routes
   app.use('/api/*', (req: Request, res: Response) => {

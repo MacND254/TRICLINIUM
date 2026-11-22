@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Plus, GripVertical, Eye, EyeOff, Edit2, Save, X, ChevronDown, ChevronUp, Loader2, Image as ImageIcon, Trash2, AlertCircle, UploadCloud } from 'lucide-react';
-import { uploadAdminMedia, apiFetch } from '@/lib/api-client';
+import { uploadAdminMedia, apiFetch, triggerRevalidation } from '@/lib/api-client';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -411,7 +411,9 @@ export default function HomepageCMSPage() {
     try {
       await apiFetch(`/admin/homepage/sections/${key}`, { method: 'PUT', body: JSON.stringify({ isEnabled: enabled }) });
       setSections(prev => prev.map(s => s.key === key ? { ...s, isEnabled: enabled } : s));
-      showToast(`Section ${enabled ? 'enabled' : 'hidden'}`);
+      // Instantly purge stale Next.js ISR edge cache on Vercel
+      await triggerRevalidation(['/']);
+      showToast(`Section ${enabled ? 'enabled' : 'hidden'} and published to live website!`);
     } catch (e: unknown) {
       showToast((e as Error).message, 'error');
     }
@@ -421,7 +423,9 @@ export default function HomepageCMSPage() {
     try {
       await apiFetch(`/admin/homepage/sections/${key}`, { method: 'PUT', body: JSON.stringify({ content }) });
       setSections(prev => prev.map(s => s.key === key ? { ...s, content } : s));
-      showToast('Section saved successfully');
+      // Instantly purge stale Next.js ISR edge cache on Vercel
+      await triggerRevalidation(['/']);
+      showToast('Section saved and published to live website!');
     } catch (e: unknown) {
       showToast((e as Error).message, 'error');
     }

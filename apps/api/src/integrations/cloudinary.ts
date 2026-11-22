@@ -177,41 +177,37 @@ export async function uploadMedia(file: Express.Multer.File): Promise<UploadResu
     }
   }
 
-  // Local/Dev persistent fallback: store in apps/web/public/uploads
+  // 2. Persistent fallback: generate base64 data URI so binary is permanently retained in database
+  const base64Data = file.buffer.toString('base64');
+  const dataUri = `data:${file.mimetype};base64,${base64Data}`;
+
+  // 3. Local/Dev disk storage (best effort on local environments for direct disk caching)
   try {
     let uploadDir = path.resolve(process.cwd(), 'apps/web/public/uploads');
     if (!fs.existsSync(path.resolve(process.cwd(), 'apps/web')) && fs.existsSync(path.resolve(process.cwd(), '../web/public'))) {
       uploadDir = path.resolve(process.cwd(), '../web/public/uploads');
     }
-    if (!fs.existsSync(uploadDir)) {
+    if (!fs.existsSync(uploadDir) && !process.env.VERCEL) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
     
-    // Validate target path is strictly within uploadDir (defense against path traversal)
-    const targetPath = path.join(uploadDir, safeFilename);
-    const resolvedPath = path.resolve(targetPath);
-    if (!resolvedPath.startsWith(uploadDir)) {
-      throw new Error('Invalid upload destination path detected.');
+    if (fs.existsSync(uploadDir)) {
+      const targetPath = path.join(uploadDir, safeFilename);
+      const resolvedPath = path.resolve(targetPath);
+      if (resolvedPath.startsWith(uploadDir)) {
+        fs.writeFileSync(resolvedPath, file.buffer);
+      }
     }
-
-    fs.writeFileSync(resolvedPath, file.buffer);
-
-    return {
-      url: `/uploads/${safeFilename}`,
-      provider: 'local',
-      filename: safeFilename,
-      size: file.size,
-      mimeType: file.mimetype,
-    };
-  } catch (localErr: any) {
-    // In-memory data URI fallback if filesystem writing fails
-    const base64 = file.buffer.toString('base64');
-    return {
-      url: `data:${file.mimetype};base64,${base64}`,
-      provider: 'local',
-      filename: safeFilename,
-      size: file.size,
-      mimeType: file.mimetype,
-    };
+  } catch (diskErr) {
+    // Disk write skipped or failed (expected in read-only serverless environments like Vercel)
   }
+
+  // Always store persistent data URI so media can be served on Vercel serverless without disk dependencies
+  return {
+    url: dataUri,
+    provider: 'local',
+    filename: safeFilename,
+    size: file.size,
+    mimeType: file.mimetype,
+  };
 }

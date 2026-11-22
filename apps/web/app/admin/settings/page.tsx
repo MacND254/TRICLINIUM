@@ -7,7 +7,7 @@ import {
   Upload, Trash2,
 } from 'lucide-react';
 import { handleKenyanPhoneChange, formatKenyanPhone } from '@/lib/phone';
-import { uploadAdminMedia, apiFetch } from '@/lib/api-client';
+import { uploadAdminMedia, apiFetch, triggerRevalidation } from '@/lib/api-client';
 import { usePublicSettings } from '@/lib/settings-context';
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -257,6 +257,8 @@ export default function SettingsPage() {
       }));
       await apiFetch('/admin/settings', { method: 'PUT', body: JSON.stringify({ settings: payload }) });
       await refreshSettings();
+      // Instantly purge stale Next.js ISR edge cache on Vercel
+      await triggerRevalidation(['/', '/about', '/contact', '/services', '/products']);
       showToast('Settings saved successfully. Changes are now live on the website!');
     } catch (e: unknown) {
       showToast((e as Error).message, 'error');
@@ -414,11 +416,10 @@ export default function SettingsPage() {
                           key={size}
                           type="button"
                           onClick={() => set('maxUploadSizeMb', size)}
-                          className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
-                            settings.maxUploadSizeMb === size
-                              ? 'bg-sky-600 text-white'
-                              : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200 border border-slate-700'
-                          }`}
+                          className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${settings.maxUploadSizeMb === size
+                            ? 'bg-sky-600 text-white'
+                            : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200 border border-slate-700'
+                            }`}
                         >
                           {size} MB
                         </button>
