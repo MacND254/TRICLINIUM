@@ -22,6 +22,26 @@ export interface QuotationData {
   notes?: string;
   paymentTerms: string;
   preparedBy: string;
+  companyDetails?: {
+    businessName?: string;
+    businessTagline?: string;
+    businessAddress?: string;
+    businessPhone?: string;
+    businessEmail?: string;
+    businessWebsite?: string;
+    businessKraPin?: string;
+    mpesaEnabled?: boolean;
+    bankEnabled?: boolean;
+    bankName?: string;
+    bankAccountName?: string;
+    bankAccountNumber?: string;
+    bankBranch?: string;
+    bankSwiftCode?: string;
+    mpesaPaybill?: string;
+    mpesaAccount?: string;
+    mpesaPhone?: string;
+    paymentInstructionsFootnote?: string;
+  };
 }
 
 const styles = StyleSheet.create({
@@ -35,50 +55,53 @@ const styles = StyleSheet.create({
   // Header
   header: {
     backgroundColor: '#0f172a',
-    paddingHorizontal: 36,
-    paddingVertical: 28,
+    paddingHorizontal: 28,
+    paddingVertical: 18,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
-  headerLeft: {},
+  headerLeft: {
+    maxWidth: '62%',
+  },
   companyName: {
-    fontSize: 22,
+    fontSize: 18,
     fontFamily: 'Helvetica-Bold',
     color: '#0ea5e9',
-    letterSpacing: 2,
+    letterSpacing: 1.5,
+    marginBottom: 4,
   },
   companyTagline: {
-    fontSize: 8,
+    fontSize: 7.5,
     color: '#94a3b8',
-    marginTop: 3,
-    letterSpacing: 1,
+    letterSpacing: 0.8,
+    marginBottom: 6,
   },
-  companyDetails: {
-    fontSize: 7,
+  companyDetailLine: {
+    fontSize: 7.5,
     color: '#cbd5e1',
-    marginTop: 4,
-    lineHeight: 1.35,
+    marginBottom: 2.5,
   },
   headerRight: {
     alignItems: 'flex-end',
   },
   quotationLabel: {
-    fontSize: 18,
+    fontSize: 16,
     fontFamily: 'Helvetica-Bold',
     color: '#ffffff',
     letterSpacing: 1,
+    marginBottom: 4,
   },
   quoteRef: {
-    fontSize: 10,
+    fontSize: 9.5,
     fontFamily: 'Helvetica-Bold',
     color: '#0ea5e9',
-    marginTop: 4,
+    marginBottom: 5,
   },
   headerDate: {
-    fontSize: 8,
-    color: '#94a3b8',
-    marginTop: 2,
+    fontSize: 7.5,
+    color: '#cbd5e1',
+    marginBottom: 2.5,
   },
   // Accent bar
   accentBar: {
@@ -87,18 +110,18 @@ const styles = StyleSheet.create({
   },
   // Body
   body: {
-    paddingHorizontal: 36,
-    paddingTop: 24,
-    paddingBottom: 36,
+    paddingHorizontal: 28,
+    paddingTop: 14,
+    paddingBottom: 16,
   },
   // Subject Banner
   subjectBanner: {
     backgroundColor: '#f8fafc',
     borderLeft: '4px solid #0ea5e9',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
     borderRadius: 4,
-    marginBottom: 20,
+    marginBottom: 12,
     borderBottom: '1px solid #e2e8f0',
     borderRight: '1px solid #e2e8f0',
     borderTop: '1px solid #e2e8f0',
@@ -108,24 +131,24 @@ const styles = StyleSheet.create({
     fontFamily: 'Helvetica-Bold',
     color: '#0284c7',
     textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 3,
+    letterSpacing: 0.8,
+    marginBottom: 2,
   },
   subjectText: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: 'Helvetica-Bold',
     color: '#0f172a',
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
   },
   // Two-column info row
   infoRow: {
     flexDirection: 'row',
-    gap: 24,
-    marginBottom: 24,
+    gap: 14,
+    marginBottom: 12,
   },
   infoBox: {
     flex: 1,
-    padding: 14,
+    padding: 10,
     backgroundColor: '#f8fafc',
     borderRadius: 4,
     borderLeft: '3px solid #0ea5e9',
@@ -135,41 +158,41 @@ const styles = StyleSheet.create({
     fontFamily: 'Helvetica-Bold',
     color: '#64748b',
     textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 6,
+    letterSpacing: 0.8,
+    marginBottom: 4,
   },
   infoBoxText: {
-    fontSize: 9,
+    fontSize: 8.5,
     color: '#1e293b',
-    marginBottom: 2,
+    marginBottom: 1.5,
   },
   infoBoxHighlight: {
-    fontSize: 10,
+    fontSize: 9.5,
     fontFamily: 'Helvetica-Bold',
     color: '#0f172a',
     marginBottom: 2,
   },
   // Table
   tableSection: {
-    marginBottom: 20,
+    marginBottom: 10,
   },
   tableSectionTitle: {
-    fontSize: 8,
+    fontSize: 7.5,
     fontFamily: 'Helvetica-Bold',
     color: '#64748b',
     textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 8,
+    letterSpacing: 0.8,
+    marginBottom: 5,
   },
   tableHeader: {
     flexDirection: 'row',
     backgroundColor: '#0f172a',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderRadius: 3,
   },
   tableHeaderCell: {
-    fontSize: 8,
+    fontSize: 7.5,
     fontFamily: 'Helvetica-Bold',
     color: '#94a3b8',
     textTransform: 'uppercase',
@@ -177,23 +200,23 @@ const styles = StyleSheet.create({
   },
   tableRow: {
     flexDirection: 'row',
-    paddingHorizontal: 12,
-    paddingVertical: 9,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderBottom: '1px solid #e2e8f0',
   },
   tableRowAlt: {
     flexDirection: 'row',
-    paddingHorizontal: 12,
-    paddingVertical: 9,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     backgroundColor: '#f8fafc',
     borderBottom: '1px solid #e2e8f0',
   },
   tableCell: {
-    fontSize: 9,
+    fontSize: 8.5,
     color: '#334155',
   },
   tableCellBold: {
-    fontSize: 9,
+    fontSize: 8.5,
     fontFamily: 'Helvetica-Bold',
     color: '#0f172a',
   },
@@ -249,12 +272,12 @@ const styles = StyleSheet.create({
   // Terms & Notes
   bottomRow: {
     flexDirection: 'row',
-    gap: 20,
-    marginTop: 24,
+    gap: 12,
+    marginTop: 12,
   },
   termsBox: {
     flex: 1,
-    padding: 12,
+    padding: 9,
     backgroundColor: '#f8fafc',
     borderRadius: 4,
     borderTop: '2px solid #0ea5e9',
@@ -264,19 +287,19 @@ const styles = StyleSheet.create({
     fontFamily: 'Helvetica-Bold',
     color: '#64748b',
     textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 5,
+    letterSpacing: 0.8,
+    marginBottom: 4,
   },
   termsText: {
-    fontSize: 8,
+    fontSize: 7.5,
     color: '#475569',
-    lineHeight: 1.5,
+    lineHeight: 1.4,
   },
   // Footer
   footer: {
     backgroundColor: '#0f172a',
-    paddingHorizontal: 36,
-    paddingVertical: 16,
+    paddingHorizontal: 28,
+    paddingVertical: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -300,30 +323,64 @@ function formatCurrency(amount: number): string {
 
 interface QuotationPDFProps {
   quoteData: QuotationData;
+  companyDetails?: QuotationData['companyDetails'];
 }
 
-export function QuotationPDF({ quoteData }: QuotationPDFProps) {
+export function QuotationPDF({ quoteData, companyDetails }: QuotationPDFProps) {
   const subtotal = quoteData.items.reduce((sum, item) => sum + item.qty * item.unitPrice, 0);
   const taxAmount = (subtotal * quoteData.taxRate) / 100;
   const grandTotal = subtotal + taxAmount;
 
+  const c = companyDetails || quoteData.companyDetails || {};
+  const bName = (c.businessName ?? '').trim() || 'TRICLINIUM SYSTEMS';
+  const bTagline = (c.businessTagline ?? '').trim();
+  const bAddress = (c.businessAddress ?? '').trim();
+  const bPhone = (c.businessPhone ?? '').trim();
+  const bEmail = (c.businessEmail ?? '').trim();
+  const bWebsite = (c.businessWebsite ?? '').trim();
+  const bKraPin = (c.businessKraPin ?? '').trim();
+
+  const isFlagEnabled = (val: unknown) => val !== false && val !== 'false' && val !== 0 && val !== '0';
+  const mpesaEnabled = isFlagEnabled(c.mpesaEnabled);
+  const bankEnabled = isFlagEnabled(c.bankEnabled);
+  const mpesaPaybill = (c.mpesaPaybill ?? '').trim();
+  const mpesaAccount = (c.mpesaAccount ?? '').trim();
+  const mpesaPhone = (c.mpesaPhone ?? '').trim();
+  const bankName = (c.bankName ?? '').trim();
+  const bankAccountName = (c.bankAccountName ?? '').trim();
+  const bankAccountNumber = (c.bankAccountNumber ?? '').trim();
+  const bankBranch = (c.bankBranch ?? '').trim();
+  const bankSwiftCode = (c.bankSwiftCode ?? '').trim();
+  const footnote = (c.paymentInstructionsFootnote ?? '').trim();
+
+  const hasMpesa = mpesaEnabled && Boolean(mpesaPaybill || mpesaAccount || mpesaPhone);
+  const hasBank = bankEnabled && Boolean(bankName || bankAccountNumber || bankAccountName);
+
+  const contactLine = [
+    bPhone ? `Phone: ${bPhone}` : '',
+    bEmail ? `Email: ${bEmail}` : '',
+  ].filter(Boolean).join('  |  ');
+
+  const webKraLine = [
+    bWebsite ? `Web: ${bWebsite}` : '',
+    bKraPin ? `KRA PIN: ${bKraPin}` : '',
+  ].filter(Boolean).join('  |  ');
+
   return (
     <Document
       title={`Quotation ${quoteData.quoteRef}`}
-      author="TRICLINIUM"
+      author={bName}
       subject="Official Quotation"
     >
       <Page size="A4" style={styles.page}>
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <Text style={styles.companyName}>TRICLINIUM SYSTEMS</Text>
-            <Text style={styles.companyTagline}>CCTV SURVEILLANCE &amp; SMART SECURITY INFRASTRUCTURE</Text>
-            <Text style={styles.companyDetails}>
-              Westlands Commercial Hub, Ring Road, Nairobi, Kenya{'\n'}
-              PIN: P051982736Z | VAT Reg: 051982736-Z | Phone: +254 700 555 199{'\n'}
-              Email: sales@triclinium.co.ke | Web: www.triclinium.co.ke
-            </Text>
+            <Text style={styles.companyName}>{bName}</Text>
+            {bTagline ? <Text style={styles.companyTagline}>{bTagline}</Text> : null}
+            {bAddress ? <Text style={styles.companyDetailLine}>{bAddress}</Text> : null}
+            {contactLine ? <Text style={styles.companyDetailLine}>{contactLine}</Text> : null}
+            {webKraLine ? <Text style={styles.companyDetailLine}>{webKraLine}</Text> : null}
           </View>
           <View style={styles.headerRight}>
             <Text style={styles.quotationLabel}>OFFICIAL QUOTATION</Text>
@@ -422,6 +479,40 @@ export function QuotationPDF({ quoteData }: QuotationPDFProps) {
             <View style={styles.termsBox}>
               <Text style={styles.termsTitle}>Payment Terms</Text>
               <Text style={styles.termsText}>{quoteData.paymentTerms}</Text>
+
+              {/* Payment Method Footnote */}
+              {(hasMpesa || hasBank || footnote) && (
+                <View style={{ marginTop: 6, paddingTop: 6, borderTopWidth: 0.5, borderTopColor: '#cbd5e1' }}>
+                  <Text style={{ fontSize: 7, fontFamily: 'Helvetica-Bold', color: '#0f172a', marginBottom: 2 }}>
+                    Accepted Payment Methods:
+                  </Text>
+                  {hasMpesa && (
+                    <Text style={{ fontSize: 6.5, color: '#334155', marginBottom: 1.5 }}>
+                      • {[
+                        mpesaPaybill ? `M-Pesa Paybill: ${mpesaPaybill}` : 'M-Pesa',
+                        mpesaAccount ? `Account: ${mpesaAccount}` : '',
+                        mpesaPhone ? `Confirmation SMS: ${mpesaPhone}` : '',
+                      ].filter(Boolean).join(' | ')}
+                    </Text>
+                  )}
+                  {hasBank && (
+                    <Text style={{ fontSize: 6.5, color: '#334155', marginBottom: 1.5 }}>
+                      • {[
+                        bankName ? `Bank EFT / RTGS: ${bankName}` : 'Bank EFT / RTGS',
+                        bankAccountNumber ? `Acc: ${bankAccountNumber}` : '',
+                        bankAccountName ? `Name: ${bankAccountName}` : '',
+                        bankBranch ? `Branch: ${bankBranch}` : '',
+                        bankSwiftCode ? `SWIFT: ${bankSwiftCode}` : '',
+                      ].filter(Boolean).join(' | ')}
+                    </Text>
+                  )}
+                  {footnote ? (
+                    <Text style={{ fontSize: 6.5, color: '#64748b', fontStyle: 'italic', marginTop: 2 }}>
+                      Note: {footnote}
+                    </Text>
+                  ) : null}
+                </View>
+              )}
             </View>
             {quoteData.notes && (
               <View style={styles.termsBox}>
@@ -437,7 +528,7 @@ export function QuotationPDF({ quoteData }: QuotationPDFProps) {
           <Text style={styles.footerText}>
             This quotation is valid until {quoteData.validUntil}. Prices subject to change after expiry.
           </Text>
-          <Text style={styles.footerBrand}>TRICLINIUM</Text>
+          <Text style={styles.footerBrand}>{bName}</Text>
         </View>
       </Page>
     </Document>

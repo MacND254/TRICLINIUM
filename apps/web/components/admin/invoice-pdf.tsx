@@ -24,6 +24,26 @@ export interface InvoiceData {
   paymentInstructions?: string;
   preparedBy: string;
   status?: string; // DRAFT, ISSUED, PAID
+  companyDetails?: {
+    businessName?: string;
+    businessTagline?: string;
+    businessAddress?: string;
+    businessPhone?: string;
+    businessEmail?: string;
+    businessWebsite?: string;
+    businessKraPin?: string;
+    mpesaEnabled?: boolean;
+    bankEnabled?: boolean;
+    bankName?: string;
+    bankAccountName?: string;
+    bankAccountNumber?: string;
+    bankBranch?: string;
+    bankSwiftCode?: string;
+    mpesaPaybill?: string;
+    mpesaAccount?: string;
+    mpesaPhone?: string;
+    paymentInstructionsFootnote?: string;
+  };
 }
 
 const styles = StyleSheet.create({
@@ -37,70 +57,73 @@ const styles = StyleSheet.create({
   // Header
   header: {
     backgroundColor: '#0f172a',
-    paddingHorizontal: 36,
-    paddingVertical: 24,
+    paddingHorizontal: 28,
+    paddingVertical: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
-  headerLeft: {},
+  headerLeft: {
+    maxWidth: '62%',
+  },
   companyName: {
-    fontSize: 20,
+    fontSize: 18,
     fontFamily: 'Helvetica-Bold',
     color: '#38bdf8',
     letterSpacing: 1.5,
+    marginBottom: 4,
   },
   companyTagline: {
     fontSize: 7.5,
     color: '#94a3b8',
-    marginTop: 3,
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
+    marginBottom: 6,
   },
-  companyDetails: {
-    fontSize: 7,
+  companyDetailLine: {
+    fontSize: 7.5,
     color: '#cbd5e1',
-    marginTop: 4,
-    lineHeight: 1.3,
+    marginBottom: 2.5,
   },
   headerRight: {
     alignItems: 'flex-end',
   },
   invoiceBadge: {
-    fontSize: 18,
+    fontSize: 16,
     fontFamily: 'Helvetica-Bold',
     color: '#ffffff',
     letterSpacing: 1,
+    marginBottom: 4,
   },
   invoiceNumber: {
-    fontSize: 10,
+    fontSize: 9.5,
     fontFamily: 'Helvetica-Bold',
     color: '#38bdf8',
-    marginTop: 4,
+    marginBottom: 5,
   },
   headerDate: {
-    fontSize: 8,
-    color: '#94a3b8',
-    marginTop: 2,
+    fontSize: 7.5,
+    color: '#cbd5e1',
+    marginBottom: 2.5,
   },
   // Accent Bar
   accentBar: {
     backgroundColor: '#0284c7',
-    height: 4,
+    height: 3,
   },
   // Body
   body: {
-    paddingHorizontal: 36,
-    paddingTop: 20,
-    paddingBottom: 30,
+    paddingHorizontal: 28,
+    paddingTop: 14,
+    paddingBottom: 16,
   },
   // Subject Banner
   subjectBanner: {
     backgroundColor: '#f8fafc',
     borderLeft: '4px solid #0284c7',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
     borderRadius: 4,
-    marginBottom: 20,
+    marginBottom: 12,
     borderBottom: '1px solid #e2e8f0',
     borderRight: '1px solid #e2e8f0',
     borderTop: '1px solid #e2e8f0',
@@ -110,56 +133,56 @@ const styles = StyleSheet.create({
     fontFamily: 'Helvetica-Bold',
     color: '#0284c7',
     textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 3,
+    letterSpacing: 0.8,
+    marginBottom: 2,
   },
   subjectText: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: 'Helvetica-Bold',
     color: '#0f172a',
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
   },
   // Info section
   infoRow: {
     flexDirection: 'row',
-    gap: 20,
-    marginBottom: 20,
+    gap: 14,
+    marginBottom: 12,
   },
   infoBox: {
     flex: 1,
-    padding: 12,
+    padding: 9,
     backgroundColor: '#f8fafc',
     borderRadius: 4,
     borderLeft: '3px solid #0284c7',
   },
   infoBoxTitle: {
-    fontSize: 7.5,
+    fontSize: 7,
     fontFamily: 'Helvetica-Bold',
     color: '#64748b',
     textTransform: 'uppercase',
     letterSpacing: 0.8,
-    marginBottom: 5,
+    marginBottom: 4,
   },
   infoBoxHighlight: {
-    fontSize: 10,
+    fontSize: 9.5,
     fontFamily: 'Helvetica-Bold',
     color: '#0f172a',
     marginBottom: 2,
   },
   infoBoxText: {
-    fontSize: 8.5,
+    fontSize: 8,
     color: '#334155',
-    marginBottom: 2,
+    marginBottom: 1.5,
   },
   // Line items
   tableSection: {
-    marginBottom: 16,
+    marginBottom: 10,
   },
   tableHeader: {
     flexDirection: 'row',
     backgroundColor: '#0f172a',
-    paddingHorizontal: 12,
-    paddingVertical: 7,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
     borderRadius: 3,
   },
   tableHeaderCell: {
@@ -242,28 +265,28 @@ const styles = StyleSheet.create({
   // Payment Details & Bank Details
   paymentRow: {
     flexDirection: 'row',
-    gap: 16,
-    marginBottom: 20,
+    gap: 12,
+    marginBottom: 10,
   },
   paymentBox: {
     flex: 1,
-    padding: 10,
+    padding: 8,
     backgroundColor: '#f0f9ff',
     borderRadius: 4,
     border: '1px solid #bae6fd',
   },
   paymentBoxTitle: {
-    fontSize: 7.5,
+    fontSize: 7,
     fontFamily: 'Helvetica-Bold',
     color: '#0369a1',
     textTransform: 'uppercase',
     letterSpacing: 0.8,
-    marginBottom: 4,
+    marginBottom: 3,
   },
   paymentText: {
-    fontSize: 8,
+    fontSize: 7.5,
     color: '#0c4a6e',
-    lineHeight: 1.4,
+    lineHeight: 1.35,
   },
   paymentTextBold: {
     fontFamily: 'Helvetica-Bold',
@@ -274,29 +297,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
-    marginTop: 10,
-    paddingTop: 14,
+    marginTop: 8,
+    paddingTop: 10,
     borderTop: '1px dashed #cbd5e1',
   },
   signBlock: {
-    width: 180,
+    width: 170,
     alignItems: 'center',
   },
   signLine: {
     width: '100%',
     borderBottom: '1px solid #94a3b8',
-    marginBottom: 4,
-    height: 30,
+    marginBottom: 3,
+    height: 22,
   },
   signLabel: {
-    fontSize: 7.5,
+    fontSize: 7,
     color: '#64748b',
   },
   // Footer
   footer: {
     backgroundColor: '#0f172a',
-    paddingHorizontal: 36,
-    paddingVertical: 12,
+    paddingHorizontal: 28,
+    paddingVertical: 10,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -320,30 +343,64 @@ function formatKES(amount: number): string {
 
 interface InvoicePDFProps {
   invoiceData: InvoiceData;
+  companyDetails?: InvoiceData['companyDetails'];
 }
 
-export function InvoicePDF({ invoiceData }: InvoicePDFProps) {
+export function InvoicePDF({ invoiceData, companyDetails }: InvoicePDFProps) {
   const subtotal = invoiceData.items.reduce((sum, item) => sum + item.qty * item.unitPrice, 0);
   const taxAmount = (subtotal * invoiceData.taxRate) / 100;
   const grandTotal = subtotal + taxAmount;
 
+  const c = companyDetails || invoiceData.companyDetails || {};
+  const bName = (c.businessName ?? '').trim() || 'TRICLINIUM SYSTEMS';
+  const bTagline = (c.businessTagline ?? '').trim();
+  const bAddress = (c.businessAddress ?? '').trim();
+  const bPhone = (c.businessPhone ?? '').trim();
+  const bEmail = (c.businessEmail ?? '').trim();
+  const bWebsite = (c.businessWebsite ?? '').trim();
+  const bKraPin = (c.businessKraPin ?? '').trim();
+
+  const isFlagEnabled = (val: unknown) => val !== false && val !== 'false' && val !== 0 && val !== '0';
+  const mpesaEnabled = isFlagEnabled(c.mpesaEnabled);
+  const bankEnabled = isFlagEnabled(c.bankEnabled);
+  const mpesaPaybill = (c.mpesaPaybill ?? '').trim();
+  const mpesaAccount = (c.mpesaAccount ?? '').trim();
+  const mpesaPhone = (c.mpesaPhone ?? '').trim();
+  const bankName = (c.bankName ?? '').trim();
+  const bankAccountName = (c.bankAccountName ?? '').trim();
+  const bankAccountNumber = (c.bankAccountNumber ?? '').trim();
+  const bankBranch = (c.bankBranch ?? '').trim();
+  const bankSwiftCode = (c.bankSwiftCode ?? '').trim();
+  const footnote = (invoiceData.paymentInstructions || c.paymentInstructionsFootnote || '').trim();
+
+  const hasMpesa = mpesaEnabled && Boolean(mpesaPaybill || mpesaAccount || mpesaPhone);
+  const hasBank = bankEnabled && Boolean(bankName || bankAccountNumber || bankAccountName);
+
+  const contactLine = [
+    bPhone ? `Phone: ${bPhone}` : '',
+    bEmail ? `Email: ${bEmail}` : '',
+  ].filter(Boolean).join('  |  ');
+
+  const webKraLine = [
+    bWebsite ? `Web: ${bWebsite}` : '',
+    bKraPin ? `KRA PIN: ${bKraPin}` : '',
+  ].filter(Boolean).join('  |  ');
+
   return (
     <Document
       title={`Tax Invoice ${invoiceData.invoiceNumber}`}
-      author="TRICLINIUM SYSTEMS"
+      author={bName}
       subject="Commercial Tax Invoice"
     >
       <Page size="A4" style={styles.page}>
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <Text style={styles.companyName}>TRICLINIUM SYSTEMS</Text>
-            <Text style={styles.companyTagline}>CCTV SURVEILLANCE &amp; SMART SECURITY INFRASTRUCTURE</Text>
-            <Text style={styles.companyDetails}>
-              Westlands Commercial Hub, Ring Road, Nairobi, Kenya{'\n'}
-              PIN: P051982736Z | VAT Reg: 051982736-Z | Phone: +254 700 555 199{'\n'}
-              Email: accounts@triclinium.co.ke | Web: www.triclinium.co.ke
-            </Text>
+            <Text style={styles.companyName}>{bName}</Text>
+            {bTagline ? <Text style={styles.companyTagline}>{bTagline}</Text> : null}
+            {bAddress ? <Text style={styles.companyDetailLine}>{bAddress}</Text> : null}
+            {contactLine ? <Text style={styles.companyDetailLine}>{contactLine}</Text> : null}
+            {webKraLine ? <Text style={styles.companyDetailLine}>{webKraLine}</Text> : null}
           </View>
           <View style={styles.headerRight}>
             <Text style={styles.invoiceBadge}>TAX INVOICE</Text>
@@ -440,33 +497,73 @@ export function InvoicePDF({ invoiceData }: InvoicePDFProps) {
           </View>
 
           {/* Payment Details */}
-          <View style={styles.paymentRow}>
-            <View style={styles.paymentBox}>
-              <Text style={styles.paymentBoxTitle}>M-Pesa Mobile Payment</Text>
-              <Text style={styles.paymentText}>
-                Paybill Business No: <Text style={styles.paymentTextBold}>247247</Text>{'\n'}
-                Account Number: <Text style={styles.paymentTextBold}>{invoiceData.invoiceNumber}</Text>{'\n'}
-                Send M-Pesa confirmation SMS to: <Text style={styles.paymentTextBold}>+254 700 555 199</Text>
+          {(hasMpesa || hasBank) && (
+            <View style={styles.paymentRow}>
+              {hasMpesa && (
+                <View style={styles.paymentBox}>
+                  <Text style={styles.paymentBoxTitle}>M-Pesa Mobile Payment</Text>
+                  {mpesaPaybill ? (
+                    <Text style={styles.paymentText}>
+                      Paybill Business No: <Text style={styles.paymentTextBold}>{mpesaPaybill}</Text>
+                    </Text>
+                  ) : null}
+                  {mpesaAccount ? (
+                    <Text style={styles.paymentText}>
+                      Account Number: <Text style={styles.paymentTextBold}>{mpesaAccount}</Text>
+                    </Text>
+                  ) : null}
+                  {mpesaPhone ? (
+                    <Text style={styles.paymentText}>
+                      Send M-Pesa confirmation SMS to: <Text style={styles.paymentTextBold}>{mpesaPhone}</Text>
+                    </Text>
+                  ) : null}
+                </View>
+              )}
+              {hasBank && (
+                <View style={styles.paymentBox}>
+                  <Text style={styles.paymentBoxTitle}>Bank Electronic Transfer</Text>
+                  {bankName ? (
+                    <Text style={styles.paymentText}>
+                      Bank: <Text style={styles.paymentTextBold}>{bankName}</Text>
+                    </Text>
+                  ) : null}
+                  {bankAccountName ? (
+                    <Text style={styles.paymentText}>
+                      Account Name: <Text style={styles.paymentTextBold}>{bankAccountName}</Text>
+                    </Text>
+                  ) : null}
+                  {(bankAccountNumber || bankBranch || bankSwiftCode) ? (
+                    <Text style={styles.paymentText}>
+                      {bankAccountNumber ? (
+                        <>Account No: <Text style={styles.paymentTextBold}>{bankAccountNumber}</Text></>
+                      ) : null}
+                      {bankBranch ? `${bankAccountNumber ? ' | ' : ''}Branch: ${bankBranch}` : ''}
+                      {bankSwiftCode ? `${bankAccountNumber || bankBranch ? ' | ' : ''}SWIFT: ${bankSwiftCode}` : ''}
+                    </Text>
+                  ) : null}
+                </View>
+              )}
+            </View>
+          )}
+
+          {/* Payment Instructions / Footnote if present */}
+          {footnote ? (
+            <View style={{ marginTop: 4, padding: 6, backgroundColor: '#f8fafc', borderRadius: 4, borderWidth: 0.5, borderColor: '#e2e8f0' }}>
+              <Text style={{ fontSize: 7, color: '#334155' }}>
+                <Text style={{ fontFamily: 'Helvetica-Bold' }}>Payment Terms / Remittance Instructions: </Text>
+                {footnote}
               </Text>
             </View>
-            <View style={styles.paymentBox}>
-              <Text style={styles.paymentBoxTitle}>Bank Electronic Transfer</Text>
-              <Text style={styles.paymentText}>
-                Bank: <Text style={styles.paymentTextBold}>Equity Bank Kenya</Text>{'\n'}
-                Account Name: <Text style={styles.paymentTextBold}>TRICLINIUM SYSTEMS LTD</Text>{'\n'}
-                Account No: <Text style={styles.paymentTextBold}>0180293847561</Text> | Branch: Westlands
-              </Text>
-            </View>
-          </View>
+          ) : null}
 
           {/* Signature & Stamp */}
           <View style={styles.signatureRow}>
             <View>
               <Text style={{ fontSize: 7.5, color: '#64748b', marginBottom: 2 }}>
-                Thank you for choosing TRICLINIUM SYSTEMS for your security solutions!
+                Thank you for choosing {bName} for your security solutions!
               </Text>
               <Text style={{ fontSize: 7, color: '#94a3b8' }}>
-                Goods once sold remain the property of TRICLINIUM SYSTEMS until paid in full.
+                Goods once sold remain the property of {bName} until settled in full.
               </Text>
             </View>
             <View style={styles.signBlock}>
@@ -479,9 +576,9 @@ export function InvoicePDF({ invoiceData }: InvoicePDFProps) {
         {/* Footer */}
         <View style={styles.footer} fixed>
           <Text style={styles.footerText}>
-            TRICLINIUM SYSTEMS • Licensed Security Integrator • Westlands, Nairobi, Kenya
+            {[bName, 'Licensed Security Integrator', bAddress].filter(Boolean).join(' • ')}
           </Text>
-          <Text style={styles.footerBrand}>TRICLINIUM SYSTEMS</Text>
+          <Text style={styles.footerBrand}>{bName}</Text>
         </View>
       </Page>
     </Document>

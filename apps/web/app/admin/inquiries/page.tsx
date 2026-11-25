@@ -33,6 +33,7 @@ import { handleKenyanPhoneChange, formatKenyanPhone } from '@/lib/phone';
 import { QuotationPDF } from '@/components/admin/quotation-pdf';
 import { InvoicePDF } from '@/components/admin/invoice-pdf';
 import { PdfPreviewModal } from '@/components/admin/pdf-preview-modal';
+import { usePublicSettings } from '@/lib/settings-context';
 
 interface CustomQuoteItem {
   description: string;
@@ -44,6 +45,7 @@ type ModuleTab = 'INQUIRIES' | 'QUOTATIONS' | 'INVOICES';
 
 export default function AdminInquiriesPage() {
   const router = useRouter();
+  const { settings } = usePublicSettings();
   const [inquiries, setInquiries] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState('');
@@ -161,14 +163,14 @@ export default function AdminInquiriesPage() {
     let notesVal = '';
     let termsVal = '';
     if (inq.message && inq.message.includes('Notes:')) {
-      const matchNotes = inq.message.match(/Notes:\s*([^\n]+)/);
-      if (matchNotes && matchNotes[1] && matchNotes[1] !== 'None') {
+      const matchNotes = inq.message.match(/Notes:\s*([\s\S]+?)(?:\nTerms:|$)/);
+      if (matchNotes && matchNotes[1] && matchNotes[1].trim() !== 'None') {
         notesVal = matchNotes[1].trim();
       }
     }
     if (inq.message && inq.message.includes('Terms:')) {
-      const matchTerms = inq.message.match(/Terms:\s*([^\n]+)/);
-      if (matchTerms && matchTerms[1] && matchTerms[1] !== 'Standard') {
+      const matchTerms = inq.message.match(/Terms:\s*([\s\S]+?)(?:\n\n|$)/);
+      if (matchTerms && matchTerms[1] && matchTerms[1].trim() !== 'Standard') {
         termsVal = matchTerms[1].trim();
       }
     }
@@ -385,14 +387,14 @@ export default function AdminInquiriesPage() {
     let extractedNotes = typeof inq.notes === 'string' ? inq.notes : '';
     let extractedTerms = '';
     if (inq.message && inq.message.includes('Notes:')) {
-      const matchNotes = inq.message.match(/Notes:\s*([^\n]+)/);
-      if (matchNotes && matchNotes[1] && matchNotes[1] !== 'None') {
+      const matchNotes = inq.message.match(/Notes:\s*([\s\S]+?)(?:\nTerms:|$)/);
+      if (matchNotes && matchNotes[1] && matchNotes[1].trim() !== 'None') {
         extractedNotes = matchNotes[1].trim();
       }
     }
     if (inq.message && inq.message.includes('Terms:')) {
-      const matchTerms = inq.message.match(/Terms:\s*([^\n]+)/);
-      if (matchTerms && matchTerms[1] && matchTerms[1] !== 'Standard') {
+      const matchTerms = inq.message.match(/Terms:\s*([\s\S]+?)(?:\n\n|$)/);
+      if (matchTerms && matchTerms[1] && matchTerms[1].trim() !== 'Standard') {
         extractedTerms = matchTerms[1].trim();
       }
     }
@@ -462,9 +464,9 @@ export default function AdminInquiriesPage() {
       const { pdf } = await import('@react-pdf/renderer');
       const doc =
         docType === 'QUOTATION' ? (
-          <QuotationPDF quoteData={data} />
+          <QuotationPDF quoteData={data} companyDetails={settings} />
         ) : (
-          <InvoicePDF invoiceData={data} />
+          <InvoicePDF invoiceData={data} companyDetails={settings} />
         );
       const blob = await pdf(doc).toBlob();
       const url = URL.createObjectURL(blob);
@@ -488,9 +490,9 @@ export default function AdminInquiriesPage() {
       const { pdf } = await import('@react-pdf/renderer');
       const doc =
         docType === 'QUOTATION' ? (
-          <QuotationPDF quoteData={data} />
+          <QuotationPDF quoteData={data} companyDetails={settings} />
         ) : (
-          <InvoicePDF invoiceData={data} />
+          <InvoicePDF invoiceData={data} companyDetails={settings} />
         );
       const blob = await pdf(doc).toBlob();
       const url = URL.createObjectURL(blob);

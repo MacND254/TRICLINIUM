@@ -29,6 +29,26 @@ export interface PublicSettings {
   maxUploadSizeMb?: number;
   notifyEmail?: string;
   smtpFromEmail?: string;
+  // Business Details & PDF Branding
+  businessName?: string;
+  businessTagline?: string;
+  businessAddress?: string;
+  businessPhone?: string;
+  businessEmail?: string;
+  businessWebsite?: string;
+  businessKraPin?: string;
+  // Payment Methods
+  mpesaEnabled?: boolean;
+  bankEnabled?: boolean;
+  bankName?: string;
+  bankAccountName?: string;
+  bankAccountNumber?: string;
+  bankBranch?: string;
+  bankSwiftCode?: string;
+  mpesaPaybill?: string;
+  mpesaAccount?: string;
+  mpesaPhone?: string;
+  paymentInstructionsFootnote?: string;
 }
 
 const DEFAULT_SETTINGS: PublicSettings = {
@@ -56,6 +76,24 @@ const DEFAULT_SETTINGS: PublicSettings = {
   metaDescription: 'Commercial and residential video surveillance, 4K AI IP cameras, smart video doorbells, wireless home alarms, and certified installation across Kenya.',
   googleAnalyticsId: '',
   googleTagManagerId: '',
+  businessName: 'TRICLINIUM SYSTEMS',
+  businessTagline: '',
+  businessAddress: '',
+  businessPhone: '',
+  businessEmail: '',
+  businessWebsite: '',
+  businessKraPin: '',
+  mpesaEnabled: true,
+  bankEnabled: true,
+  bankName: '',
+  bankAccountName: '',
+  bankAccountNumber: '',
+  bankBranch: '',
+  bankSwiftCode: '',
+  mpesaPaybill: '',
+  mpesaAccount: '',
+  mpesaPhone: '',
+  paymentInstructionsFootnote: '',
 };
 
 const SETTINGS_STORAGE_KEY = 'triclinium_public_settings_cache_v2';

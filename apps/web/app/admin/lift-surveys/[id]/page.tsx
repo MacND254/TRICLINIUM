@@ -34,8 +34,10 @@ import { fetchApi } from '@/lib/api-client';
 import { formatDate } from '@/lib/utils';
 import { PdfPreviewModal } from '@/components/admin/pdf-preview-modal';
 import { BuildingSurveyReportPDF } from '@/components/admin/lift-survey-pdf';
+import { usePublicSettings } from '@/lib/settings-context';
 
 export default function AdminLiftSurveyDetailPage() {
+  const { settings } = usePublicSettings();
   const params = useParams();
   const id = params?.id as string;
   const router = useRouter();
@@ -339,7 +341,7 @@ export default function AdminLiftSurveyDetailPage() {
 
     try {
       const { pdf } = await import('@react-pdf/renderer');
-      const blob = await pdf(<BuildingSurveyReportPDF report={reportData} />).toBlob();
+      const blob = await pdf(<BuildingSurveyReportPDF report={reportData} companyDetails={settings} />).toBlob();
       const url = URL.createObjectURL(blob);
       setPreviewPdfUrl(url);
     } catch (err: any) {
@@ -356,7 +358,7 @@ export default function AdminLiftSurveyDetailPage() {
     try {
       const reportData = buildReportPayload();
       const { pdf } = await import('@react-pdf/renderer');
-      const blob = await pdf(<BuildingSurveyReportPDF report={reportData} />).toBlob();
+      const blob = await pdf(<BuildingSurveyReportPDF report={reportData} companyDetails={settings} />).toBlob();
       const url = URL.createObjectURL(blob);
       const filename = `${survey?.surveyNumber || 'BSR'}-${projectName.replace(/\s+/g, '_')}.pdf`;
 

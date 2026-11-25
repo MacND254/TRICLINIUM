@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   Save, Loader2, X, Globe, Mail, Phone, MapPin, Share2,
   Search, Image, Palette, Bell, AlertCircle, CheckCircle2, Building2,
-  Upload, Trash2,
+  Upload, Trash2, Briefcase, CreditCard, FileText,
 } from 'lucide-react';
 import { handleKenyanPhoneChange, formatKenyanPhone } from '@/lib/phone';
 import { uploadAdminMedia, apiFetch, triggerRevalidation } from '@/lib/api-client';
@@ -48,6 +48,26 @@ interface WebsiteSettings {
   currencySymbol: string;
   showPrices: boolean;
   enableQuotations: boolean;
+  // Business Details & PDF Document Header
+  businessName: string;
+  businessTagline: string;
+  businessAddress: string;
+  businessPhone: string;
+  businessEmail: string;
+  businessWebsite: string;
+  businessKraPin: string;
+  // Payment Methods & Terms Footnote
+  mpesaEnabled: boolean;
+  bankEnabled: boolean;
+  bankName: string;
+  bankAccountName: string;
+  bankAccountNumber: string;
+  bankBranch: string;
+  bankSwiftCode: string;
+  mpesaPaybill: string;
+  mpesaAccount: string;
+  mpesaPhone: string;
+  paymentInstructionsFootnote: string;
   // Notifications
   notifyEmail: string;
   notifyOnInquiry: boolean;
@@ -94,6 +114,26 @@ const DEFAULTS: WebsiteSettings = {
   currencySymbol: 'Ksh',
   showPrices: true,
   enableQuotations: true,
+  // Business Details & PDF Branding (leave optional fields blank unless configured)
+  businessName: 'TRICLINIUM SYSTEMS',
+  businessTagline: '',
+  businessAddress: '',
+  businessPhone: '',
+  businessEmail: '',
+  businessWebsite: '',
+  businessKraPin: '',
+  // Payment Methods
+  mpesaEnabled: true,
+  bankEnabled: true,
+  bankName: '',
+  bankAccountName: '',
+  bankAccountNumber: '',
+  bankBranch: '',
+  bankSwiftCode: '',
+  mpesaPaybill: '',
+  mpesaAccount: '',
+  mpesaPhone: '',
+  paymentInstructionsFootnote: '',
   notifyEmail: 'archer.tritech@gmail.com',
   notifyOnInquiry: true,
   notifyOnQuotation: true,
@@ -153,14 +193,15 @@ function ToggleField({ label, hint, checked, onChange }: { label: string; hint?:
   );
 }
 
-type TabId = 'general' | 'contact' | 'social' | 'seo' | 'business' | 'notifications' | 'mail';
+type TabId = 'general' | 'business_details' | 'contact' | 'social' | 'seo' | 'business' | 'notifications' | 'mail';
 
 const TABS: { id: TabId; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: 'general', label: 'General', icon: Building2 },
+  { id: 'business_details', label: 'Business Details & PDF', icon: Briefcase },
   { id: 'contact', label: 'Contact', icon: Phone },
   { id: 'social', label: 'Social', icon: Share2 },
   { id: 'seo', label: 'SEO', icon: Search },
-  { id: 'business', label: 'Business', icon: Globe },
+  { id: 'business', label: 'Commerce', icon: Globe },
   { id: 'notifications', label: 'Alerts', icon: Bell },
   { id: 'mail', label: 'Mail Gateway', icon: Mail },
 ];
@@ -253,7 +294,7 @@ export default function SettingsPage() {
       // Convert settings object to array of {key, value} for API
       const payload = Object.entries(settings).map(([key, value]) => ({
         key,
-        value: String(value),
+        value: typeof value === 'boolean' || typeof value === 'number' ? value : String(value),
       }));
       await apiFetch('/admin/settings', { method: 'PUT', body: JSON.stringify({ settings: payload }) });
       await refreshSettings();
@@ -300,39 +341,39 @@ export default function SettingsPage() {
       )}
 
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-100">Website Settings</h1>
-          <p className="mt-1 text-slate-400">Configure your site, branding, SEO, and notifications.</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-slate-100">Website Settings</h1>
+          <p className="mt-1 text-xs sm:text-sm text-slate-400">Configure business details, PDF headers, branding, SEO, and mail gateway.</p>
         </div>
         <button onClick={handleSave} disabled={saving}
-          className="flex items-center gap-2 rounded-lg bg-sky-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-sky-500 disabled:opacity-50 transition-colors shadow-md">
+          className="flex items-center justify-center gap-2 rounded-lg bg-sky-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-sky-500 disabled:opacity-50 transition-colors shadow-md w-full sm:w-auto shrink-0">
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           Save All Changes
         </button>
       </div>
 
-      <div className="flex gap-6">
-        {/* Sidebar tabs */}
-        <nav className="w-44 shrink-0 space-y-1">
+      <div className="flex flex-col md:flex-row gap-6">
+        {/* Navigation tabs - horizontally scrollable pills on mobile, vertical sidebar on desktop */}
+        <nav className="flex md:flex-col overflow-x-auto pb-2 md:pb-0 scrollbar-none gap-1.5 w-full md:w-56 shrink-0 border-b md:border-b-0 border-slate-800">
           {TABS.map(tab => {
             const Icon = tab.icon;
             return (
               <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                className={`w-full flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${activeTab === tab.id ? 'bg-sky-900/40 text-sky-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100'}`}>
+                className={`flex items-center gap-2 whitespace-nowrap rounded-lg px-3.5 py-2.5 text-xs sm:text-sm font-medium transition-colors shrink-0 md:w-full ${activeTab === tab.id ? 'bg-sky-900/50 text-sky-400 font-semibold shadow-inner border border-sky-800/60' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-100 border border-transparent'}`}>
                 <Icon className="h-4 w-4 shrink-0" />
-                {tab.label}
+                <span>{tab.label}</span>
               </button>
             );
           })}
         </nav>
 
         {/* Panel */}
-        <div className="flex-1 rounded-xl border border-slate-800 bg-slate-900 p-6 space-y-6">
+        <div className="flex-1 min-w-0 rounded-xl border border-slate-800 bg-slate-900 p-4 sm:p-6 space-y-6">
           {activeTab === 'general' && (
             <>
               <SectionHeader icon={Building2} title="General Settings" description="Site identity, branding, and appearance." />
-              <div className="grid grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
                 <Field label="Site Name" hint="Displayed in header, emails, and browser tab.">
                   <input className={inputCls} value={settings.siteName} onChange={e => set('siteName', e.target.value)} placeholder="TRICLINIUM" />
                 </Field>
@@ -431,10 +472,244 @@ export default function SettingsPage() {
             </>
           )}
 
+          {activeTab === 'business_details' && (
+            <>
+              <SectionHeader
+                icon={Briefcase}
+                title="Business Details & PDF Documents"
+                description="Manage the dynamic business header and payment methods rendered on generated Quotations, Tax Invoices, and Survey Reports."
+              />
+
+              <div className="rounded-xl border border-sky-800/40 bg-sky-950/20 p-4">
+                <div className="flex items-start gap-3">
+                  <FileText className="h-5 w-5 text-sky-400 shrink-0 mt-0.5" />
+                  <div className="text-xs text-sky-200 space-y-1">
+                    <p className="font-semibold text-sky-300">Live Dynamic PDF Header &amp; Payment Footnote</p>
+                    <p>
+                      The company information below is dynamically pulled into the top heading of all generated official Quotations, Tax Invoices, and Lift Survey Reports. No static or hardcoded business information will be used.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 1. Header Information */}
+              <div className="space-y-4">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  1. Company &amp; Contact Header (Top of PDF)
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+                  <Field label="Business / Company Name" hint="Official legal business name displayed at top left of PDFs.">
+                    <input
+                      className={inputCls}
+                      value={settings.businessName}
+                      onChange={e => set('businessName', e.target.value)}
+                      placeholder="TRICLINIUM SYSTEMS"
+                    />
+                  </Field>
+                  <Field label="Business Subtitle / Tagline" hint="Appears beneath the company name in header.">
+                    <input
+                      className={inputCls}
+                      value={settings.businessTagline}
+                      onChange={e => set('businessTagline', e.target.value)}
+                      placeholder="CCTV SURVEILLANCE & SMART SECURITY INFRASTRUCTURE"
+                    />
+                  </Field>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+                  <Field label="Physical / Operating Address" hint="Office or showroom location shown on PDF.">
+                    <input
+                      className={inputCls}
+                      value={settings.businessAddress}
+                      onChange={e => set('businessAddress', e.target.value)}
+                      placeholder="Westlands Commercial Hub, Ring Road, Nairobi, Kenya"
+                    />
+                  </Field>
+                  <Field label="Official Phone Number" hint="Displayed on PDFs for sales and customer support.">
+                    <input
+                      className={inputCls}
+                      value={settings.businessPhone}
+                      onChange={e => handleKenyanPhoneChange(e, val => set('businessPhone', val))}
+                      onBlur={() => set('businessPhone', formatKenyanPhone(settings.businessPhone))}
+                      placeholder="+254 700 555 199"
+                    />
+                  </Field>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+                  <Field label="Official Sales / Inquiries Email" hint="Displayed on PDF header for correspondence.">
+                    <input
+                      type="email"
+                      className={inputCls}
+                      value={settings.businessEmail}
+                      onChange={e => set('businessEmail', e.target.value)}
+                      placeholder="sales@triclinium.co.ke"
+                    />
+                  </Field>
+                  <Field label="Official Website Domain" hint="Website URL shown in document header.">
+                    <input
+                      className={inputCls}
+                      value={settings.businessWebsite}
+                      onChange={e => set('businessWebsite', e.target.value)}
+                      placeholder="www.triclinium.co.ke"
+                    />
+                  </Field>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
+                  <Field label="KRA PIN" hint="Optional tax PIN shown in PDF header. Leave blank to omit.">
+                    <input
+                      className={inputCls}
+                      value={settings.businessKraPin}
+                      onChange={e => set('businessKraPin', e.target.value)}
+                      placeholder="P051234567X"
+                    />
+                  </Field>
+                </div>
+              </div>
+
+              {/* 2. Payment Methods */}
+              <div className="space-y-4 pt-4 border-t border-slate-800">
+                <div className="flex items-center gap-2">
+                  <CreditCard className="h-4 w-4 text-emerald-400" />
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                    2. Payment Methods &amp; Terms Footnote (Bottom of PDF)
+                  </h3>
+                </div>
+                <p className="text-xs text-slate-400">
+                  Displayed under the payment terms footnote in Quotations and Tax Invoices. Disable a payment method or leave fields blank to hide them from PDFs.
+                </p>
+
+                {/* M-Pesa Details */}
+                <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4 space-y-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <h4 className="text-xs font-semibold text-emerald-400 uppercase tracking-wide">
+                      Mobile Money (M-Pesa Paybill / Till)
+                    </h4>
+                    <label className="inline-flex items-center gap-2 cursor-pointer text-xs text-slate-300">
+                      <input
+                        type="checkbox"
+                        checked={settings.mpesaEnabled}
+                        onChange={e => set('mpesaEnabled', e.target.checked)}
+                        className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-emerald-500 focus:ring-emerald-500"
+                      />
+                      <span>{settings.mpesaEnabled ? 'Enabled on PDFs' : 'Disabled on PDFs'}</span>
+                    </label>
+                  </div>
+                  <div className={`grid grid-cols-1 sm:grid-cols-3 gap-4 transition-opacity ${settings.mpesaEnabled ? '' : 'opacity-45 pointer-events-none'}`}>
+                    <Field label="M-Pesa Business / Paybill No.">
+                      <input
+                        className={inputCls}
+                        value={settings.mpesaPaybill}
+                        onChange={e => set('mpesaPaybill', e.target.value)}
+                        placeholder="247247"
+                      />
+                    </Field>
+                    <Field label="Account Reference Format" hint="e.g. Invoice / QT Number">
+                      <input
+                        className={inputCls}
+                        value={settings.mpesaAccount}
+                        onChange={e => set('mpesaAccount', e.target.value)}
+                        placeholder="Invoice Number / Quote Ref"
+                      />
+                    </Field>
+                    <Field label="Confirmation Phone / SMS" hint="Leave blank to omit from PDF">
+                      <input
+                        className={inputCls}
+                        value={settings.mpesaPhone}
+                        onChange={e => handleKenyanPhoneChange(e, val => set('mpesaPhone', val))}
+                        onBlur={() => set('mpesaPhone', settings.mpesaPhone.trim() ? formatKenyanPhone(settings.mpesaPhone) : '')}
+                        placeholder="+254 700 555 199"
+                      />
+                    </Field>
+                  </div>
+                </div>
+
+                {/* Bank Electronic Transfer Details */}
+                <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-4 space-y-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <h4 className="text-xs font-semibold text-sky-400 uppercase tracking-wide">
+                      Bank Electronic Transfer (EFT / RTGS)
+                    </h4>
+                    <label className="inline-flex items-center gap-2 cursor-pointer text-xs text-slate-300">
+                      <input
+                        type="checkbox"
+                        checked={settings.bankEnabled}
+                        onChange={e => set('bankEnabled', e.target.checked)}
+                        className="h-4 w-4 rounded border-slate-600 bg-slate-800 text-sky-500 focus:ring-sky-500"
+                      />
+                      <span>{settings.bankEnabled ? 'Enabled on PDFs' : 'Disabled on PDFs'}</span>
+                    </label>
+                  </div>
+                  <div className={`space-y-4 transition-opacity ${settings.bankEnabled ? '' : 'opacity-45 pointer-events-none'}`}>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <Field label="Bank Name">
+                        <input
+                          className={inputCls}
+                          value={settings.bankName}
+                          onChange={e => set('bankName', e.target.value)}
+                          placeholder="Equity Bank Kenya"
+                        />
+                      </Field>
+                      <Field label="Bank Account Name">
+                        <input
+                          className={inputCls}
+                          value={settings.bankAccountName}
+                          onChange={e => set('bankAccountName', e.target.value)}
+                          placeholder="TRICLINIUM SYSTEMS LTD"
+                        />
+                      </Field>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <Field label="Account Number">
+                        <input
+                          className={inputCls}
+                          value={settings.bankAccountNumber}
+                          onChange={e => set('bankAccountNumber', e.target.value)}
+                          placeholder="0180293847561"
+                        />
+                      </Field>
+                      <Field label="Branch Name">
+                        <input
+                          className={inputCls}
+                          value={settings.bankBranch}
+                          onChange={e => set('bankBranch', e.target.value)}
+                          placeholder="Westlands Branch"
+                        />
+                      </Field>
+                      <Field label="SWIFT / BIC Code">
+                        <input
+                          className={inputCls}
+                          value={settings.bankSwiftCode}
+                          onChange={e => set('bankSwiftCode', e.target.value)}
+                          placeholder="EQBLKENA"
+                        />
+                      </Field>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Payment Instructions Footnote */}
+                <Field
+                  label="Payment Footnote &amp; Settlement Instructions"
+                  hint="Custom instructions shown directly under payment terms on both Quotation &amp; Invoice PDFs."
+                >
+                  <textarea
+                    rows={3}
+                    className={`${inputCls} resize-none`}
+                    value={settings.paymentInstructionsFootnote}
+                    onChange={e => set('paymentInstructionsFootnote', e.target.value)}
+                    placeholder="Cheques payable to TRICLINIUM SYSTEMS LTD. Send payment confirmation SMS or deposit slip to accounts@triclinium.co.ke."
+                  />
+                </Field>
+              </div>
+            </>
+          )}
+
           {activeTab === 'contact' && (
             <>
               <SectionHeader icon={Phone} title="Contact Information" description="Business contact details shown publicly." />
-              <div className="grid grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
                 <Field label="Primary Email">
                   <input type="email" className={inputCls} value={settings.contactEmail} onChange={e => set('contactEmail', e.target.value)} placeholder="info@triclinium.com" />
                 </Field>
@@ -442,7 +717,7 @@ export default function SettingsPage() {
                   <input type="email" className={inputCls} value={settings.supportEmail} onChange={e => set('supportEmail', e.target.value)} placeholder="support@triclinium.com" />
                 </Field>
               </div>
-              <div className="grid grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
                 <Field label="Primary Phone (Auto +254)" hint="e.g. 0700 555 199 -> +254700555199">
                   <input
                     className={inputCls}
@@ -465,7 +740,7 @@ export default function SettingsPage() {
               <Field label="Street Address">
                 <input className={inputCls} value={settings.address} onChange={e => set('address', e.target.value)} placeholder="123 Industrial Boulevard" />
               </Field>
-              <div className="grid grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
                 <Field label="City">
                   <input className={inputCls} value={settings.city} onChange={e => set('city', e.target.value)} placeholder="Metropolis" />
                 </Field>
@@ -515,7 +790,7 @@ export default function SettingsPage() {
               <Field label="Meta Keywords" hint="Comma-separated. Limited SEO value but informative.">
                 <input className={inputCls} value={settings.metaKeywords} onChange={e => set('metaKeywords', e.target.value)} placeholder="precision engineering, industrial hardware" />
               </Field>
-              <div className="grid grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
                 <Field label="Google Analytics ID" hint="e.g. G-XXXXXXXXXX">
                   <input className={inputCls} value={settings.googleAnalyticsId} onChange={e => set('googleAnalyticsId', e.target.value)} placeholder="G-XXXXXXXXXX" />
                 </Field>
@@ -529,7 +804,7 @@ export default function SettingsPage() {
           {activeTab === 'business' && (
             <>
               <SectionHeader icon={Globe} title="Business Configuration" description="Commerce, pricing, and quotation settings." />
-              <div className="grid grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5">
                 <Field label="Currency Code" hint="ISO 4217 code, e.g. USD, EUR, GBP.">
                   <input className={inputCls} value={settings.currency} onChange={e => set('currency', e.target.value)} placeholder="USD" />
                 </Field>
@@ -612,7 +887,7 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
                 <Field label="SMTP Host Server" hint="e.g. smtp.gmail.com or mail.yourdomain.com">
                   <input
                     className={inputCls}
@@ -631,7 +906,7 @@ export default function SettingsPage() {
                 </Field>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
                 <Field label="SMTP Username / Account Email">
                   <input
                     className={inputCls}
@@ -651,7 +926,7 @@ export default function SettingsPage() {
                 </Field>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
                 <Field label="Sender Email Address (From)" hint="Address displayed to recipients">
                   <input
                     type="email"
@@ -680,7 +955,7 @@ export default function SettingsPage() {
                 />
               </div>
 
-              <div className="flex items-center justify-between pt-2 border-t border-slate-800">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-slate-800">
                 <p className="text-xs text-slate-400">
                   Sends a test message to: <strong className="text-slate-200">{settings.notifyEmail || 'archer.tritech@gmail.com'}</strong>
                 </p>
@@ -688,7 +963,7 @@ export default function SettingsPage() {
                   type="button"
                   onClick={handleTestEmail}
                   disabled={testingEmail || saving}
-                  className="flex items-center gap-2 rounded-lg border border-sky-700 bg-sky-900/30 px-4 py-2 text-xs font-semibold text-sky-300 hover:bg-sky-900/60 disabled:opacity-50 transition-colors"
+                  className="flex items-center justify-center gap-2 rounded-lg border border-sky-700 bg-sky-900/30 px-4 py-2 text-xs font-semibold text-sky-300 hover:bg-sky-900/60 disabled:opacity-50 transition-colors w-full sm:w-auto"
                 >
                   {testingEmail ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Mail className="h-3.5 w-3.5" />}
                   <span>{testingEmail ? 'Dispatching Test Email...' : 'Send Test Email'}</span>

@@ -36,6 +36,7 @@ import { QuotationPDF } from '@/components/admin/quotation-pdf';
 import type { InvoiceData, InvoiceLineItem } from '@/components/admin/invoice-pdf';
 import { InvoicePDF } from '@/components/admin/invoice-pdf';
 import { PdfPreviewModal } from '@/components/admin/pdf-preview-modal';
+import { usePublicSettings } from '@/lib/settings-context';
 
 // Dynamically import PDFDownloadLink to avoid SSR issues
 // @ts-ignore
@@ -74,6 +75,7 @@ export default function AdminInquiryDetailPage() {
   const params = useParams();
   const id = params?.id as string;
   const router = useRouter();
+  const { settings } = usePublicSettings();
 
   const [inquiry, setInquiry] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -204,14 +206,14 @@ export default function AdminInquiryDetailPage() {
       let extractedNotes = typeof data.notes === 'string' ? data.notes : '';
       let extractedTerms = '';
       if (data.message && data.message.includes('Notes:')) {
-        const matchNotes = data.message.match(/Notes:\s*([^\n]+)/);
-        if (matchNotes && matchNotes[1] && matchNotes[1] !== 'None') {
+        const matchNotes = data.message.match(/Notes:\s*([\s\S]+?)(?:\nTerms:|$)/);
+        if (matchNotes && matchNotes[1] && matchNotes[1].trim() !== 'None') {
           extractedNotes = matchNotes[1].trim();
         }
       }
       if (data.message && data.message.includes('Terms:')) {
-        const matchTerms = data.message.match(/Terms:\s*([^\n]+)/);
-        if (matchTerms && matchTerms[1] && matchTerms[1] !== 'Standard') {
+        const matchTerms = data.message.match(/Terms:\s*([\s\S]+?)(?:\n\n|$)/);
+        if (matchTerms && matchTerms[1] && matchTerms[1].trim() !== 'Standard') {
           extractedTerms = matchTerms[1].trim();
         }
       }
@@ -383,6 +385,21 @@ export default function AdminInquiryDetailPage() {
   const handleSaveInvoiced = async () => {
     setIsSavingDoc(true);
     try {
+      // Persist invoice line items and details to backend
+      await fetchApi(`/admin/inquiries/custom-quote/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          customerName: invoiceData.clientName || inquiry?.customerName,
+          email: invoiceData.clientEmail || inquiry?.email,
+          phone: invoiceData.clientPhone || inquiry?.phone,
+          company: invoiceData.clientCompany || inquiry?.company,
+          subject: invoiceData.subject || inquiry?.subject || 'Tax Invoice',
+          notes: invoiceData.notes || '',
+          paymentTerms: invoiceData.paymentInstructions || '',
+          validUntil: invoiceData.dueDate || 'Upon Receipt',
+          items: items.map((itm) => ({ description: itm.description, qty: itm.qty, unitPrice: itm.unitPrice })),
+        }),
+      });
       await fetchApi(`/admin/inquiries/${id}/notes`, {
         method: 'POST',
         body: JSON.stringify({
@@ -391,11 +408,11 @@ export default function AdminInquiryDetailPage() {
       });
       await fetchApi(`/admin/inquiries/${id}`, {
         method: 'PATCH',
-        body: JSON.stringify({ status: 'IN_PROGRESS' }),
+        body: JSON.stringify({ status: 'CONVERTED' }),
       });
-      setStatus('IN_PROGRESS');
+      setStatus('CONVERTED');
       await loadInquiry();
-      alert('Tax Invoice generated and recorded in inquiry timeline.');
+      alert('Tax Invoice generated and saved. Status updated to CONVERTED.');
     } catch (err: any) {
       alert(err.message || 'Failed to save invoice record');
     } finally {
@@ -536,9 +553,9 @@ export default function AdminInquiryDetailPage() {
       const { pdf } = await import('@react-pdf/renderer');
       const doc =
         type === 'QUOTATION' ? (
-          <QuotationPDF quoteData={{ ...quoteData, items }} />
+          <QuotationPDF quoteData={{ ...quoteData, items }} companyDetails={settings} />
         ) : (
-          <InvoicePDF invoiceData={{ ...invoiceData, items }} />
+          <InvoicePDF invoiceData={{ ...invoiceData, items }} companyDetails={settings} />
         );
       const blob = await pdf(doc).toBlob();
       const url = URL.createObjectURL(blob);
@@ -558,9 +575,9 @@ export default function AdminInquiryDetailPage() {
       const { pdf } = await import('@react-pdf/renderer');
       const doc =
         type === 'QUOTATION' ? (
-          <QuotationPDF quoteData={{ ...quoteData, items }} />
+          <QuotationPDF quoteData={{ ...quoteData, items }} companyDetails={settings} />
         ) : (
-          <InvoicePDF invoiceData={{ ...invoiceData, items }} />
+          <InvoicePDF invoiceData={{ ...invoiceData, items }} companyDetails={settings} />
         );
       const blob = await pdf(doc).toBlob();
       const url = URL.createObjectURL(blob);
@@ -848,6 +865,34 @@ export default function AdminInquiryDetailPage() {
               </div>
             )}
           </div>
+
+          {/* Active Quotation / Invoice Notes & Remarks */}
+          {(quoteData.notes || quoteData.paymentTerms || invoiceData.notes || invoiceData.paymentInstructions) && (
+            <div className="p-5 rounded-xl border border-amber-800/40 bg-amber-900/10 space-y-3">
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-amber-400" />
+                <h3 className="text-sm font-bold text-amber-300 uppercase tracking-wider">
+                  Active {docType === 'INVOICE' ? 'Invoice' : 'Quotation'} Notes & Remarks
+                </h3>
+              </div>
+              {(quoteData.notes || invoiceData.notes) && (
+                <div className="space-y-1">
+                  <p className="text-xs font-semibold text-amber-400 uppercase tracking-wide">Notes</p>
+                  <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">
+                    {docType === 'INVOICE' ? invoiceData.notes : quoteData.notes}
+                  </p>
+                </div>
+              )}
+              {(quoteData.paymentTerms || invoiceData.paymentInstructions) && (
+                <div className="space-y-1 pt-2 border-t border-amber-800/30">
+                  <p className="text-xs font-semibold text-amber-400 uppercase tracking-wide">Payment Terms</p>
+                  <p className="text-xs text-slate-300 leading-relaxed whitespace-pre-wrap">
+                    {docType === 'INVOICE' ? invoiceData.paymentInstructions : quoteData.paymentTerms}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Email Reply to Client via Mail Gateway */}
           <div className="p-6 rounded-xl border border-sky-800/50 bg-slate-900 space-y-4">

@@ -94,6 +94,9 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const data = await fetchApi('/admin/auth/me');
         if (isMounted) {
+          const current = Date.now();
+          setLastActiveTime(current);
+          setNow(current);
           setUser(data);
           try { sessionStorage.setItem('triclinium_admin_user', JSON.stringify(data)); } catch {}
         }
@@ -126,11 +129,14 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
   }, [pathname, user]);
 
   const login = (token: string, userData: AdminUser) => {
+    const current = Date.now();
     if (typeof window !== 'undefined') {
       localStorage.setItem('triclinium_admin_token', token);
       sessionStorage.setItem('triclinium_admin_user', JSON.stringify(userData));
       document.cookie = `triclinium_session=${token}; path=/; max-age=300; SameSite=Lax`;
     }
+    setLastActiveTime(current);
+    setNow(current);
     setUser(userData);
     setIsLoading(false);
     router.push('/admin');
@@ -152,6 +158,9 @@ export function AdminAuthProvider({ children }: { children: React.ReactNode }) {
         sessionStorage.removeItem('triclinium_admin_user');
         document.cookie = `triclinium_session=; path=/; max-age=0; SameSite=Lax`;
       }
+      const current = Date.now();
+      setLastActiveTime(current);
+      setNow(current);
       setUser(null);
       setIsLoading(false);
       if (reason === 'inactivity') {

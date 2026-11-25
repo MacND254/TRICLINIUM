@@ -48,6 +48,20 @@ export class SettingsController {
 
       const globalSetting = rowMap['global_settings'] || DEFAULT_WEBSITE_SETTINGS;
 
+      const strVal = (key: string, fallback = '') =>
+        rowMap[key] !== undefined && rowMap[key] !== null ? String(rowMap[key]) : fallback;
+      const boolVal = (key: string, fallback = true) => {
+        const v = rowMap[key];
+        if (v === undefined || v === null) return fallback;
+        if (typeof v === 'boolean') return v;
+        if (typeof v === 'string') {
+          const lower = v.trim().toLowerCase();
+          if (lower === 'false' || lower === '0' || lower === '') return false;
+          if (lower === 'true' || lower === '1') return true;
+        }
+        return Boolean(v);
+      };
+
       // Filter and merge for public consumption
       const publicSettings = {
         siteName: rowMap['siteName'] || globalSetting?.general?.companyName || 'TRICLINIUM SYSTEMS',
@@ -79,6 +93,26 @@ export class SettingsController {
         googleAnalyticsId: rowMap['googleAnalyticsId'] || '',
         googleTagManagerId: rowMap['googleTagManagerId'] || '',
         maxUploadSizeMb: rowMap['maxUploadSizeMb'] ? Number(rowMap['maxUploadSizeMb']) : 2,
+        // Business Details & PDF Branding (preserve empty strings when intentionally cleared)
+        businessName: strVal('businessName', rowMap['siteName'] || globalSetting?.general?.companyName || 'TRICLINIUM SYSTEMS'),
+        businessTagline: strVal('businessTagline', ''),
+        businessAddress: strVal('businessAddress', ''),
+        businessPhone: strVal('businessPhone', ''),
+        businessEmail: strVal('businessEmail', ''),
+        businessWebsite: strVal('businessWebsite', ''),
+        businessKraPin: strVal('businessKraPin', ''),
+        // Payment Methods
+        mpesaEnabled: boolVal('mpesaEnabled', true),
+        bankEnabled: boolVal('bankEnabled', true),
+        bankName: strVal('bankName', ''),
+        bankAccountName: strVal('bankAccountName', ''),
+        bankAccountNumber: strVal('bankAccountNumber', ''),
+        bankBranch: strVal('bankBranch', ''),
+        bankSwiftCode: strVal('bankSwiftCode', ''),
+        mpesaPaybill: strVal('mpesaPaybill', ''),
+        mpesaAccount: strVal('mpesaAccount', ''),
+        mpesaPhone: strVal('mpesaPhone', ''),
+        paymentInstructionsFootnote: strVal('paymentInstructionsFootnote', ''),
         general: globalSetting?.general,
         contact: globalSetting?.contact,
         social: globalSetting?.social,

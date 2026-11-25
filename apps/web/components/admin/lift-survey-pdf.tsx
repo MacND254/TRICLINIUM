@@ -95,18 +95,18 @@ const styles = StyleSheet.create({
     fontFamily: 'Helvetica-Bold',
     color: '#38bdf8',
     letterSpacing: 1.5,
+    marginBottom: 2.5,
   },
   companyTagline: {
     fontSize: 6.5,
     fontFamily: 'Helvetica-Bold',
     color: '#94a3b8',
-    marginTop: 1.5,
+    marginBottom: 3,
     letterSpacing: 0.8,
   },
   companyDetails: {
-    fontSize: 5.5,
+    fontSize: 6,
     color: '#cbd5e1',
-    marginTop: 2,
   },
   brandRight: {
     alignItems: 'flex-end',
@@ -587,11 +587,13 @@ function LiftReportPage({
   lift,
   liftIndex,
   totalLifts,
+  companyDetails,
 }: {
   report: LiftSurveyReportData;
   lift: LiftSectionData;
   liftIndex: number;
   totalLifts: number;
+  companyDetails?: any;
 }) {
   const liftLabel = totalLifts > 1 ? `L${lift.liftNumber || liftIndex + 1} ELE.` : 'L1 ELE.';
 
@@ -601,19 +603,31 @@ function LiftReportPage({
     observationsList.push(report.observations && report.observations[i] ? report.observations[i] : '');
   }
 
+  const bName = (companyDetails?.businessName ?? '').trim() || 'TRICLINIUM SYSTEMS';
+  const bTagline = (companyDetails?.businessTagline ?? '').trim();
+  const bAddress = (companyDetails?.businessAddress ?? '').trim();
+  const bPhone = (companyDetails?.businessPhone ?? '').trim();
+  const bKraPin = (companyDetails?.businessKraPin ?? '').trim();
+
+  const detailParts = [
+    bAddress,
+    bPhone ? `Tel: ${bPhone}` : '',
+    bKraPin ? `KRA PIN: ${bKraPin}` : '',
+  ].filter(Boolean);
+
   return (
     <Page size="A4" orientation="landscape" style={styles.page}>
       <View style={styles.reportContainer}>
         {/* 1. Executive Brand Header */}
         <View style={styles.brandHeader}>
           <View style={styles.brandLeft}>
-            <Text style={styles.companyName}>TRICLINIUM SYSTEMS</Text>
-            <Text style={styles.companyTagline}>
-              ELEVATOR &amp; ESCALATOR ENGINEERING · PRECISION BUILDING SURVEYS
-            </Text>
-            <Text style={styles.companyDetails}>
-              Westlands Commercial Hub, Ring Road, Nairobi, Kenya · Tel: +254 700 555 199
-            </Text>
+            <Text style={styles.companyName}>{bName}</Text>
+            {bTagline ? <Text style={styles.companyTagline}>{bTagline}</Text> : null}
+            {detailParts.length > 0 ? (
+              <Text style={styles.companyDetails}>
+                {detailParts.join('  ·  ')}
+              </Text>
+            ) : null}
           </View>
           <View style={styles.brandRight}>
             <Text style={styles.reportBadge}>BUILDING SURVEY REPORT</Text>
@@ -896,7 +910,13 @@ function LiftReportPage({
 
 // ================= FULL DOCUMENT COMPONENT =================
 
-export function BuildingSurveyReportPDF({ report }: { report: LiftSurveyReportData }) {
+export function BuildingSurveyReportPDF({
+  report,
+  companyDetails,
+}: {
+  report: LiftSurveyReportData;
+  companyDetails?: any;
+}) {
   const lifts = report.lifts && report.lifts.length > 0 ? report.lifts : [
     {
       liftNumber: 1,
@@ -912,10 +932,12 @@ export function BuildingSurveyReportPDF({ report }: { report: LiftSurveyReportDa
     },
   ];
 
+  const bName = companyDetails?.businessName || 'TRICLINIUM SYSTEMS';
+
   return (
     <Document
       title={`Building Survey Report - ${report.projectName || 'Lift Survey'}`}
-      author="TRICLINIUM SYSTEMS"
+      author={bName}
       subject="Elevator & Lift Shaft Building Survey Report"
       keywords="Lift Survey, Shaft Plan, Elevator Measurements, TRICLINIUM SYSTEMS"
     >
@@ -926,6 +948,7 @@ export function BuildingSurveyReportPDF({ report }: { report: LiftSurveyReportDa
           lift={lift}
           liftIndex={index}
           totalLifts={lifts.length}
+          companyDetails={companyDetails}
         />
       ))}
     </Document>
