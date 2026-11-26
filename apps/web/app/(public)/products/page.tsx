@@ -437,25 +437,71 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
 
           {/* Pagination Controls */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 pt-8">
-              {Array.from({ length: totalPages }).map((_, idx) => {
-                const pageNum = idx + 1;
-                const isCurrent = pageNum === currentPage;
-                const p = new URLSearchParams(queryParams);
-                p.set('page', pageNum.toString());
+            <div className="flex flex-wrap items-center justify-center gap-2 pt-8">
+              {currentPage > 1 && (
+                <Link
+                  href={`/products?${(() => {
+                    const p = new URLSearchParams(queryParams);
+                    p.set('page', String(currentPage - 1));
+                    return p.toString();
+                  })()}`}
+                >
+                  <Button size="sm" variant="outline" className="h-8 px-3 text-xs">
+                    Previous
+                  </Button>
+                </Link>
+              )}
 
-                return (
-                  <Link key={pageNum} href={`/products?${p.toString()}`}>
-                    <Button
-                      size="sm"
-                      variant={isCurrent ? 'default' : 'outline'}
-                      className="h-8 w-8 p-0 text-xs"
-                    >
-                      {pageNum}
-                    </Button>
-                  </Link>
-                );
-              })}
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter((pageNum) => {
+                  if (totalPages <= 7) return true;
+                  return pageNum === 1 || pageNum === totalPages || Math.abs(pageNum - currentPage) <= 1;
+                })
+                .reduce<(number | 'ellipsis')[]>((acc, pageNum, idx, arr) => {
+                  if (idx > 0 && pageNum - arr[idx - 1] > 1) {
+                    acc.push('ellipsis');
+                  }
+                  acc.push(pageNum);
+                  return acc;
+                }, [])
+                .map((item, idx) => {
+                  if (item === 'ellipsis') {
+                    return (
+                      <span key={`e-${idx}`} className="px-1.5 text-xs text-muted-foreground">
+                        …
+                      </span>
+                    );
+                  }
+                  const isCurrent = item === currentPage;
+                  const p = new URLSearchParams(queryParams);
+                  p.set('page', item.toString());
+
+                  return (
+                    <Link key={item} href={`/products?${p.toString()}`}>
+                      <Button
+                        size="sm"
+                        variant={isCurrent ? 'default' : 'outline'}
+                        className="h-8 w-8 p-0 text-xs"
+                      >
+                        {item}
+                      </Button>
+                    </Link>
+                  );
+                })}
+
+              {currentPage < totalPages && (
+                <Link
+                  href={`/products?${(() => {
+                    const p = new URLSearchParams(queryParams);
+                    p.set('page', String(currentPage + 1));
+                    return p.toString();
+                  })()}`}
+                >
+                  <Button size="sm" variant="outline" className="h-8 px-3 text-xs">
+                    Next
+                  </Button>
+                </Link>
+              )}
             </div>
           )}
         </main>

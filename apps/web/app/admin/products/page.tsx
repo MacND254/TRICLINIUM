@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Plus, Search, Edit2, Archive, Loader2, ExternalLink } from 'lucide-react';
+import { Plus, Search, Edit2, Archive, Loader2, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -11,19 +11,32 @@ import { formatPrice, formatDate } from '@/lib/utils';
 
 export default function AdminProductsPage() {
   const [products, setProducts] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('');
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
 
-  const loadProducts = async () => {
+  const loadProducts = async (targetPage = page) => {
     setIsLoading(true);
     try {
       const query = new URLSearchParams();
-      if (search) query.set('search', search);
+      query.set('page', String(targetPage));
+      query.set('limit', String(limit));
+      if (search.trim()) query.set('search', search.trim());
       if (statusFilter) query.set('status', statusFilter);
+      if (categoryFilter) query.set('categoryId', categoryFilter);
 
       const res = await fetchApi(`/admin/products?${query.toString()}`);
-      setProducts(res.items || []);
+      const items = res.items || [];
+      const pag = res.pagination || {};
+      setProducts(items);
+      setTotal(pag.total ?? items.length);
+      setTotalPages(Math.max(1, pag.totalPages ?? 1));
     } catch (err) {
       console.error(err);
     } finally {
@@ -32,8 +45,14 @@ export default function AdminProductsPage() {
   };
 
   useEffect(() => {
-    loadProducts();
-  }, [statusFilter]);
+    fetchApi('/product-categories')
+      .then((res) => setCategories(Array.isArray(res) ? res : res?.items || []))
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    loadProducts(page);
+  }, [page, limit, statusFilter, categoryFilter]);
 
   const handleArchive = async (id: string, name: string) => {
     if (!confirm(`Are you sure you want to archive "${name}"?`)) return;
@@ -66,7 +85,11 @@ export default function AdminProductsPage() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            loadProducts();
+            if (page !== 1) {
+              setPage(1);
+            } else {
+              loadProducts(1);
+            }
           }}
           className="relative w-full sm:w-80"
         >
@@ -81,16 +104,48 @@ export default function AdminProductsPage() {
           </button>
         </form>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          <select
+            value={categoryFilter}
+            onChange={(e) => {
+              setCategoryFilter(e.target.value);
+              setPage(1);
+            }}
+            className="h-9 rounded-md border border-slate-800 bg-slate-950 px-3 text-xs text-slate-300 max-w-[220px]"
+          >
+            <option value="">All Categories</option>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
+              </option>
+            ))}
+          </select>
+
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => {
+              setStatusFilter(e.target.value);
+              setPage(1);
+            }}
             className="h-9 rounded-md border border-slate-800 bg-slate-950 px-3 text-xs text-slate-300"
           >
             <option value="">All Statuses</option>
             <option value="PUBLISHED">Published</option>
             <option value="DRAFT">Draft</option>
             <option value="ARCHIVED">Archived</option>
+          </select>
+
+          <select
+            value={limit}
+            onChange={(e) => {
+              setLimit(Number(e.target.value));
+              setPage(1);
+            }}
+            className="h-9 rounded-md border border-slate-800 bg-slate-950 px-3 text-xs text-slate-300"
+          >
+            <option value={20}>20 / page</option>
+            <option value={50}>50 / page</option>
+            <option value={100}>100 / page</option>
           </select>
         </div>
       </div>
@@ -128,7 +183,7 @@ export default function AdminProductsPage() {
                           <img
                             src={p.images[0].url}
                             alt=""
-                            className="h-9 w-9 rounded object-cover border border-slate-800 shrink-0"
+                            className="h-9 w-9 rounded object-contain bg-white p-0.5 border border-slate-700 shrink-0"
                           />
                         )}
                         <span className="truncate max-w-[200px]">{p.name}</span>
@@ -181,6 +236,83 @@ export default function AdminProductsPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Pagination Bar */}
+        {!isLoading && total > 0 && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 border-t border-slate-800 bg-slate-950/60 text-xs text-slate-400">
+            <div>
+              Showing{' '}
+              <span className="font-semibold text-white">
+                {(page - 1) * limit + 1}
+              </span>
+              –
+              <span className="font-semibold text-white">
+                {Math.min(page * limit, total)}
+              </span>{' '}
+              of <span className="font-semibold text-white">{total}</span> products
+            </div>
+
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1.5 flex-wrap justify-center">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={page <= 1}
+                  className="h-8 px-2.5 text-xs border-slate-800 bg-slate-900 text-slate-300 hover:text-white disabled:opacity-40"
+                >
+                  <ChevronLeft className="h-3.5 w-3.5 mr-1" />
+                  Prev
+                </Button>
+
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter((pNum) => {
+                    if (totalPages <= 7) return true;
+                    return pNum === 1 || pNum === totalPages || Math.abs(pNum - page) <= 1;
+                  })
+                  .reduce<(number | 'ellipsis')[]>((acc, pNum, idx, arr) => {
+                    if (idx > 0 && pNum - arr[idx - 1] > 1) {
+                      acc.push('ellipsis');
+                    }
+                    acc.push(pNum);
+                    return acc;
+                  }, [])
+                  .map((item, idx) =>
+                    item === 'ellipsis' ? (
+                      <span key={`e-${idx}`} className="px-1.5 text-slate-500">
+                        …
+                      </span>
+                    ) : (
+                      <Button
+                        key={item}
+                        size="sm"
+                        variant={item === page ? 'default' : 'outline'}
+                        onClick={() => setPage(item)}
+                        className={`h-8 w-8 p-0 text-xs ${
+                          item === page
+                            ? 'bg-sky-600 hover:bg-sky-500 text-white border-sky-600'
+                            : 'border-slate-800 bg-slate-900 text-slate-300 hover:text-white'
+                        }`}
+                      >
+                        {item}
+                      </Button>
+                    )
+                  )}
+
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages}
+                  className="h-8 px-2.5 text-xs border-slate-800 bg-slate-900 text-slate-300 hover:text-white disabled:opacity-40"
+                >
+                  Next
+                  <ChevronRight className="h-3.5 w-3.5 ml-1" />
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </div>
