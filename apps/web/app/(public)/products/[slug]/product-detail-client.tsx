@@ -44,11 +44,11 @@ export function ProductDetailClient({ product }: { product: any }) {
       {/* 1. Left Gallery */}
       <div className="space-y-4">
         {/* Main Display Image */}
-        <div className="aspect-[4/3] w-full rounded-xl overflow-hidden border bg-slate-50 dark:bg-slate-900 shadow-sm relative">
+        <div className="aspect-[4/3] w-full rounded-xl overflow-hidden border bg-white p-6 flex items-center justify-center shadow-sm relative">
           <img
             src={images[activeImageIdx]}
             alt={product.name}
-            className="h-full w-full object-cover object-center"
+            className="max-h-full max-w-full object-contain object-center"
           />
         </div>
 
@@ -59,11 +59,11 @@ export function ProductDetailClient({ product }: { product: any }) {
               <button
                 key={idx}
                 onClick={() => setActiveImageIdx(idx)}
-                className={`relative h-20 w-24 shrink-0 rounded-lg overflow-hidden border-2 transition-all ${
+                className={`relative h-20 w-24 shrink-0 rounded-lg overflow-hidden border-2 bg-white p-1.5 flex items-center justify-center transition-all ${
                   activeImageIdx === idx ? 'border-sky-600 ring-2 ring-sky-200' : 'border-transparent opacity-75 hover:opacity-100'
                 }`}
               >
-                <img src={imgUrl} alt="" className="h-full w-full object-cover" />
+                <img src={imgUrl} alt="" className="max-h-full max-w-full object-contain" />
               </button>
             ))}
           </div>
