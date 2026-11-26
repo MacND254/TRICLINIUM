@@ -602,7 +602,7 @@ export class InquiriesController {
         items: z.array(
           z.object({
             description: z.string().min(1, 'Line item description is required'),
-            qty: z.coerce.number().int().positive().default(1),
+            qty: z.coerce.number().nonnegative().default(1),
             unitPrice: z.coerce.number().nonnegative().default(0),
           })
         ).min(1, 'At least one line item is required'),
@@ -630,9 +630,9 @@ export class InquiriesController {
           items: {
             create: data.items.map((i: { description: string; qty: number; unitPrice: number }) => ({
               productName: i.description,
-              quantity: i.qty,
+              quantity: Math.max(0, Math.round(i.qty)),
               unitPrice: i.unitPrice,
-              notes: JSON.stringify({ unitPrice: i.unitPrice }),
+              notes: JSON.stringify({ unitPrice: i.unitPrice, qty: i.qty }),
             })),
           },
           notes: {
@@ -673,7 +673,7 @@ export class InquiriesController {
         items: z.array(
           z.object({
             description: z.string().min(1, 'Line item description is required'),
-            qty: z.coerce.number().int().positive().default(1),
+            qty: z.coerce.number().nonnegative().default(1),
             unitPrice: z.coerce.number().nonnegative().default(0),
           })
         ).min(1, 'At least one line item is required'),
@@ -707,9 +707,9 @@ export class InquiriesController {
             items: {
               create: data.items.map((i: { description: string; qty: number; unitPrice: number }) => ({
                 productName: i.description,
-                quantity: i.qty,
+                quantity: Math.max(0, Math.round(i.qty)),
                 unitPrice: i.unitPrice,
-                notes: JSON.stringify({ unitPrice: i.unitPrice }),
+                notes: JSON.stringify({ unitPrice: i.unitPrice, qty: i.qty }),
               })),
             },
           },

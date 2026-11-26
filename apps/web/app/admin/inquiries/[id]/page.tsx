@@ -98,7 +98,8 @@ export default function AdminInquiryDetailPage() {
   const docGeneratorRef = useRef<HTMLDivElement>(null);
 
   // Common items state shared or synced
-  const [items, setItems] = useState<LineItem[]>([
+  type EditableLineItem = { description: string; qty: number | string; unitPrice: number | string };
+  const [items, setItems] = useState<EditableLineItem[]>([
     { description: 'TRICLINIUM ApexGuard 4K AI Turret Camera', qty: 2, unitPrice: 14500 },
     { description: 'Professional Installation & Cable Routing', qty: 1, unitPrice: 7500 },
   ]);
@@ -155,26 +156,38 @@ export default function AdminInquiryDetailPage() {
       setStatus(data.status);
       setUrgency(data.urgency);
 
-      const extractUnitPrice = (item: any): number => {
+      const extractUnitPrice = (item: any): number | string => {
         if (item.unitPrice !== undefined && item.unitPrice !== null && !isNaN(Number(item.unitPrice))) {
-          return Number(item.unitPrice);
+          return Number(item.unitPrice) === 0 ? '' : Number(item.unitPrice);
         }
         if (item.notes) {
           try {
             const parsed = JSON.parse(item.notes);
             if (parsed.unitPrice !== undefined && !isNaN(Number(parsed.unitPrice))) {
-              return Number(parsed.unitPrice);
+              return Number(parsed.unitPrice) === 0 ? '' : Number(parsed.unitPrice);
             }
           } catch {}
         }
-        return 0;
+        return '';
       };
 
-      let initialItems: LineItem[] = [];
+      const extractQty = (item: any): number | string => {
+        if (item.notes) {
+          try {
+            const parsed = JSON.parse(item.notes);
+            if (parsed.qty !== undefined && !isNaN(Number(parsed.qty))) {
+              return Number(parsed.qty);
+            }
+          } catch {}
+        }
+        return item.quantity ?? item.qty ?? 1;
+      };
+
+      let initialItems: EditableLineItem[] = [];
       if (data.items && data.items.length > 0) {
         initialItems = data.items.map((item: any) => ({
           description: item.productName || item.product?.name || item.description || 'Security Equipment / Installation',
-          qty: item.quantity || item.qty || 1,
+          qty: extractQty(item),
           unitPrice: extractUnitPrice(item),
         }));
       } else if (data.message && data.message.includes('Custom Quote Items:')) {
@@ -182,13 +195,14 @@ export default function AdminInquiryDetailPage() {
           data.message.indexOf('Custom Quote Items:') + 'Custom Quote Items:'.length,
           data.message.indexOf('\n\n') > -1 ? data.message.indexOf('\n\n') : undefined
         );
-        const regex = /(?:^|\n|,\s*)(.+?)\s*\(x(\d+)\s*@\s*Ksh\s*([\d,]+)\)(?=,\s*|$)/g;
+        const regex = /(?:^|\n|,\s*)(.+?)\s*\(x([\d.]+)\s*@\s*Ksh\s*([\d,.]+)\)(?=,\s*|$)/g;
         let m;
         while ((m = regex.exec(itemPart.trim())) !== null) {
+          const p = parseFloat(m[3].replace(/,/g, ''));
           initialItems.push({
             description: m[1].trim(),
-            qty: parseInt(m[2], 10),
-            unitPrice: parseFloat(m[3].replace(/,/g, '')),
+            qty: parseFloat(m[2]),
+            unitPrice: p === 0 ? '' : p,
           });
         }
       }
@@ -200,6 +214,14 @@ export default function AdminInquiryDetailPage() {
       }
 
       setItems(initialItems);
+      const normalizedItems: LineItem[] = initialItems.map((i) => ({
+        description: i.description,
+        qty: Number(i.qty) || 0,
+        unitPrice: Number(i.unitPrice) || 0,
+      }));
+      const docIssueDate = (data.updatedAt || data.createdAt)
+        ? new Date(data.updatedAt || data.createdAt).toISOString().split('T')[0]
+        : todayStr();
 
       const cleanRef = (data.referenceNumber || '2026-001').replace(/^(QT-|INV-)/, '');
 
@@ -222,12 +244,13 @@ export default function AdminInquiryDetailPage() {
       setQuoteData((prev) => ({
         ...prev,
         quoteRef: `QT-${cleanRef}`,
+        date: docIssueDate,
         subject: data.subject || 'Custom Security Quotation',
         clientName: data.customerName || '',
         clientCompany: data.company || '',
         clientEmail: data.email || '',
         clientPhone: data.phone || '',
-        items: initialItems,
+        items: normalizedItems,
         notes: extractedNotes || prev.notes,
         paymentTerms: extractedTerms || prev.paymentTerms,
       }));
@@ -236,12 +259,13 @@ export default function AdminInquiryDetailPage() {
       setInvoiceData((prev) => ({
         ...prev,
         invoiceNumber: `INV-${cleanRef}`,
+        date: docIssueDate,
         subject: data.subject || 'Custom Security Quotation',
         clientName: data.customerName || '',
         clientCompany: data.company || '',
         clientEmail: data.email || '',
         clientPhone: data.phone || '',
-        items: initialItems,
+        items: normalizedItems,
       }));
 
       // Pre-populate reply subject
@@ -356,8 +380,8 @@ export default function AdminInquiryDetailPage() {
           validUntil: quoteData.validUntil || '30 Days',
           items: items.map((itm) => ({
             description: itm.description,
-            qty: itm.qty,
-            unitPrice: itm.unitPrice,
+            qty: Math.max(0, Number(itm.qty === '' ? 1 : itm.qty)),
+            unitPrice: Math.max(0, Number(itm.unitPrice || 0)),
           })),
         }),
       });
@@ -374,6 +398,7 @@ export default function AdminInquiryDetailPage() {
       });
       setStatus('QUOTED');
       await loadInquiry();
+      setQuoteData((prev) => ({ ...prev, date: todayStr() }));
       alert('Quotation updated and saved successfully.');
     } catch (err: any) {
       alert(err.message || 'Failed to update quotation');
@@ -397,7 +422,11 @@ export default function AdminInquiryDetailPage() {
           notes: invoiceData.notes || '',
           paymentTerms: invoiceData.paymentInstructions || '',
           validUntil: invoiceData.dueDate || 'Upon Receipt',
-          items: items.map((itm) => ({ description: itm.description, qty: itm.qty, unitPrice: itm.unitPrice })),
+          items: items.map((itm) => ({
+            description: itm.description,
+            qty: Math.max(0, Number(itm.qty === '' ? 1 : itm.qty)),
+            unitPrice: Math.max(0, Number(itm.unitPrice || 0)),
+          })),
         }),
       });
       await fetchApi(`/admin/inquiries/${id}/notes`, {
@@ -428,7 +457,7 @@ export default function AdminInquiryDetailPage() {
         body: JSON.stringify({
           quoteData: {
             ...quoteData,
-            items,
+            items: getNormalizedItems(),
           },
         }),
       });
@@ -449,7 +478,7 @@ export default function AdminInquiryDetailPage() {
         body: JSON.stringify({
           invoiceData: {
             ...invoiceData,
-            items,
+            items: getNormalizedItems(),
           },
         }),
       });
@@ -485,7 +514,7 @@ export default function AdminInquiryDetailPage() {
         invoiceNumber: invNo,
         paymentStatus: 'PAID',
         notes: `Paid in full via ${paymentRef}. Includes 1-year on-site equipment warranty.`,
-        items,
+        items: getNormalizedItems(),
       }));
 
       // Switch view to Invoice mode
@@ -502,32 +531,54 @@ export default function AdminInquiryDetailPage() {
   };
 
   // Line item helpers
-  const updateItem = (idx: number, field: keyof LineItem, value: string | number) => {
+  const getNormalizedItems = (): LineItem[] =>
+    items.map((i) => ({
+      description: i.description,
+      qty: Number(i.qty === '' ? 1 : i.qty) || 0,
+      unitPrice: Number(i.unitPrice || 0) || 0,
+    }));
+
+  const updateItem = (idx: number, field: keyof EditableLineItem, value: string | number) => {
     const updated = [...items];
     updated[idx] = { ...updated[idx], [field]: value };
     setItems(updated);
-    setQuoteData((prev) => ({ ...prev, items: updated }));
-    setInvoiceData((prev) => ({ ...prev, items: updated }));
+    const normalized = updated.map((i) => ({
+      description: i.description,
+      qty: Number(i.qty === '' ? 1 : i.qty) || 0,
+      unitPrice: Number(i.unitPrice || 0) || 0,
+    }));
+    setQuoteData((prev) => ({ ...prev, items: normalized }));
+    setInvoiceData((prev) => ({ ...prev, items: normalized }));
   };
 
   const addItem = () => {
-    const updated = [...items, { description: '', qty: 1, unitPrice: 0 }];
+    const updated = [...items, { description: '', qty: '', unitPrice: '' }];
     setItems(updated);
-    setQuoteData((prev) => ({ ...prev, items: updated }));
-    setInvoiceData((prev) => ({ ...prev, items: updated }));
+    const normalized = updated.map((i) => ({
+      description: i.description,
+      qty: Number(i.qty === '' ? 1 : i.qty) || 0,
+      unitPrice: Number(i.unitPrice || 0) || 0,
+    }));
+    setQuoteData((prev) => ({ ...prev, items: normalized }));
+    setInvoiceData((prev) => ({ ...prev, items: normalized }));
   };
 
   const removeItem = (idx: number) => {
     if (items.length <= 1) return;
     const updated = items.filter((_, i) => i !== idx);
     setItems(updated);
-    setQuoteData((prev) => ({ ...prev, items: updated }));
-    setInvoiceData((prev) => ({ ...prev, items: updated }));
+    const normalized = updated.map((i) => ({
+      description: i.description,
+      qty: Number(i.qty === '' ? 1 : i.qty) || 0,
+      unitPrice: Number(i.unitPrice || 0) || 0,
+    }));
+    setQuoteData((prev) => ({ ...prev, items: normalized }));
+    setInvoiceData((prev) => ({ ...prev, items: normalized }));
   };
 
   // Active Tax & Totals calculation
   const activeTaxRate = docType === 'QUOTATION' ? quoteData.taxRate : invoiceData.taxRate;
-  const subtotal = items.reduce((s, i) => s + i.qty * i.unitPrice, 0);
+  const subtotal = items.reduce((s, i) => s + (Number(i.qty) || 0) * (Number(i.unitPrice) || 0), 0);
   const taxAmount = (subtotal * activeTaxRate) / 100;
   const grandTotal = subtotal + taxAmount;
 
@@ -553,9 +604,9 @@ export default function AdminInquiryDetailPage() {
       const { pdf } = await import('@react-pdf/renderer');
       const doc =
         type === 'QUOTATION' ? (
-          <QuotationPDF quoteData={{ ...quoteData, items }} companyDetails={settings} />
+          <QuotationPDF quoteData={{ ...quoteData, items: getNormalizedItems() }} companyDetails={settings} />
         ) : (
-          <InvoicePDF invoiceData={{ ...invoiceData, items }} companyDetails={settings} />
+          <InvoicePDF invoiceData={{ ...invoiceData, items: getNormalizedItems() }} companyDetails={settings} />
         );
       const blob = await pdf(doc).toBlob();
       const url = URL.createObjectURL(blob);
@@ -575,9 +626,9 @@ export default function AdminInquiryDetailPage() {
       const { pdf } = await import('@react-pdf/renderer');
       const doc =
         type === 'QUOTATION' ? (
-          <QuotationPDF quoteData={{ ...quoteData, items }} companyDetails={settings} />
+          <QuotationPDF quoteData={{ ...quoteData, items: getNormalizedItems() }} companyDetails={settings} />
         ) : (
-          <InvoicePDF invoiceData={{ ...invoiceData, items }} companyDetails={settings} />
+          <InvoicePDF invoiceData={{ ...invoiceData, items: getNormalizedItems() }} companyDetails={settings} />
         );
       const blob = await pdf(doc).toBlob();
       const url = URL.createObjectURL(blob);
@@ -837,7 +888,17 @@ export default function AdminInquiryDetailPage() {
                           {item.product?.sku || 'TRIC-CUSTOM'}
                         </td>
                         <td className="py-2.5 px-4 text-center font-bold text-sky-400">
-                          {item.quantity} units
+                          {(() => {
+                            if (item.notes) {
+                              try {
+                                const parsed = JSON.parse(item.notes);
+                                if (parsed.qty !== undefined && !isNaN(Number(parsed.qty))) {
+                                  return Number(parsed.qty);
+                                }
+                              } catch {}
+                            }
+                            return item.quantity;
+                          })()} units
                         </td>
                       </tr>
                     ))}
@@ -1353,20 +1414,23 @@ export default function AdminInquiryDetailPage() {
                       <div className="col-span-2">
                         <input
                           type="number"
-                          min={1}
+                          min={0}
+                          step="any"
+                          placeholder="1"
                           value={item.qty}
-                          onChange={(e) => updateItem(idx, 'qty', Number(e.target.value))}
-                          className="w-full h-7 rounded border border-slate-700 bg-slate-950 px-2 text-xs text-white text-center focus:border-sky-600 focus:outline-none"
+                          onChange={(e) => updateItem(idx, 'qty', e.target.value)}
+                          className="w-full h-7 rounded border border-slate-700 bg-slate-950 px-2 text-xs text-white text-center placeholder-slate-500 focus:border-sky-600 focus:outline-none"
                         />
                       </div>
                       <div className="col-span-3">
                         <input
                           type="number"
                           min={0}
-                          step={100}
+                          step="any"
+                          placeholder="0"
                           value={item.unitPrice}
-                          onChange={(e) => updateItem(idx, 'unitPrice', Number(e.target.value))}
-                          className="w-full h-7 rounded border border-slate-700 bg-slate-950 px-2 text-xs text-white text-right focus:border-sky-600 focus:outline-none font-mono"
+                          onChange={(e) => updateItem(idx, 'unitPrice', e.target.value)}
+                          className="w-full h-7 rounded border border-slate-700 bg-slate-950 px-2 text-xs text-white text-right placeholder-slate-500 focus:border-sky-600 focus:outline-none font-mono"
                         />
                       </div>
                       <div className="col-span-1 flex justify-center">

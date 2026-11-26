@@ -37,8 +37,8 @@ import { usePublicSettings } from '@/lib/settings-context';
 
 interface CustomQuoteItem {
   description: string;
-  qty: number;
-  unitPrice: number;
+  qty: number | string;
+  unitPrice: number | string;
 }
 
 type ModuleTab = 'INQUIRIES' | 'QUOTATIONS' | 'INVOICES';
@@ -178,26 +178,38 @@ export default function AdminInquiriesPage() {
     setQuotePaymentTerms(termsVal || '50% commitment upon project confirmation, 50% upon completed commissioning.');
     setQuoteValidUntil('30 Days');
 
-    const extractPrice = (itm: any): number => {
+    const extractPrice = (itm: any): number | string => {
       if (itm.unitPrice !== undefined && itm.unitPrice !== null && !isNaN(Number(itm.unitPrice))) {
-        return Number(itm.unitPrice);
+        return Number(itm.unitPrice) === 0 ? '' : Number(itm.unitPrice);
       }
       if (itm.notes) {
         try {
           const parsed = JSON.parse(itm.notes);
           if (parsed.unitPrice !== undefined && !isNaN(Number(parsed.unitPrice))) {
-            return Number(parsed.unitPrice);
+            return Number(parsed.unitPrice) === 0 ? '' : Number(parsed.unitPrice);
           }
         } catch {}
       }
-      return 0;
+      return '';
+    };
+
+    const extractQty = (itm: any): number | string => {
+      if (itm.notes) {
+        try {
+          const parsed = JSON.parse(itm.notes);
+          if (parsed.qty !== undefined && !isNaN(Number(parsed.qty))) {
+            return Number(parsed.qty);
+          }
+        } catch {}
+      }
+      return itm.quantity ?? itm.qty ?? 1;
     };
 
     let parsedItems: CustomQuoteItem[] = [];
     if (inq.items && inq.items.length > 0) {
       parsedItems = inq.items.map((itm: any) => ({
         description: itm.productName || itm.description || 'Equipment / Service Item',
-        qty: itm.quantity || itm.qty || 1,
+        qty: extractQty(itm),
         unitPrice: extractPrice(itm),
       }));
     } else if (inq.message && inq.message.includes('Custom Quote Items:')) {
@@ -205,13 +217,14 @@ export default function AdminInquiriesPage() {
         inq.message.indexOf('Custom Quote Items:') + 'Custom Quote Items:'.length,
         inq.message.indexOf('\n\n') > -1 ? inq.message.indexOf('\n\n') : undefined
       );
-      const regex = /(?:^|\n|,\s*)(.+?)\s*\(x(\d+)\s*@\s*Ksh\s*([\d,]+)\)(?=,\s*|$)/g;
+      const regex = /(?:^|\n|,\s*)(.+?)\s*\(x([\d.]+)\s*@\s*Ksh\s*([\d,.]+)\)(?=,\s*|$)/g;
       let m;
       while ((m = regex.exec(itemPart.trim())) !== null) {
+        const p = parseFloat(m[3].replace(/,/g, ''));
         parsedItems.push({
           description: m[1].trim(),
-          qty: parseInt(m[2], 10),
-          unitPrice: parseFloat(m[3].replace(/,/g, '')),
+          qty: parseFloat(m[2]),
+          unitPrice: p === 0 ? '' : p,
         });
       }
     }
@@ -348,11 +361,23 @@ export default function AdminInquiriesPage() {
       return 0;
     };
 
-    let initialItems: CustomQuoteItem[] = [];
+    const extractItemQty = (item: any): number => {
+      if (item.notes) {
+        try {
+          const parsed = JSON.parse(item.notes);
+          if (parsed.qty !== undefined && !isNaN(Number(parsed.qty))) {
+            return Number(parsed.qty);
+          }
+        } catch {}
+      }
+      return item.quantity ?? item.qty ?? 1;
+    };
+
+    let initialItems: Array<{ description: string; qty: number; unitPrice: number }> = [];
     if (inq.items && inq.items.length > 0) {
       initialItems = inq.items.map((item: any) => ({
         description: item.productName || item.product?.name || item.description || 'Security Equipment / Installation',
-        qty: item.quantity || item.qty || 1,
+        qty: extractItemQty(item),
         unitPrice: extractItemUnitPrice(item),
       }));
     } else if (inq.message && inq.message.includes('Custom Quote Items:')) {
@@ -360,12 +385,12 @@ export default function AdminInquiriesPage() {
         inq.message.indexOf('Custom Quote Items:') + 'Custom Quote Items:'.length,
         inq.message.indexOf('\n\n') > -1 ? inq.message.indexOf('\n\n') : undefined
       );
-      const regex = /(?:^|\n|,\s*)(.+?)\s*\(x(\d+)\s*@\s*Ksh\s*([\d,]+)\)(?=,\s*|$)/g;
+      const regex = /(?:^|\n|,\s*)(.+?)\s*\(x([\d.]+)\s*@\s*Ksh\s*([\d,.]+)\)(?=,\s*|$)/g;
       let m;
       while ((m = regex.exec(itemPart.trim())) !== null) {
         initialItems.push({
           description: m[1].trim(),
-          qty: parseInt(m[2], 10),
+          qty: parseFloat(m[2]),
           unitPrice: parseFloat(m[3].replace(/,/g, '')),
         });
       }
@@ -428,7 +453,7 @@ export default function AdminInquiriesPage() {
         data: {
           quoteRef: `QT-${cleanRef}`,
           subject: inq.subject || 'Custom Security Quotation',
-          date: inq.createdAt ? new Date(inq.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          date: (inq.updatedAt || inq.createdAt) ? new Date(inq.updatedAt || inq.createdAt).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
           validUntil: '30 Days',
           clientName: inq.customerName || 'Valued Client',
           clientCompany: inq.company || '',
@@ -514,7 +539,7 @@ export default function AdminInquiriesPage() {
   };
 
   const addQuoteItem = () => {
-    setQuoteItems((prev) => [...prev, { description: '', qty: 1, unitPrice: 0 }]);
+    setQuoteItems((prev) => [...prev, { description: '', qty: '', unitPrice: '' }]);
   };
 
   const removeQuoteItem = (idx: number) => {
@@ -530,7 +555,7 @@ export default function AdminInquiriesPage() {
     });
   };
 
-  const quoteSubtotal = quoteItems.reduce((acc, i) => acc + (i.qty * i.unitPrice), 0);
+  const quoteSubtotal = quoteItems.reduce((acc, i) => acc + ((Number(i.qty) || 0) * (Number(i.unitPrice) || 0)), 0);
   const quoteVat = Math.round(quoteSubtotal * 0.16);
   const quoteGrandTotal = quoteSubtotal + quoteVat;
 
@@ -563,12 +588,12 @@ export default function AdminInquiriesPage() {
         setModalError(`Line item #${i + 1} requires a valid description.`);
         return;
       }
-      const qtyNum = Number(itm.qty);
-      if (isNaN(qtyNum) || qtyNum < 1) {
-        setModalError(`Line item #${i + 1} quantity must be a positive integer.`);
+      const qtyNum = itm.qty === '' ? 1 : Number(itm.qty);
+      if (isNaN(qtyNum) || qtyNum < 0) {
+        setModalError(`Line item #${i + 1} quantity cannot be negative.`);
         return;
       }
-      const priceNum = Number(itm.unitPrice);
+      const priceNum = itm.unitPrice === '' ? 0 : Number(itm.unitPrice);
       if (isNaN(priceNum) || priceNum < 0) {
         setModalError(`Line item #${i + 1} unit price cannot be negative.`);
         return;
@@ -588,8 +613,8 @@ export default function AdminInquiriesPage() {
         validUntil: quoteValidUntil.trim(),
         items: quoteItems.map((itm) => ({
           description: itm.description.trim(),
-          qty: Math.max(1, Math.round(Number(itm.qty))),
-          unitPrice: Math.max(0, Number(itm.unitPrice)),
+          qty: Math.max(0, Number(itm.qty === '' ? 1 : itm.qty)),
+          unitPrice: Math.max(0, Number(itm.unitPrice === '' ? 0 : itm.unitPrice)),
         })),
       };
 
@@ -892,7 +917,7 @@ export default function AdminInquiriesPage() {
                       </td>
 
                       <td className="px-2.5 py-2.5 whitespace-nowrap font-mono text-[10px] text-slate-400">
-                        {formatDate(inq.createdAt)}
+                        {formatDate(activeTab === 'QUOTATIONS' ? (inq.updatedAt || inq.createdAt) : inq.createdAt)}
                       </td>
 
                       <td className="px-3 py-2.5 text-right whitespace-nowrap">
@@ -1475,20 +1500,23 @@ export default function AdminInquiriesPage() {
                           <div className="col-span-2">
                             <input
                               type="number"
-                              min={1}
+                              min={0}
+                              step="any"
+                              placeholder="1"
                               value={item.qty}
-                              onChange={(e) => updateQuoteItem(idx, 'qty', Number(e.target.value))}
-                              className="w-full h-8 rounded border border-slate-800 bg-slate-900 px-2 text-xs text-white text-center focus:outline-none focus:border-sky-500"
+                              onChange={(e) => updateQuoteItem(idx, 'qty', e.target.value)}
+                              className="w-full h-8 rounded border border-slate-800 bg-slate-900 px-2 text-xs text-white text-center placeholder-slate-500 focus:outline-none focus:border-sky-500"
                             />
                           </div>
                           <div className="col-span-3">
                             <input
                               type="number"
                               min={0}
-                              step={100}
+                              step="any"
+                              placeholder="0"
                               value={item.unitPrice}
-                              onChange={(e) => updateQuoteItem(idx, 'unitPrice', Number(e.target.value))}
-                              className="w-full h-8 rounded border border-slate-800 bg-slate-900 px-2 text-xs text-white text-right font-mono focus:outline-none focus:border-sky-500"
+                              onChange={(e) => updateQuoteItem(idx, 'unitPrice', e.target.value)}
+                              className="w-full h-8 rounded border border-slate-800 bg-slate-900 px-2 text-xs text-white text-right font-mono placeholder-slate-500 focus:outline-none focus:border-sky-500"
                             />
                           </div>
                           <div className="col-span-1 flex justify-center">
