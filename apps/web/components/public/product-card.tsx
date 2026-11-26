@@ -52,11 +52,11 @@ export function ProductCard({
     <div className="group rounded-xl border bg-card text-card-foreground shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col justify-between">
       <div>
         {/* Product Image Area */}
-        <div className="relative aspect-[4/3] w-full overflow-hidden bg-white p-4 flex items-center justify-center border-b border-slate-100 dark:border-slate-800">
+        <div className="relative aspect-[4/3] w-full overflow-hidden bg-white px-6 pt-10 pb-4 flex items-center justify-center border-b border-slate-100 dark:border-slate-800">
           <img
             src={imageUrl}
             alt={name}
-            className="max-h-full max-w-full object-contain object-center group-hover:scale-105 transition-transform duration-300"
+            className="max-h-[82%] max-w-[82%] w-auto h-auto object-contain object-center group-hover:scale-105 transition-transform duration-300"
             loading="lazy"
           />
           <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">

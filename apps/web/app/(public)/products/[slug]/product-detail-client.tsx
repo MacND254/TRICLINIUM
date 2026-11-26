@@ -44,11 +44,11 @@ export function ProductDetailClient({ product }: { product: any }) {
       {/* 1. Left Gallery */}
       <div className="space-y-4">
         {/* Main Display Image */}
-        <div className="aspect-[4/3] w-full rounded-xl overflow-hidden border bg-white p-6 flex items-center justify-center shadow-sm relative">
+        <div className="aspect-[4/3] w-full rounded-xl overflow-hidden border bg-white p-8 flex items-center justify-center shadow-sm relative">
           <img
             src={images[activeImageIdx]}
             alt={product.name}
-            className="max-h-full max-w-full object-contain object-center"
+            className="max-h-[82%] max-w-[82%] w-auto h-auto object-contain object-center"
           />
         </div>
 
